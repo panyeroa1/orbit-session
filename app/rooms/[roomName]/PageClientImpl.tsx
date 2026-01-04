@@ -502,6 +502,8 @@ function TranslatePanel({
   onTranslationVoiceSelectionChange,
   customTranslationVoice,
   onCustomTranslationVoiceChange,
+  ttsEngine,
+  onTtsEngineChange,
 }: {
   isListening: boolean;
   isBroadcastActive: boolean;
@@ -517,6 +519,8 @@ function TranslatePanel({
   onTranslationVoiceSelectionChange: (selection: 'default' | 'custom') => void;
   customTranslationVoice: string;
   onCustomTranslationVoiceChange: (voice: string) => void;
+  ttsEngine: 'cartesia' | 'google-genai';
+  onTtsEngineChange: (engine: 'cartesia' | 'google-genai') => void;
 }) {
   const room = React.useContext(RoomContext);
   const languageGroups = [
@@ -697,6 +701,25 @@ function TranslatePanel({
               />
             )}
           </div>
+        </div>
+
+        <div className={roomStyles.sidebarCard}>
+          <div className={roomStyles.sidebarCardText}>
+            <span className={roomStyles.sidebarCardLabel}>Translation voice engine</span>
+            <span className={roomStyles.sidebarCardHint}>
+              Choose the backend that synthesizes translations for the “Listen to Translation” flow.
+            </span>
+          </div>
+          <select
+            title="Translation TTS Engine"
+            aria-label="Translation TTS Engine"
+            className={roomStyles.sidebarSelect}
+            value={ttsEngine}
+            onChange={(event) => onTtsEngineChange(event.target.value as 'cartesia' | 'google-genai')}
+          >
+            <option value="cartesia">Cartesia Sonic-3 (default)</option>
+            <option value="google-genai">Google Gemini Live Audio</option>
+          </select>
         </div>
 
         <div className={roomStyles.translationClipGrid}>
@@ -931,6 +954,8 @@ function VideoConferenceComponent(props: {
     'default',
   );
   const [customTranslationVoice, setCustomTranslationVoice] = React.useState('');
+  const [ttsEngine, setTtsEngine] = React.useState<'cartesia' | 'google-genai'>('cartesia');
+
   const translationVoiceId = React.useMemo(() => {
     if (translationVoiceSelection === 'custom') {
       const trimmed = customTranslationVoice.trim();
@@ -976,8 +1001,11 @@ function VideoConferenceComponent(props: {
           return;
         }
 
-        const ttsPayload: Record<string, string> = { text: translatedText };
-        if (translationVoiceId) {
+        const ttsPayload: Record<string, string> = {
+          text: translatedText,
+          provider: ttsEngine,
+        };
+        if (ttsEngine === 'cartesia' && translationVoiceId) {
           ttsPayload.voiceId = translationVoiceId;
         }
 
@@ -995,7 +1023,7 @@ function VideoConferenceComponent(props: {
         console.warn('Failed to translate and queue audio', error);
       }
     },
-    [targetLanguage, translationEngine, translationVoiceId],
+    [targetLanguage, translationEngine, translationVoiceId, ttsEngine],
   );
 
   const handleListenTranslationClick = React.useCallback(async () => {
@@ -1778,6 +1806,8 @@ function VideoConferenceComponent(props: {
               onTranslationVoiceSelectionChange={setTranslationVoiceSelection}
               customTranslationVoice={customTranslationVoice}
               onCustomTranslationVoiceChange={setCustomTranslationVoice}
+              ttsEngine={ttsEngine}
+              onTtsEngineChange={setTtsEngine}
               onListenTranslationClick={handleListenTranslationClick}
             />
           );

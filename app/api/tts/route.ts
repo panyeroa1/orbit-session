@@ -2,18 +2,91 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+type TtsRequestBody = {
+  text: string;
+  voiceId?: string;
+  provider?: 'cartesia' | 'google-genai';
+};
+
 export async function POST(request: Request) {
   try {
-    const { text, voiceId: requestedVoiceId } = await request.json();
+    const { text, voiceId: requestedVoiceId, provider = 'cartesia' } = (await request.json()) as TtsRequestBody;
 
     if (!text) {
       return new NextResponse('Missing text', { status: 400 });
     }
 
+    if (provider === 'google-genai') {
+      const apiKey = process.env.GEMINI_API_KEY;
+      const model = process.env.GEMINI_AUDIO_MODEL || 'models/gemini-2.5-flash-native-audio-preview-12-2025';
+
+      if (!apiKey) {
+        return new NextResponse('Gemini API key not configured', { status: 503 });
+      }
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  {
+                    text,
+                  },
+                ],
+              },
+            ],
+            responseModalities: ['audio'],
+            audioConfig: {
+              audioEncoding: 'WAV',
+              speakingRate: 1.0,
+              pitch: 0.0,
+            },
+            generationConfig: {
+              speed: 1.1,
+              volume: 1,
+              emotion: 'calm',
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Gemini audio error:', errorData);
+        return new NextResponse('Gemini audio failed', { status: 500 });
+      }
+
+      const data = await response.json();
+      const candidate = data?.candidates?.[0];
+      const audioPart = candidate?.content?.find((part: any) => part?.audio?.data);
+      const audioBase64 =
+        audioPart?.audio?.data ??
+        candidate?.content?.[0]?.audio?.data ??
+        candidate?.output?.audio?.data;
+
+      if (!audioBase64) {
+        return new NextResponse('Gemini returned no audio', { status: 500 });
+      }
+
+      const buffer = Buffer.from(audioBase64, 'base64');
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': 'audio/wav',
+          'Cache-Control': 'no-cache',
+        },
+      });
+    }
+
     const apiKey = process.env.CARTESIA_API_KEY;
     const voiceEnv = process.env.CARTESIA_VOICE_ID;
     const modelId = process.env.CARTESIA_MODEL_ID || 'sonic-3';
-
     const voiceToUse = requestedVoiceId?.trim() || voiceEnv;
 
     if (!apiKey || !voiceToUse) {
