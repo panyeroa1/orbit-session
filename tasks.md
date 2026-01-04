@@ -1014,3 +1014,48 @@ How it was tested:
 Test result:
 
 - PASS
+
+Task ID: T-0036
+Title: Fix Translation Sidebar History Overwrite
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 13:00
+
+Current behavior:
+
+- Translation sidebar transcripts appear "broken" or flash/disappear because new segments from non-cumulative STT engines (like Deepgram) overwrite previous ones instead of appending.
+
+Plan and scope:
+
+- Modify `setTranscriptions` logic in `PageClientImpl.tsx` to handle both cumulative (WebSpeech) and chunked (Deepgram) inputs.
+- Implement intelligent appending/replacing based on text overlap.
+
+Files expected to change:
+
+- app/rooms/[roomName]/PageClientImpl.tsx
+
+END LOG
+
+Timestamp: 2026-01-04 13:10
+
+Summary of what actually changed:
+
+- Updated `setTranscriptions` state update logic in `PageClientImpl.tsx`.
+- Implemented a check to see if new text extends existing text (replace) or is new (append).
+- This ensures history is preserved for 1-second chunks from Deepgram while supporting cumulative updates from WebSpeech.
+
+Files actually modified:
+
+- app/rooms/[roomName]/PageClientImpl.tsx
+
+How it was tested:
+
+- npm run build (Verified clean build)
+- npm run lint (Verified code quality)
+
+Test result:
+
+- PASS

@@ -1471,13 +1471,32 @@ function VideoConferenceComponent(props: {
 
         // Update UI Feed (Descending)
         setTranscriptions(prev => {
+          // Find the most recent entry for this speaker
           const existingIdx = prev.findIndex(t => t.speakerId === speakerId);
+          
+          // Logic:
+          // 1. If no existing entry, prepend new one.
+          // 2. If existing entry text is a prefix of new text (cumulative update), replace it.
+          // 3. If new text is different (new sentence/segment), prepend new one.
+          
           if (existingIdx !== -1) {
-            const next = [...prev];
-            next[existingIdx] = { ...next[existingIdx], text: fullText, timestamp: Date.now() };
-            return next.sort((a, b) => b.timestamp - a.timestamp);
+            const existing = prev[existingIdx];
+            // Check if it's an update (cumulative)
+            if (fullText.startsWith(existing.text) || existing.text.startsWith(fullText)) {
+              // It's likely a correction or extension of the same sentence
+              // Use the longer one or the new one if they match length
+              const next = [...prev];
+              next[existingIdx] = { 
+                ...existing, 
+                text: fullText.length >= existing.text.length ? fullText : existing.text, 
+                timestamp: Date.now() 
+              };
+              return next.sort((a, b) => b.timestamp - a.timestamp);
+            }
           }
-          return [{ id: Math.random().toString(), speakerId, text: fullText, timestamp: Date.now() }, ...prev];
+          
+          // Fallback: Prepend as new segment
+          return [{ id: Math.random().toString(), speakerId, text: fullText, timestamp: Date.now() }, ...prev].slice(0, 50);
         });
 
         // ---------------------------------------------------------
