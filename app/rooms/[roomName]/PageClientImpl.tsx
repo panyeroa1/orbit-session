@@ -564,11 +564,11 @@ function TranslatePanel({
               Select your listener language.
             </span>
           </div>
-        <div
-          role="radiogroup"
-          aria-label="Translation mode"
-          className={roomStyles.translationModeRadioGroup}
-        >
+          <div
+            role="radiogroup"
+            aria-label="Translation mode"
+            className={roomStyles.translationModeRadioGroup}
+          >
             <label
               className={`${roomStyles.translationModeOption} ${
                 !isListening ? roomStyles.translationModeOptionActive : ''
@@ -688,67 +688,76 @@ function TranslatePanel({
           </div>
         </div>
 
-        <div className={roomStyles.sidebarCard}>
-          <div className={roomStyles.sidebarSectionHeader}>
-            <span>Supabase transcripts (live)</span>
-            <span className={roomStyles.badge}>{transcriptions.length}</span>
-          </div>
-          <div className={roomStyles.transcriptionsScroll}>
-            {transcriptions.length === 0 ? (
-              <div className={roomStyles.emptyState}>
-                <p>No transcripts stored yet.</p>
-              </div>
-            ) : (
-              transcriptions.map((entry) => (
-                <div key={entry.id} className={roomStyles.transcriptItem}>
-                  <div className={roomStyles.transcriptHeader}>
-                    <span className={roomStyles.transcriptSpeaker}>
-                      {room?.getParticipantByIdentity(entry.speakerId)?.name || entry.speakerId}
-                    </span>
-                    <span className={roomStyles.transcriptTime}>
-                      {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <p className={roomStyles.transcriptText}>{entry.text}</p>
+        <div className={roomStyles.translationClipGrid}>
+          <div className={roomStyles.translationClipCard}>
+            <div className={roomStyles.sidebarSectionHeader}>
+              <span>Supabase transcripts (live)</span>
+              <span className={roomStyles.badge}>{transcriptions.length}</span>
+            </div>
+            <div className={roomStyles.transcriptionsScroll}>
+              {transcriptions.length === 0 ? (
+                <div className={roomStyles.emptyState}>
+                  <p>No transcripts stored yet.</p>
+                  <small className={roomStyles.sidebarCardHint}>Add clip-to-content snippets here.</small>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className={roomStyles.sidebarCard}>
-          <div className={roomStyles.sidebarSectionHeader}>
-            <span>Translation preview</span>
-            <span className={roomStyles.badge}>{translationLog.length}</span>
-          </div>
-          <div className={roomStyles.transcriptionsScroll}>
-            {translationLog.length === 0 ? (
-              <div className={roomStyles.emptyState}>
-                <p>Waiting for translations to arrive...</p>
-              </div>
-            ) : (
-              translationLog.map((entry, idx) => (
-                <div key={`${entry.speakerId}-${entry.timestamp}-${idx}`} className={roomStyles.transcriptItem}>
-                  <div className={roomStyles.transcriptHeader}>
-                    <span className={roomStyles.transcriptSpeaker}>
-                      {room?.getParticipantByIdentity(entry.speakerId)?.name || entry.speakerId}
-                    </span>
-                    <span className={roomStyles.transcriptTime}>
-                      {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+              ) : (
+                transcriptions.map((entry) => (
+                  <div key={entry.id} className={roomStyles.transcriptItem}>
+                    <div className={roomStyles.transcriptHeader}>
+                      <span className={roomStyles.transcriptSpeaker}>
+                        {room?.getParticipantByIdentity(entry.speakerId)?.name || entry.speakerId}
+                      </span>
+                      <span className={roomStyles.transcriptTime}>
+                        {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <p className={roomStyles.transcriptText}>{entry.text}</p>
                   </div>
-                  <p className={roomStyles.transcriptText}>
-                    <strong>Source:</strong> {entry.source}
-                  </p>
-                  <p className={`${roomStyles.transcriptText} ${roomStyles.translationHighlight}`}>
-                    <strong>
-                      Translated ({entry.engine === 'google' ? 'Google' : 'Ollama'}):
-                    </strong>{' '}
-                    {entry.translated}
-                  </p>
+                ))
+              )}
+            </div>
+            <button
+              className={roomStyles.sidebarCardButton}
+              onClick={onListenTranslationClick}
+              disabled={!isBroadcastActive || transcriptions.length === 0}
+            >
+              Listen to Translation
+            </button>
+          </div>
+          <div className={roomStyles.translationClipCard}>
+            <div className={roomStyles.sidebarSectionHeader}>
+              <span>Translation preview</span>
+              <span className={roomStyles.badge}>{translationLog.length}</span>
+            </div>
+            <div className={roomStyles.transcriptionsScroll}>
+              {translationLog.length === 0 ? (
+                <div className={roomStyles.emptyState}>
+                  <p>Waiting for translations to arrive...</p>
                 </div>
-              ))
-            )}
+              ) : (
+                translationLog.map((entry, idx) => (
+                  <div key={`${entry.speakerId}-${entry.timestamp}-${idx}`} className={roomStyles.transcriptItem}>
+                    <div className={roomStyles.transcriptHeader}>
+                      <span className={roomStyles.transcriptSpeaker}>
+                        {room?.getParticipantByIdentity(entry.speakerId)?.name || entry.speakerId}
+                      </span>
+                      <span className={roomStyles.transcriptTime}>
+                        {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <p className={roomStyles.transcriptText}>
+                      <strong>Source:</strong> {entry.source}
+                    </p>
+                    <p className={`${roomStyles.transcriptText} ${roomStyles.translationHighlight}`}>
+                      <strong>
+                        Translated ({entry.engine === 'google' ? 'Google' : 'Ollama'}):
+                      </strong>{' '}
+                      {entry.translated}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

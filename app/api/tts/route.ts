@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       headers: {
         'Content-Type': 'application/json',
         'X-API-Key': apiKey,
-        'Cartesia-Version': '2024-06-10',
+        'Cartesia-Version': '2025-04-16',
       },
       body: JSON.stringify({
         model_id: modelId,
@@ -35,9 +35,15 @@ export async function POST(request: Request) {
           id: voiceToUse,
         },
         output_format: {
-          container: 'mp3',
+          container: 'wav',
+          encoding: 'pcm_f32le',
           sample_rate: 44100,
-          bit_rate: 128000,
+        },
+        speed: 'normal',
+        generation_config: {
+          speed: 1.1,
+          volume: 1,
+          emotion: 'calm',
         },
       }),
     });
@@ -59,7 +65,7 @@ export async function POST(request: Request) {
 
     return new NextResponse(audioBuffer, {
       headers: {
-        'Content-Type': 'audio/mpeg',
+        'Content-Type': 'audio/wav',
         'Cache-Control': 'no-cache',
       },
     });
