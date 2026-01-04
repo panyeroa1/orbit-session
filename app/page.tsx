@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
 
-function ControlCard() {
+export default function Page() {
   const router = useRouter();
   const [e2ee, setE2ee] = useState(false);
   const [sharedPassphrase, setSharedPassphrase] = useState(randomString(64));
@@ -18,118 +18,81 @@ function ControlCard() {
   };
 
   return (
-    <div className={styles.controlCard}>
-      <h3>Launch instant premium room</h3>
-      <p>Auto-configured HD connection, encrypted by default.</p>
-      <button className={styles.primaryButton} onClick={joinRoom}>
-        Start premium meeting
-      </button>
-      <div className={styles.cardSettings}>
-        <label className={styles.switchLabel}>
-          <input
-            type="checkbox"
-            checked={e2ee}
-            onChange={(ev) => setE2ee(ev.target.checked)}
-          />
-          <span>Enable E2E encryption</span>
-        </label>
-        {e2ee && (
-          <input
-            className={styles.passphraseInput}
-            type="password"
-            value={sharedPassphrase}
-            onChange={(ev) => setSharedPassphrase(ev.target.value)}
-            placeholder="Enter passphrase..."
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ConnectionCard() {
-  return (
-    <div className={styles.highlightCard}>
-      <h3>Enterprise integration toolkit</h3>
-      <p>Connect tokens, servers, or self-hosted Orbit clouds with a single form.</p>
-      <button className={styles.secondaryButton} onClick={() => window.location.assign('/integrations')}>
-        Explore integrations
-      </button>
-    </div>
-  );
-}
-
-export default function Page() {
-  return (
     <main className={styles.main}>
-      <div className={styles.heroLayer}>
-        <div className={styles.heroContent}>
-          <div className={styles.heroBadge}>
-            <span className={styles.badgeDot} />
-            Enterprise-grade experience
-          </div>
-          <Image
-            className={styles.logo}
-            src="/images/success-class-logo.svg"
-            alt="Eburon Meet"
-            width={220}
-            height={36}
-            priority
-          />
-          <h1 className={styles.headline}>
-            Premium meetings with
-            <span className={styles.headlineAccent}> AI-native translation & voice </span>
+      {/* Hero Section */}
+      <section className={styles.hero}>
+        <div className={styles.heroText}>
+          <span className={styles.badge}>AI-Powered Education</span>
+          <h1>
+            Video conferencing<br />
+            <span className={styles.accent}>reimagined</span>
           </h1>
-          <p className={styles.subheadline}>
-            Full-stack conferencing, contextual transcripts, and AI-powered narration that adapts to every speaker.
-            Built for teams who need clarity, speed, and control.
+          <p>
+            Real-time translation, live transcription, and AI voice synthesis. 
+            Built for modern classrooms.
           </p>
-          <div className={styles.heroStats}>
-            <div>
-              <strong>4K</strong>
-              <span>High-definition video</span>
-            </div>
-            <div>
-              <strong>+</strong>
-              <span>Instant AI translation</span>
-            </div>
-            <div>
-              <strong>Secure</strong>
-              <span>E2EE with granular access</span>
-            </div>
+          <div className={styles.actions}>
+            <button className={styles.primaryBtn} onClick={joinRoom}>
+              Start Meeting
+            </button>
+            <button className={styles.secondaryBtn} onClick={() => window.location.assign('/integrations')}>
+              Explore Features
+            </button>
+          </div>
+          <div className={styles.encryption}>
+            <label>
+              <input
+                type="checkbox"
+                checked={e2ee}
+                onChange={(ev) => setE2ee(ev.target.checked)}
+              />
+              <span>End-to-end encryption</span>
+            </label>
+            {e2ee && (
+              <input
+                className={styles.passphrase}
+                type="password"
+                value={sharedPassphrase}
+                onChange={(ev) => setSharedPassphrase(ev.target.value)}
+                placeholder="Passphrase..."
+              />
+            )}
           </div>
         </div>
-        <div className={styles.heroCardWrap}>
-          <ControlCard />
-          <ConnectionCard />
+        <div className={styles.heroImage}>
+          <Image
+            src="/images/hero-image.png"
+            alt="Success Class Interface"
+            width={600}
+            height={400}
+            priority
+            className={styles.heroImg}
+          />
         </div>
-      </div>
+      </section>
 
-      <section className={styles.featuresGrid}>
+      {/* Features Grid */}
+      <section className={styles.features}>
         {[
-          { title: 'Adaptive AI captions', body: 'Realtime Supabase archive + translation memory.' },
-          { title: 'Translation dashboard', body: 'Ticker-style feed, translation engine switching, and TTS playback.' },
-          { title: 'Broadcast controls', body: 'Single-source broadcaster, audio muting, and continuous saves.' },
-          { title: 'Integrations', body: 'Extensible AI tooling, Gemini, Ollama, Cartesia, and LiveKit together.' },
-        ].map((feature) => (
-          <article key={feature.title} className={styles.featureTile}>
-            <div className={styles.featureIcon}>{feature.title.charAt(0)}</div>
-            <h3>{feature.title}</h3>
-            <p>{feature.body}</p>
+          { icon: '🎯', title: 'Live Transcription', desc: 'Real-time captions powered by Deepgram & Web Speech.' },
+          { icon: '🌐', title: 'AI Translation', desc: 'Instant translation via Google, Gemini, or Ollama.' },
+          { icon: '🔊', title: 'Voice Synthesis', desc: 'Natural TTS with Cartesia Sonic-3 and Gemini Live.' },
+          { icon: '🔒', title: 'Enterprise Security', desc: 'E2E encryption with granular access controls.' },
+        ].map((f) => (
+          <article key={f.title} className={styles.featureCard}>
+            <span className={styles.featureIcon}>{f.icon}</span>
+            <h3>{f.title}</h3>
+            <p>{f.desc}</p>
           </article>
         ))}
       </section>
 
-      <section className={styles.integrationBanner}>
-        <div>
-          <h2>Integrations for every workflow</h2>
-          <p>
-            Connect voice engines, analytics, and automation in one place. Tap the integration suite for AI tools that
-            amplify every meeting with smarter context.
-          </p>
-        </div>
-        <button className={styles.primaryButton} onClick={() => window.location.assign('/integrations')}>
-          View integration tools
+      {/* CTA Banner */}
+      <section className={styles.cta}>
+        <h2>Ready to transform your classroom?</h2>
+        <p>Join thousands of educators using Success Class for seamless multilingual learning.</p>
+        <button className={styles.primaryBtn} onClick={joinRoom}>
+          Get Started Free
         </button>
       </section>
     </main>
