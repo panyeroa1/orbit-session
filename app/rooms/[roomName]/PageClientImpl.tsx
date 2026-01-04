@@ -1506,7 +1506,7 @@ function VideoConferenceComponent(props: {
     const pollInterval = setInterval(checkBroadcastLock, 5000); // Poll every 5 seconds
 
     return () => clearInterval(pollInterval);
-  }, [roomName]);
+  }, [roomName, room?.localParticipant?.identity]);
 
   React.useEffect(() => {
     const lockedByOther =
