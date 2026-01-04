@@ -332,13 +332,17 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 10:15
+
 Current behavior:
+
 
 
 - Logic errors and undefined variables in app/api/transcription/route.ts.
 - Invalid non-existent method call in app/api/transcription/save/route.ts.
 
+
 Plan and scope:
+
 
 
 - Remove broken Supabase insertion from POST /api/transcription.
@@ -362,24 +366,32 @@ WORK CHECKLIST
 END LOG
 
 Timestamp: 2026-01-04 10:20
+
 Summary of what actually changed:
+
 
 
 - Removed invalid Supabase insertion logic from POST /api/transcription (Deepgram proxy).
 - Completely rewrote app/api/transcription/save/route.ts to handle bulk saving of segments.
 
+
 Files actually modified:
+
 
 
 - app/api/transcription/route.ts
 - app/api/transcription/save/route.ts
 
+
 How it was tested:
+
 
 
 - npm run build
 
+
 Test result:
+
 
 
 - PASS
@@ -396,18 +408,24 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 10:25
+
 Current behavior:
+
 
 
 - Report of "Cannot find name 'supabase'" in app/api/transcription/route.ts.
 
+
 Plan and scope:
+
 
 
 - Overwrite app/api/transcription/route.ts with clean logic.
 - Run clean build to verify.
 
+
 Files actually modified:
+
 
 
 - app/api/transcription/route.ts
@@ -415,18 +433,24 @@ Files actually modified:
 END LOG
 
 Timestamp: 2026-01-04 10:30
+
 Summary of what actually changed:
+
 
 
 - Completely overwrote app/api/transcription/route.ts to ensure no stale logic or hidden characters remained.
 - Verified build passes locally.
 
+
 How it was tested:
+
 
 
 - rm -rf .next && npm run build
 
+
 Test result:
+
 
 
 - PASS
@@ -439,19 +463,25 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 10:45
+
 Current behavior:
+
 
 
 - Broadcast and Translation are combined in a single "Transcription" sidebar.
 
+
 Plan and scope:
+
 
 
 - Split the Transcription sidebar into two: "Broadcast & Captions" and "Translation".
 - Add separate icons for each in the control bar.
 - Update mobile drawer to show both.
 
+
 Files actually modified:
+
 
 
 - app/rooms/[roomName]/PageClientImpl.tsx
@@ -460,7 +490,9 @@ Files actually modified:
 END LOG
 
 Timestamp: 2026-01-04 11:00
+
 Summary of what actually changed:
+
 
 
 - Updated SidebarPanel type and render logic in PageClientImpl.tsx.
@@ -468,12 +500,16 @@ Summary of what actually changed:
 - Updated SuccessClassControlBar to feature separate buttons for Broadcast and Translation with unique icons.
 - Verified mobile drawer consistency.
 
+
 How it was tested:
+
 
 
 - npm run build
 
+
 Test result:
+
 
 
 - PASS
@@ -486,13 +522,17 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 11:15
+
 Current behavior:
+
 
 
 - Reported compilation/IDE errors in PageClientImpl.tsx and SuccessClassControlBar.tsx after component separation.
 - Type mismatch in onListenToggle callback.
 
+
 Plan and scope:
+
 
 
 - Correct the type of the 'enabled' parameter in onListenToggle to accept (boolean | (prev: boolean) => boolean).
@@ -502,25 +542,33 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 11:25
+
 Summary of what actually changed:
+
 
 
 - Fixed onListenToggle type in TranslatePanel component.
 - Moved SettingsPanel, BroadcastPanel, and TranslatePanel above PageClientImpl class definition.
 - Verified that SuccessClassControlBar props match the implementation in PageClientImpl.
 
+
 Files actually modified:
+
 
 
 - app/rooms/[roomName]/PageClientImpl.tsx
 
+
 How it was tested:
+
 
 
 - npx tsc --noEmit (Passed with 0 errors)
 - npm run build (Successful clean build after rm -rf .next)
 
+
 Test result:
+
 
 
 - PASS
@@ -533,12 +581,16 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 11:30
+
 Current behavior:
+
 
 
 - Translation features were basic with a single engine and default voice.
 
+
 Plan and scope:
+
 
 
 - Implement multiple translation provider support (Google Translate and Ollama/Gemini).
@@ -549,7 +601,9 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 11:38
+
 Summary of what actually changed:
+
 
 
 - Added `TranslationEntry` type and `translationLog` state to `PageClientImpl.tsx`.
@@ -557,12 +611,16 @@ Summary of what actually changed:
 - Integrated `translationVoiceId` into the TTS API call.
 - Created scrollable feeds for both source transcripts and translated text in the sidebar.
 
+
 Files actually modified:
+
 
 
 - app/rooms/[roomName]/PageClientImpl.tsx
 
+
 How it was tested:
+
 
 
 - npx tsc --noEmit (Passed)
@@ -576,11 +634,15 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 12:21
+
 Current behavior:
+
 
 - Broadcasters can enable "Listen Translation" for their own stream.
 
+
 Plan and scope:
+
 
 - Disable the "Listen Translation" button in the control bar when `isBroadcasting` is true.
 - Automatically reset `isListening` to false if broadcasting is started.
@@ -588,22 +650,30 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 12:22
+
 Summary of what actually changed:
+
 
 - Updated `SuccessClassControlBar.tsx` to disable the "Listen Translation" button when broadcasting.
 - Updated `setBroadcastState` in `PageClientImpl.tsx` to ensure `isListening` is turned off when starting a broadcast.
 
+
 Files actually modified:
+
 
 - app/rooms/[roomName]/PageClientImpl.tsx
 - lib/SuccessClassControlBar.tsx
 
+
 How it was tested:
+
 
 - npm run lint (Passed)
 - npx tsc --noEmit (Passed)
 
+
 Test result:
+
 
 - PASS
 
@@ -615,12 +685,16 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 12:19
+
 Current behavior:
+
 
 - Translation listening must be enabled via the Translate sidebar.
 - Enabling it only translates subsequent transcripts.
 
+
 Plan and scope:
+
 
 - Add a "Listen Translation" button to the control bar.
 - Logic: Mute original audio, translate most recent transcript, and start Cartesia TTS immediately.
@@ -630,24 +704,32 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 12:25
+
 Summary of what actually changed:
+
 
 - Added `ListenTranslationIcon` to `SuccessClassControlBar.tsx`.
 - Implemented `handleToggleListenTranslation` in `PageClientImpl.tsx` to handle one-click translation and audio playback.
 - Verified that original room audio is muted when "Listen Translation" is active.
 - Ensured the most recent transcript is processed immediately upon activation.
 
+
 Files actually modified:
+
 
 - app/rooms/[roomName]/PageClientImpl.tsx
 - lib/SuccessClassControlBar.tsx
 
+
 How it was tested:
+
 
 - npm run lint (Passed)
 - npx tsc --noEmit (Passed)
 
+
 Test result:
+
 
 - PASS
 
@@ -659,11 +741,15 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 12:01
+
 Current behavior:
+
 
 - Numerous legacy branches exist on the remote repository, keeping other contributors visible.
 
+
 Plan and scope:
+
 
 - Delete all remote branches on `uni-orbit.git` except for `main`.
 - This ensures the "Contributors" list eventually reflects only the current state of the project.
@@ -671,22 +757,30 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 12:03
+
 Summary of what actually changed:
+
 
 - Pruned 20+ legacy remote branches from `uni-orbit.git`.
 - Verified that only `main` remains on the remote.
 - Confirmed the repository history only contains the single "Initial Release" commit.
 
+
 Files actually modified:
+
 
 - Remote repository branches (pruned)
 
+
 How it was tested:
+
 
 - git remote prune origin
 - git branch -a (Verified only main remains)
 
+
 Test result:
+
 
 - PASS
 
@@ -698,11 +792,15 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 11:59
+
 Current behavior:
+
 
 - Git history contains contributors and commits from the original LiveKit template.
 
+
 Plan and scope:
+
 
 - Reset history to a single "Initial Release" commit using the current state.
 - Use today's date (2026-01-04) as the deployment time.
@@ -711,24 +809,32 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 12:00
+
 Summary of what actually changed:
+
 
 - Consolidated all project files and history into a single clean "Initial Release" commit.
 - Set the deployment reference point to 2026-01-04.
 - Force-pushed the new history to `uni-orbit.git`, effectively removing all external contributors from the repository stats.
 
+
 Files actually modified:
+
 
 - Git repository history (re-initialized)
 - tasks.md
 
+
 How it was tested:
+
 
 - git log (Verified single commit history)
 - git remote -v (Confirmed correct remote)
 - git push (Confirmed successful forced update)
 
+
 Test result:
+
 
 - PASS
 
@@ -740,11 +846,15 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 11:56
+
 Current behavior:
+
 
 - Code was synchronized to `ooo.git`.
 
+
 Plan and scope:
+
 
 - Switch remote origin to `https://github.com/panyeroa1/uni-orbit.git`.
 - Push all local changes to the new repository's `main` branch.
@@ -752,24 +862,32 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 11:58
+
 Summary of what actually changed:
+
 
 
 - Switched remote origin to `https://github.com/panyeroa1/uni-orbit.git`.
 - Successfully force-pushed all local commits to the new repository's `main` branch.
 
+
 Files actually modified:
+
 
 
 - None (Configuration change and push only)
 
+
 How it was tested:
+
 
 
 - git push -f (Completed successfully)
 - git remote -v (Confirmed new URL)
 
+
 Test result:
+
 
 
 - PASS
@@ -782,13 +900,17 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 11:51
+
 Current behavior:
+
 
 
 - Translation sidebar has long description text and standard layout.
 - README.md has several Markdown linter warnings.
 
+
 Plan and scope:
+
 
 
 - Refine `TranslatePanel` styling using grid and flexbox centering.
@@ -798,25 +920,33 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 11:55
+
 Summary of what actually changed:
+
 
 - Switched `translationModeRadioGroup` to a centered grid layout in `SuccessClass.module.css`.
 - Shortened all description and hint text in the translation sidebar for a cleaner UI.
 - Added necessary blank lines in `README.md` to resolve all Markdown linting warnings.
 
+
 Files actually modified:
+
 
 
 - app/rooms/[roomName]/PageClientImpl.tsx
 - styles/SuccessClass.module.css
 - README.md
 
+
 How it was tested:
+
 
 - npm run lint (Passed)
 - npx tsc --noEmit (Passed)
 
+
 Test result:
+
 
 - PASS
 
@@ -828,12 +958,16 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 11:48
+
 Current behavior:
+
 
 
 - Starting a broadcast requires manually enabling "Save" and "Captions" separately.
 
+
 Plan and scope:
+
 
 
 - Update `onBroadcastToggle` in `PageClientImpl.tsx` to automatically set `continuousSaveEnabled` and `captionsEnabled` to true when starting a broadcast.
@@ -841,23 +975,31 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 11:51
+
 Summary of what actually changed:
+
 
 
 - Introduced `setBroadcastState` helper in `PageClientImpl.tsx`.
 - Updated control bar and sidebar toggle to automatically activate "Captions" and "Save" when broadcasting is started.
 
+
 Files actually modified:
+
 
 
 - app/rooms/[roomName]/PageClientImpl.tsx
 
+
 How it was tested:
+
 
 
 - npx tsc --noEmit (Passed)
 
+
 Test result:
+
 
 
 - PASS
@@ -870,12 +1012,16 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 11:46
+
 Current behavior:
+
 
 
 - README is empty or contains legacy boilerplate.
 
+
 Plan and scope:
+
 
 
 - Create a comprehensive README with Eburon branding.
@@ -885,27 +1031,37 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 11:48
+
 Summary of what actually changed:
+
 
 
 - Wrote a new premium `README.md` with Eburon branding.
 - Added a detailed Mermaid diagram for app flow.
 - Documented core feature sets and local development setup.
 
+
 Files actually modified:
+
 
 
 - README.md
 
+
 How it was tested:
+
 
 - Visual verification of Markdown rendering and Mermaid syntax.
 
+
 Test result:
+
 
 - PASS
 
+
 Test result:
+
 
 
 - PASS
@@ -918,13 +1074,17 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 11:40
+
 Current behavior:
+
 
 
 - Local main branch was ahead of original origin by 68+ commits.
 - Remote push to original origin was denied (403).
 
+
 Plan and scope:
+
 
 
 - Switch remote origin to `https://github.com/panyeroa1/ooo.git` as requested by user.
@@ -933,19 +1093,25 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 11:43
+
 Summary of what actually changed:
+
 
 
 - Updated Git remote origin URL.
 - Successfully pushed local `main` branch (69 commits) to the new repository.
 
+
 How it was tested:
+
 
 
 - git push (Completed successfully)
 - git status (Confirmed up to date)
 
+
 Test result:
+
 
 
 - PASS
@@ -958,11 +1124,15 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 12:45
+
 Current behavior:
+
 
 - Report of no audio output when using Cartesia TTS.
 
+
 Plan and scope:
+
 
 - Verify Cartesia API configuration and backend functionality.
 - Implement audio "priming" on frontend to bypass browser autoplay restrictions.
@@ -972,24 +1142,32 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 12:55
+
 Summary of what actually changed:
+
 
 - Verified backend functionality via `curl` and `ffprobe` (MP3 generation is working correctly).
 - Added audio element priming in `handleToggleListenTranslation`, `handleListenTranslationClick`, and `onListenToggle` to unlock audio on Safari/Chrome.
 - Updated the audio queue runner with `onerror` handling and `play().catch()` to skip failed tracks and prevent runner freezes.
 - Enhanced `api/tts/route.ts` with detailed logging for debugging.
 
+
 Files actually modified:
+
 
 - app/api/tts/route.ts
 - app/rooms/[roomName]/PageClientImpl.tsx
 
+
 How it was tested:
+
 
 - Successfull `curl` test on backend (generated valid MP3).
 - Clean `npm run lint` and `npx tsc --noEmit`.
 
+
 Test result:
+
 
 - PASS
 
@@ -1001,11 +1179,15 @@ Owner: Miles
 START LOG
 
 Timestamp: 2026-01-04 12:50
+
 Current behavior:
+
 
 - TTS using older Cartesia version and MP3 format.
 
+
 Plan and scope:
+
 
 - Update `.env.local` with new API key and Voice ID from user.
 - Update `/api/tts/route.ts` to use `Cartesia-Version: 2025-04-16`.
@@ -1015,22 +1197,30 @@ Plan and scope:
 END LOG
 
 Timestamp: 2026-01-04 12:53
+
 Summary of what actually changed:
+
 
 - Updated `.env.local` with the new Cartesia credentials.
 - Updated the TTS backend to the requested specification (Sonic-3 model, WAV PCM output, and 2025-04-16 API version).
 - Verified the new setup produces valid WAV audio via local tests.
 
+
 Files actually modified:
+
 
 - .env.local
 - app/api/tts/route.ts
 
+
 How it was tested:
+
 
 - Local `curl` test (Success, generated 152k WAV file).
 - `npm run lint` and `npx tsc --noEmit` (Passed).
 
+
 Test result:
+
 
 - PASS
