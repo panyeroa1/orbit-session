@@ -28,12 +28,7 @@ const tools = [
     description: 'Delta-tracked captions for clip replay, auto-save, and developer hooks.',
     icon: '📚',
   },
-  {
-    id: 'livekit-control',
-    title: 'LiveKit Control Plane',
-    description: 'Single broadcaster enforcement with remote muting and session persistence.',
-    icon: '🛰️',
-  },
+
   {
     id: 'meeting-secretary',
     title: 'Meeting Secretary',
