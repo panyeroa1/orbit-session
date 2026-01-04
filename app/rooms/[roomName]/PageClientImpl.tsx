@@ -1531,9 +1531,7 @@ function VideoConferenceComponent(props: {
 
     return () => {
       eventSource.close();
-      if (broadcastTimeoutRef.current) clearTimeout(broadcastTimeoutRef.current);
     };
-
   }, [roomName, isListening, translationVoiceId, translateAndQueue, room.localParticipant?.identity]);
 
   // Audio queue runner

@@ -1310,3 +1310,36 @@ How it was tested:
 
 Test result:
 - PASS
+
+Task ID: T-0043
+Title: Fix Syntax & Ollama Connection
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 15:40
+
+Current behavior:
+- Syntax error in app/rooms/[roomName]/PageClientImpl.tsx (duplicate cleanup code).
+- Ollama translation fails with ENOTFOUND for api.ollama.com.
+
+Plan and scope:
+- Remove duplicate cleanup lines in PageClientImpl.tsx.
+- Update OLLAMA_BASE_URL to https://ollama.com in .env.local.
+- Refactor app/api/translate/route.ts to use /api/chat and handle the correct response format.
+
+END LOG
+
+Timestamp: 2026-01-04 15:43
+
+Summary of what actually changed:
+- Fixed syntax error in PageClientImpl.tsx.
+- Corrected Ollama production API endpoint.
+- Updated translation route to be compatible with Ollama's direct API.
+
+How it was tested:
+- npm run build (Pass)
+
+Test result:
+- PASS

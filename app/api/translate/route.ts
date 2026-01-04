@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
       const systemPrompt = `You are a professional real-time translator. Translate the given text into ${targetLanguage}.\nOutput ONLY the translated text. Do not include explanations, notes, or quotes. \nKeep the tone warm, conversational, and ready for spoken playback.`;
 
-      const response = await fetch(`${baseUrl}/chat/completions`, {
+      const response = await fetch(`${baseUrl}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,8 +78,11 @@ export async function POST(request: Request) {
             { role: 'system', content: systemPrompt },
             { role: 'user', content: text },
           ],
-          temperature: 0.3,
-          max_tokens: 500,
+          stream: false,
+          options: {
+            temperature: 0.3,
+            num_predict: 500,
+          }
         }),
       });
 
@@ -90,7 +93,7 @@ export async function POST(request: Request) {
       }
 
       const data = await response.json();
-      const translatedText = data.choices?.[0]?.message?.content?.trim();
+      const translatedText = data.message?.content?.trim();
 
       if (!translatedText) {
         return new NextResponse('Empty translation returned', { status: 500 });
