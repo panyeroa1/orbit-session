@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
 
-function ControlCard({ onJoin }: { onJoin: () => void }) {
+function ControlCard() {
   const [e2ee, setE2ee] = useState(false);
   const [sharedPassphrase, setSharedPassphrase] = useState(randomString(64));
 
@@ -14,7 +14,6 @@ function ControlCard({ onJoin }: { onJoin: () => void }) {
     const roomId = generateRoomId();
     const href = e2ee ? `/rooms/${roomId}#${encodePassphrase(sharedPassphrase)}` : `/rooms/${roomId}`;
     window.location.assign(href);
-    onJoin();
   };
 
   return (
@@ -89,7 +88,7 @@ export default function Page() {
     }
   };
 
-  const handleJoin = () => router.push('/rooms');
+
 
   return (
     <main className={styles.main}>
@@ -151,7 +150,7 @@ export default function Page() {
         </div>
         <div className={styles.heroVisual}>
           <div className={styles.heroCardWrap}>
-            <ControlCard onJoin={handleJoin} />
+            <ControlCard />
           </div>
           <Image
             src="/images/premium-hero.png"
