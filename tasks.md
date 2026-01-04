@@ -539,6 +539,39 @@ How it was tested:
 - npx tsc --noEmit (Passed)
 - npm run build (Passed)
 
+Task ID: T-0033
+Title: Disable Listen Translation for Broadcasters
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 12:21
+Current behavior:
+- Broadcasters can enable "Listen Translation" for their own stream.
+
+Plan and scope:
+- Disable the "Listen Translation" button in the control bar when `isBroadcasting` is true.
+- Automatically reset `isListening` to false if broadcasting is started.
+
+END LOG
+
+Timestamp: 2026-01-04 12:22
+Summary of what actually changed:
+- Updated `SuccessClassControlBar.tsx` to disable the "Listen Translation" button when broadcasting.
+- Updated `setBroadcastState` in `PageClientImpl.tsx` to ensure `isListening` is turned off when starting a broadcast.
+
+Files actually modified:
+- app/rooms/[roomName]/PageClientImpl.tsx
+- lib/SuccessClassControlBar.tsx
+
+How it was tested:
+- npm run lint (Passed)
+- npx tsc --noEmit (Passed)
+
+Test result:
+- PASS
+
 Task ID: T-0032
 Title: Implement One-Click "Listen Translation" Feature
 Status: DONE
