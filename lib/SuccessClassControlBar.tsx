@@ -732,8 +732,9 @@ export function SuccessClassControlBar({
           <button
             className={`${styles.controlButton} ${isListening ? styles.broadcastActive : ''}`}
             onClick={onListenTranslationToggle}
-            title={isListening ? 'Stop listening to translation' : 'Listen to translation (AI Voice)'}
+            title={isBroadcasting ? 'Disabled while broadcasting' : (isListening ? 'Stop listening to translation' : 'Listen to translation (AI Voice)')}
             aria-pressed={isListening}
+            disabled={isBroadcasting}
           >
             <ListenTranslationIcon />
           </button>

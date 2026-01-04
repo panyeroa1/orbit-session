@@ -1474,6 +1474,7 @@ function VideoConferenceComponent(props: {
     if (enabled) {
       setCaptionsEnabled(true);
       setContinuousSaveEnabled(true);
+      setIsListening(false); // Can't listen to own translation
     }
   };
 
