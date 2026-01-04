@@ -111,9 +111,10 @@ export function LiveCaptions({
     [onEngineFallback],
   );
 
+  // Cleanup timeout
   const cleanupVAD = React.useCallback(async () => {
     if (vadLoopRef.current) {
-      cancelAnimationFrame(vadLoopRef.current);
+      clearInterval(vadLoopRef.current);
       vadLoopRef.current = null;
     }
     if (vadAnalyserRef.current) {
@@ -125,6 +126,7 @@ export function LiveCaptions({
       vadAnalyserRef.current = null;
     }
   }, []);
+
 
   const startVAD = React.useCallback(
     async (track?: LocalAudioTrack) => {
@@ -140,17 +142,15 @@ export function LiveCaptions({
           minDecibels: -90,
           maxDecibels: -30,
         });
-        const tick = () => {
-          if (!vadAnalyserRef.current) {
-            return;
-          }
+        
+        // Use setInterval instead of requestAnimationFrame for background persistence
+        vadLoopRef.current = window.setInterval(() => {
+          if (!vadAnalyserRef.current) return;
           const volume = vadAnalyserRef.current.calculateVolume();
           if (volume > VAD_THRESHOLD) {
             vadLastVoiceAtRef.current = Date.now();
           }
-          vadLoopRef.current = requestAnimationFrame(tick);
-        };
-        tick();
+        }, 100); // Check every 100ms
       } catch (error) {
         console.warn('VAD setup failed', error);
       }
@@ -385,9 +385,21 @@ export function LiveCaptions({
       triggerFallback(event.error || 'unknown_error');
     };
 
+    recognition.onend = () => {
+      // Auto-restart if still enabled (and not just stopped by error handler)
+      if (enabledRef.current && engineRef.current === 'webspeech') {
+        try {
+          recognition.start();
+        } catch (e) {
+          // Ignore if already started
+        }
+      }
+    };
+
     recognition.start();
 
     return () => {
+      recognition.onend = null; // Prevent restart loop on cleanup
       recognition.stop();
       recognitionRef.current = null;
     };

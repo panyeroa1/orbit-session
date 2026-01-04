@@ -1524,14 +1524,16 @@ function VideoConferenceComponent(props: {
     };
 
     eventSource.onerror = (error) => {
-      console.error('SSE connection error', error);
-      eventSource.close();
+      console.warn('SSE connection error (will auto-retry)', error);
+      // Do NOT close. Let the browser retry automatically.
+      // eventSource.close(); 
     };
 
     return () => {
       eventSource.close();
       if (broadcastTimeoutRef.current) clearTimeout(broadcastTimeoutRef.current);
     };
+
   }, [roomName, isListening, translationVoiceId, translateAndQueue, room.localParticipant?.identity]);
 
   // Audio queue runner

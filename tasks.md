@@ -1120,3 +1120,98 @@ End log:
 - Changed: Added back imports for React, Next.js, and styles.
 - Tests: Re-ran npm run build.
 - Status: DONE
+
+Task ID: T-0038
+Title: Deploy to mysuccess.git
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 14:52
+
+Current behavior:
+- Codebase needs to be synced to a new remote: https://github.com/panyeroa1/mysuccess.git
+
+Plan and scope:
+- Update git remote origin.
+- Push main branch (force update if necessary).
+
+END LOG
+
+Timestamp: 2026-01-04 14:55
+
+Summary of what actually changed:
+- Updated remote origin to https://github.com/panyeroa1/mysuccess.git.
+- Force pushed main branch to synchronize history.
+
+How it was tested:
+- git push (Completed successfully)
+
+Test result:
+- PASS
+
+Task ID: T-0039
+Title: Deploy to uni-orbit.git
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 14:56
+
+Current behavior:
+- Codebase needs to be synced to secondary remote: https://github.com/panyeroa1/uni-orbit.git
+
+Plan and scope:
+- Push main branch (force update).
+
+END LOG
+
+Timestamp: 2026-01-04 14:57
+
+Summary of what actually changed:
+- Force pushed main branch to https://github.com/panyeroa1/uni-orbit.git.
+
+How it was tested:
+- git push (Completed successfully)
+
+Test result:
+- PASS
+
+Task ID: T-0040
+Title: Robust Transcription & Background Reconnection
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 15:05
+
+Current behavior:
+- Transcription stops when tab is hidden (rAF pauses).
+- Transcription/Translation does not auto-reconnect on error or stop.
+
+Plan and scope:
+- Replace requestAnimationFrame in LiveCaptions with background-safe setInterval.
+- Add onend handler to SpeechRecognition for instant restart.
+- Update PageClientImpl SSE listener to allow browser auto-retry on connection error.
+
+Files expected to change:
+- lib/LiveCaptions.tsx
+- app/rooms/[roomName]/PageClientImpl.tsx
+
+END LOG
+
+Timestamp: 2026-01-04 15:10
+
+Summary of what actually changed:
+- Switched VAD loop to setInterval(100ms) to persist in background tabs.
+- Added auto-restart logic to SpeechRecognition.
+- Removed explicit eventSource.close() on error to enable native EventSource reconnection.
+
+How it was tested:
+- npm run build
+
+Test result:
+- PASS
