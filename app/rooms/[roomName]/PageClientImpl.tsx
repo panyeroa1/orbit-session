@@ -927,7 +927,6 @@ function VideoConferenceComponent(props: {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [captionsEnabled, setCaptionsEnabled] = React.useState(true);
   const [isBroadcasting, setIsBroadcasting] = React.useState(false);
-  const [captionEngine, setCaptionEngine] = React.useState<'webspeech'>('webspeech');
   const [captionLanguage, setCaptionLanguage] = React.useState('auto');
   const [captionAudioSource, setCaptionAudioSource] = React.useState<'auto' | 'microphone' | 'screen'>('auto');
   const [transcriptSegments, setTranscriptSegments] = React.useState<TranscriptSegment[]>([]);
@@ -1465,6 +1464,7 @@ function VideoConferenceComponent(props: {
           const data = await res.json();
           setBroadcastLocked(data.isLocked);
           setCurrentBroadcasterId(data.broadcasterId);
+          setIsRemoteBroadcastActive(data.isLocked && data.broadcasterId !== room?.localParticipant?.identity);
         }
       } catch (error) {
         console.warn('Failed to check broadcast lock', error);
@@ -1843,8 +1843,6 @@ function VideoConferenceComponent(props: {
             onSaveTranscription={handleSaveTranscription}
             isBroadcasting={isBroadcasting}
             onBroadcastToggle={() => setBroadcastState(!isBroadcasting)}
-            broadcastLocked={broadcastLocked}
-            currentBroadcasterId={currentBroadcasterId}
           />
         );
       case 'translate':

@@ -211,6 +211,8 @@ interface SuccessClassControlBarProps {
   isTranslateOpen?: boolean;
   isSettingsOpen?: boolean;
   isBroadcasting?: boolean;
+  isBroadcastLocked?: boolean;
+  broadcasterId?: string | null;
   isAppMuted?: boolean;
   onAppMuteToggle?: (muted: boolean | ((prev: boolean) => boolean)) => void;
   isListening?: boolean;
@@ -232,6 +234,8 @@ export function SuccessClassControlBar({
   isTranslateOpen,
   isSettingsOpen,
   isBroadcasting,
+  isBroadcastLocked = false,
+  broadcasterId = null,
   isAppMuted = false,
   onAppMuteToggle,
   isListening = false,
@@ -720,12 +724,17 @@ export function SuccessClassControlBar({
         {/* Broadcast */}
         {onBroadcastToggle && (
           <button
-            className={`${styles.controlButton} ${isBroadcastOpen ? styles.controlButtonActive : ''} ${isBroadcasting ? styles.broadcastActive : ''}`}
+            className={`${styles.controlButton} ${isBroadcastOpen ? styles.controlButtonActive : ''} ${isBroadcasting ? styles.broadcastActive : ''} ${isBroadcastLocked && !isBroadcasting ? styles.controlButtonMuted : ''}`}
             onClick={onBroadcastToggle}
-            title="Broadcast & Captions"
+            title={isBroadcastLocked && !isBroadcasting ? `Locked by ${broadcasterId}` : "Broadcast & Captions"}
             aria-pressed={isBroadcastOpen}
           >
-            <BroadcastIcon />
+            {isBroadcastLocked && !isBroadcasting ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            ) : <BroadcastIcon />}
           </button>
         )}
 
