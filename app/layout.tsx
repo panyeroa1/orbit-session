@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     url: 'https://orbit.eburon.ai',
     images: [
       {
-        url: 'https://orbit.eburon.ai/images/orbit-open-graph.png',
+        url: 'https://orbit.eburon.ai/images/success-class-open-graph.png',
         width: 2000,
         height: 1000,
         type: 'image/png',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     apple: [
       {
         rel: 'apple-touch-icon',
-        url: '/favicon.png',
+        url: '/images/success-class-apple-touch.png',
         sizes: '180x180',
       },
     ],
