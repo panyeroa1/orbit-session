@@ -47,17 +47,7 @@ function ControlCard({ onJoin }: { onJoin: () => void }) {
   );
 }
 
-function ConnectionCard() {
-  return (
-    <div className={styles.highlightCard}>
-      <h3>Integration toolkit</h3>
-      <p>Auto-token flows for Cartesia, Gemini, Ollama, and LiveKit automation.</p>
-      <button className={styles.secondaryButton} onClick={() => window.location.assign('/integrations')}>
-        Explore integration suite
-      </button>
-    </div>
-  );
-}
+
 
 export default function Page() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -174,25 +164,29 @@ export default function Page() {
         </div>
       </section>
 
-      <section className={styles.featureShowcase}>
-        <div className={styles.showcaseText}>
-          <h2>Analytics & Insights</h2>
-          <p>
-            Real-time sentiment analysis, speaker diarization, and live translation streams.
-            Visualize your meeting data with our premium dashboard.
-          </p>
-        </div>
-        <Image
-          src="/images/dashboard-feature.png"
-          alt="Analytics Dashboard"
-          width={1000}
-          height={600}
-          className={styles.showcaseImg}
-        />
-      </section>
-
       <section className={styles.zigZagSection}>
+        {/* Item 1: Analytics (Left Text, Right Image) */}
         <div className={styles.zigZagRow}>
+          <div className={styles.zigZagContent}>
+            <h2>Analytics & Insights</h2>
+            <p>
+              Real-time sentiment analysis, speaker diarization, and live translation streams.
+              Visualize your meeting data with our premium dashboard.
+            </p>
+          </div>
+          <div className={styles.zigZagVisual}>
+            <Image
+              src="/images/dashboard-feature.png"
+              alt="Analytics Dashboard"
+              width={600}
+              height={400}
+              className={styles.featureImg}
+            />
+          </div>
+        </div>
+
+        {/* Item 2: Translation (Right Text, Left Image) */}
+        <div className={`${styles.zigZagRow} ${styles.rowReverse}`}>
           <div className={styles.zigZagContent}>
             <h2>Native AI Translation</h2>
             <p>Live, nuance-aware subtitles that adapt to speaker cadence.</p>
@@ -208,7 +202,8 @@ export default function Page() {
           </div>
         </div>
 
-        <div className={`${styles.zigZagRow} ${styles.rowReverse}`}>
+        {/* Item 3: Workflow (Left Text, Right Image) */}
+        <div className={styles.zigZagRow}>
           <div className={styles.zigZagContent}>
             <h2>Flow Automation</h2>
             <p>Connect Cartesia, Gemini, and Ollama in one seamless pipe.</p>
@@ -224,7 +219,8 @@ export default function Page() {
           </div>
         </div>
 
-        <div className={styles.zigZagRow}>
+        {/* Item 4: Security (Right Text, Left Image) */}
+        <div className={`${styles.zigZagRow} ${styles.rowReverse}`}>
           <div className={styles.zigZagContent}>
             <h2>Enterprise Security</h2>
             <p>End-to-end encryption with per-room token enforcement.</p>
