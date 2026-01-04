@@ -80,6 +80,18 @@ type TranslationEntry = {
   timestamp: number;
 };
 
+function splitIntoSentences(text: string): string[] {
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return [];
+  if (typeof Intl !== 'undefined' && 'Segmenter' in (Intl as any)) {
+    const segmenter = new (Intl as any).Segmenter('en', { granularity: 'sentence' });
+    return Array.from(segmenter.segment(cleaned))
+      .map((segment: any) => segment.segment.trim())
+      .filter(Boolean);
+  }
+  return cleaned.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((s) => s.trim()).filter(Boolean) ?? [cleaned];
+}
+
 function VideoGrid({ allowedParticipantIds }: { allowedParticipantIds: Set<string> }) {
   const layoutContext = useLayoutContext();
   const tracks = useTracks(
@@ -1388,45 +1400,51 @@ function VideoConferenceComponent(props: {
 
   const handleTranscriptSegment = React.useCallback(
     async (segment: TranscriptSegment) => {
-      setTranscriptSegments((prev) => [...prev, segment]);
-      
       const speakerId = room.localParticipant?.identity ?? 'local';
       const speakerName = room.localParticipant?.name ?? 'Unknown Speaker';
+      
+      const sentences = splitIntoSentences(segment.text);
+      if (sentences.length === 0) return;
 
-      // 1. Save to Supabase if enabled
-      if (continuousSaveEnabled) {
+      for (const sentence of sentences) {
+        const sentenceSegment = { ...segment, text: sentence };
+        setTranscriptSegments((prev) => [...prev, sentenceSegment]);
+
+        // 1. Save to Supabase if enabled
+        if (continuousSaveEnabled) {
+          try {
+            await fetch('/api/transcription/save-live', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                meetingId: roomName,
+                sourceText: sentence,
+                sourceLang: segment.language ?? captionLanguage,
+                speakerId,
+              }),
+            });
+          } catch (error) {
+            console.warn('Live transcription save failed', error);
+          }
+        }
+
+        // 2. Publish to transcription stream for others to translate/hear
         try {
-          await fetch('/api/transcription/save-live', {
+          await fetch('/api/transcription/stream', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               meetingId: roomName,
-              sourceText: segment.text,
-              sourceLang: segment.language ?? captionLanguage,
               speakerId,
+              speakerName,
+              text: sentence,
+              isFinal: segment.isFinal,
+              language: segment.language ?? captionLanguage,
             }),
           });
         } catch (error) {
-          console.warn('Live transcription save failed', error);
+          console.warn('Failed to publish segment to stream', error);
         }
-      }
-
-      // 2. Publish to transcription stream for others to translate/hear
-      try {
-        await fetch('/api/transcription/stream', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            meetingId: roomName,
-            speakerId,
-            speakerName,
-            text: segment.text,
-            isFinal: segment.isFinal,
-            language: segment.language ?? captionLanguage,
-          }),
-        });
-      } catch (error) {
-        console.warn('Failed to publish segment to stream', error);
       }
     },
     [continuousSaveEnabled, roomName, captionLanguage, room],
@@ -1626,14 +1644,17 @@ function VideoConferenceComponent(props: {
 
         if (!delta || delta.length < 2) return;
 
-        await translateAndQueue(
-          speakerId,
-          delta,
-          isListening,
-          isListening
-            ? { translationEngine: 'ollama', ttsEngine: 'cartesia' }
-            : undefined,
-        );
+        const deltaSentences = splitIntoSentences(delta);
+        for (const sentence of deltaSentences) {
+          await translateAndQueue(
+            speakerId,
+            sentence,
+            isListening,
+            isListening
+              ? { translationEngine: 'ollama', ttsEngine: 'cartesia' }
+              : undefined,
+          );
+        }
       } catch (error) {
         console.warn('Failed to process message from stream', error);
       }

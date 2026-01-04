@@ -1501,6 +1501,41 @@ Title: Persistent Broadcast Lock & Deepgram Removal
 Status: DONE
 Owner: Miles
 
+Task ID: T-0049
+Title: Optimized Sentence-Level Segmentation for Fast Pace
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 17:25
+
+Current behavior:
+- Transcription processing waits for the browser's slow `isFinal` event.
+- Large blocks of text are processed at once, delaying TTS.
+
+Plan and scope:
+- Implement `splitIntoSentences` utility in `PageClientImpl.tsx`.
+- Refactor `handleTranscriptSegment` and participants' listener to process each sentence separately.
+- Enhance `LiveCaptions.tsx` with "pseudo-final" emissions based on silence (>800ms).
+
+END LOG
+
+Timestamp: 2026-01-04 17:55
+
+Summary:
+- Optimized the entire transcription pipeline to handle text at the sentence level.
+- Reduced perceived latency for TTS by triggering it immediately after each sentence.
+- Improved responsiveness with silence-based pseudo-final emissions.
+- Fixed TypeScript `Intl.Segmenter` and dependency warnings.
+
+How it was tested:
+- npm run build (Pass)
+- Sequential code review of the segmentation logic.
+
+Test result:
+- PASS
+
 START LOG
 
 Timestamp: 2026-01-04 16:25

@@ -46,6 +46,8 @@ export function LiveCaptions({
 
   // Refs for managing state without re-renders during callbacks
   const recognitionRef = React.useRef<any>(null);
+  const latestInterimRef = React.useRef('');
+  const lastUpdateAtRef = React.useRef<number | null>(null);
 
   const enabledRef = React.useRef(enabled);
   const audioSourceRef = React.useRef(audioSource);
@@ -90,34 +92,72 @@ export function LiveCaptions({
     recognition.lang = language === 'auto' ? navigator.language : language; // Default to browser lang if auto
     recognitionRef.current = recognition;
 
+    let emittedFinalText = '';
+
     recognition.onresult = (event: any) => {
       let interimTranscript = '';
-      let finalTranscript = '';
+      let latestFinal = '';
 
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
+          latestFinal += event.results[i][0].transcript;
         } else {
           interimTranscript += event.results[i][0].transcript;
         }
       }
       
-      const text = finalTranscript || interimTranscript;
-      if (text) {
+      const fullText = latestFinal || interimTranscript;
+      if (fullText) {
         setStatusMessage('');
-        setCaption(text);
+        setCaption(fullText);
         setLastUpdateAt(Date.now());
-        if (finalTranscript) {
-          onTranscriptSegment?.({
-            text: finalTranscript,
-            source: audioSourceRef.current,
-            timestamp: Date.now(),
-            isFinal: true,
-            language,
-          });
+        
+        lastUpdateAtRef.current = Date.now();
+        latestInterimRef.current = interimTranscript;
+
+        if (latestFinal) {
+          // Calculate what's truly new in this final result
+          const newText = latestFinal.substring(emittedFinalText.length).trim();
+          if (newText) {
+            onTranscriptSegment?.({
+              text: newText,
+              source: audioSourceRef.current,
+              timestamp: Date.now(),
+              isFinal: true,
+              language,
+            });
+            emittedFinalText = latestFinal;
+            // Clear interim ref since we just emitted a final
+            latestInterimRef.current = '';
+          }
         }
       }
     };
+
+    // Fast-paced optimization: Emit interim as pseudo-final if speaker pauses
+    const silenceInterval = setInterval(() => {
+      if (!recognitionRef.current) return;
+      
+      const now = Date.now();
+      const lastUpdate = lastUpdateAtRef.current || 0;
+      const interim = latestInterimRef.current || '';
+      
+      // If we have interim text and no updates for > 800ms, treat it as a pseudo-final
+      if (interim.length > 10 && (now - lastUpdate) > 800) {
+        onTranscriptSegment?.({
+          text: interim,
+          source: audioSourceRef.current,
+          timestamp: now,
+          isFinal: true, // Mark as final to trigger pipeline
+          language,
+        });
+        
+        // Reset to prevent double emission
+        latestInterimRef.current = '';
+        lastUpdateAtRef.current = null;
+        setCaption('');
+      }
+    }, 500);
 
     recognition.onerror = (event: any) => {
       console.warn('Speech recognition error', event.error);
@@ -147,6 +187,7 @@ export function LiveCaptions({
     }
 
     return () => {
+      clearInterval(silenceInterval);
       recognition.onend = null; // Prevent restart loop on cleanup
       recognition.stop();
       recognitionRef.current = null;

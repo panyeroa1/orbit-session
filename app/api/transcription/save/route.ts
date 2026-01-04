@@ -7,10 +7,10 @@ export const dynamic = 'force-dynamic';
 function splitIntoSentences(text: string): string[] {
   const cleaned = text.replace(/\s+/g, ' ').trim();
   if (!cleaned) return [];
-  if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
-    const segmenter = new Intl.Segmenter('en', { granularity: 'sentence' });
+  if (typeof Intl !== 'undefined' && 'Segmenter' in (Intl as any)) {
+    const segmenter = new (Intl as any).Segmenter('en', { granularity: 'sentence' });
     return Array.from(segmenter.segment(cleaned))
-      .map((segment) => segment.segment.trim())
+      .map((segment: any) => segment.segment.trim())
       .filter(Boolean);
   }
   return cleaned.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((s) => s.trim()).filter(Boolean) ?? [];
