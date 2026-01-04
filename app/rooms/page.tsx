@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { generateRoomId } from '@/lib/client-utils';
 import { useRouter } from 'next/navigation';
+import styles from '@/styles/Home.module.css';
 
 export default function RoomsIndex() {
   const router = useRouter();
@@ -13,14 +14,7 @@ export default function RoomsIndex() {
   }, [router]);
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      background: '#000',
-      color: '#fff' 
-    }}>
+    <div className={styles.loadingScreen}>
       Redirecting to new room...
     </div>
   );

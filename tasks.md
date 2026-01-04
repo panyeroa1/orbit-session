@@ -1059,3 +1059,64 @@ How it was tested:
 Test result:
 
 - PASS
+
+Task ID: T-0037
+Title: Refactor Inline Styles in Rooms Page
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 14:40
+
+Current behavior:
+
+- app/rooms/page.tsx uses inline styles, causing linting warnings and inconsistency.
+
+Plan and scope:
+
+- Move inline styles to styles/Home.module.css as .loadingScreen class.
+- Update app/rooms/page.tsx to use the new class.
+
+Files expected to change:
+
+- app/rooms/page.tsx
+- styles/Home.module.css
+
+END LOG
+
+Timestamp: 2026-01-04 14:42
+
+Summary of what actually changed:
+
+- Extracted inline styles to .loadingScreen in Home.module.css.
+- Updated RoomsIndex component to import and use the new style class.
+
+Files actually modified:
+
+- app/rooms/page.tsx
+- styles/Home.module.css
+
+How it was tested:
+
+- Visual verification of code.
+- npm run build (Verified clean build).
+
+Test result:
+
+- PASS
+
+Task ID: T-0037-Fix
+Title: Restore Missing Imports in Rooms Page
+Status: DONE
+Owner: Miles
+
+Start log:
+- Timestamp: 2026-01-04 14:45
+- Plan: Restore imports lost during previous refactor.
+
+End log:
+- Timestamp: 2026-01-04 14:47
+- Changed: Added back imports for React, Next.js, and styles.
+- Tests: Re-ran npm run build.
+- Status: DONE
