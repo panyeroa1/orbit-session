@@ -72,6 +72,7 @@ const ChevronLeftIcon = () => (
 type SidebarPanel = 'participants' | 'agent' | 'chat' | 'broadcast' | 'translate' | 'settings';
 
 type TranslationEntry = {
+  id: string;
   speakerId: string;
   source: string;
   translated: string;
@@ -783,8 +784,8 @@ function TranslatePanel({
                   <p>Waiting for translations to arrive...</p>
                 </div>
               ) : (
-                translationLog.map((entry, idx) => (
-                  <div key={`${entry.speakerId}-${entry.timestamp}-${idx}`} className={roomStyles.transcriptItem}>
+                translationLog.map((entry) => (
+                  <div key={entry.id} className={roomStyles.transcriptItem}>
                     <div className={roomStyles.transcriptHeader}>
                       <span className={roomStyles.transcriptSpeaker}>
                         {room?.getParticipantByIdentity(entry.speakerId)?.name || entry.speakerId}
@@ -957,6 +958,8 @@ function VideoConferenceComponent(props: {
   const broadcastTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   const [transcriptions, setTranscriptions] = React.useState<{ id: string; speakerId: string; text: string; timestamp: number }[]>([]);
   const lastSeenTextMap = React.useRef<Map<string, string>>(new Map());
+  const pipelineEmitter = React.useRef(new EventTarget());
+
   const layoutContext = useCreateLayoutContext();
   const [broadcastLocked, setBroadcastLocked] = React.useState(false);
   const [currentBroadcasterId, setCurrentBroadcasterId] = React.useState<string | null>(null);
@@ -978,14 +981,42 @@ function VideoConferenceComponent(props: {
     return undefined;
   }, [translationVoiceSelection, customTranslationVoice]);
 
-  const translateAndQueue = React.useCallback(
-    async (speakerId: string, sourceText: string, playAudio: boolean) => {
-      const text = sourceText.trim();
-      if (!text || text.length < 2) {
-        return;
-      }
+  // Pipeline Listeners
+  React.useEffect(() => {
+    const emitter = pipelineEmitter.current;
+
+    /**
+     * Step 1: Render Source
+     * Renders the source sentence in the translation panel immediately.
+     */
+    const onRenderSource = async (e: any) => {
+      const { speakerId, text, timestamp, id } = e.detail;
+      
+      setTranslationLog((prev) => [
+        {
+          id,
+          speakerId,
+          source: text,
+          translated: '...', // Rendering "in progress" state
+          engine: translationEngine,
+          timestamp,
+        },
+        ...prev,
+      ].slice(0, 50));
+
+      // Propagate to next step
+      emitter.dispatchEvent(new CustomEvent('translate', { detail: e.detail }));
+    };
+
+    /**
+     * Step 2: Translate
+     * Performs AI translation and updates the log entry.
+     */
+    const onTranslate = async (e: any) => {
+      const { speakerId, text, timestamp, id } = e.detail;
+      
       try {
-        const transRes = await fetch('/api/translate', {
+        const res = await fetch('/api/translate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -995,12 +1026,15 @@ function VideoConferenceComponent(props: {
           }),
         });
 
-        if (!transRes.ok) {
-          return;
-        }
-        const { translatedText } = await transRes.json();
+        if (!res.ok) throw new Error('Translation failed');
+        const { translatedText } = await res.json();
 
-        // Persist translation to database if enabled
+        // Update UI with translated text
+        setTranslationLog((prev) => prev.map(entry => 
+          entry.id === id ? { ...entry, translated: translatedText } : entry
+        ));
+
+        // Persist to DB if enabled
         if (continuousSaveEnabled) {
           fetch('/api/transcription/save-live', {
             method: 'POST',
@@ -1013,24 +1047,28 @@ function VideoConferenceComponent(props: {
               targetLang: targetLanguage,
               translatedText,
             }),
-          }).catch((err) => console.warn('Failed to persist translation:', err));
+          }).catch((err) => console.warn('Persistence failed:', err));
         }
 
-        setTranslationLog((prev) => [
-          {
-            speakerId,
-            source: text,
-            translated: translatedText,
-            engine: translationEngine,
-            timestamp: Date.now(),
-          },
-          ...prev,
-        ].slice(0, 12));
+        // Propagate to TTS
+        emitter.dispatchEvent(new CustomEvent('tts', { detail: { ...e.detail, translatedText } }));
+      } catch (err) {
+        console.warn('Pipeline translation error:', err);
+        setTranslationLog((prev) => prev.map(entry => 
+          entry.id === id ? { ...entry, translated: '[Translation Error]' } : entry
+        ));
+      }
+    };
 
-        if (!playAudio) {
-          return;
-        }
+    /**
+     * Step 3: TTS
+     * Generates audio for the translated text and adds to playback queue.
+     */
+    const onTTS = async (e: any) => {
+      const { translatedText, playAudio } = e.detail;
+      if (!playAudio) return;
 
+      try {
         const ttsPayload: Record<string, string> = {
           text: translatedText,
           provider: ttsEngine,
@@ -1039,21 +1077,48 @@ function VideoConferenceComponent(props: {
           ttsPayload.voiceId = translationVoiceId;
         }
 
-        const ttsRes = await fetch('/api/tts', {
+        const res = await fetch('/api/tts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(ttsPayload),
         });
 
-        if (!ttsRes.ok) return;
-        const audioBlob = await ttsRes.blob();
+        if (!res.ok) return;
+        const audioBlob = await res.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
         setTranslationQueue((prev) => [...prev, audioUrl]);
-      } catch (error) {
-        console.warn('Failed to translate and queue audio', error);
+      } catch (err) {
+        console.warn('Pipeline TTS error:', err);
       }
+    };
+
+    emitter.addEventListener('render-source', onRenderSource);
+    emitter.addEventListener('translate', onTranslate);
+    emitter.addEventListener('tts', onTTS);
+
+    return () => {
+      emitter.removeEventListener('render-source', onRenderSource);
+      emitter.removeEventListener('translate', onTranslate);
+      emitter.removeEventListener('tts', onTTS);
+    };
+  }, [roomName, isListening, targetLanguage, translationEngine, translationVoiceId, ttsEngine, continuousSaveEnabled]);
+
+  const translateAndQueue = React.useCallback(
+    async (speakerId: string, sourceText: string, playAudio: boolean) => {
+      const text = sourceText.trim();
+      if (!text || text.length < 2) return;
+
+      pipelineEmitter.current.dispatchEvent(new CustomEvent('render-source', {
+        detail: {
+          id: Math.random().toString(36).substring(7),
+          speakerId,
+          text,
+          timestamp: Date.now(),
+          playAudio // This can be used in the listeners to skip steps if needed
+        }
+      }));
     },
-    [targetLanguage, translationEngine, translationVoiceId, ttsEngine, continuousSaveEnabled, roomName],
+    [],
   );
 
   const handleListenTranslationClick = React.useCallback(async () => {
@@ -1716,50 +1781,9 @@ function VideoConferenceComponent(props: {
     }
 
     if (nextValue && transcriptions.length > 0) {
-      // Auto-translate the most recent transcription segment
       const lastTranscript = transcriptions[0];
       if (lastTranscript && lastTranscript.text) {
-        try {
-          const transRes = await fetch('/api/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              text: lastTranscript.text,
-              targetLanguage: targetLanguage,
-              provider: translationEngine,
-            }),
-          });
-
-          if (!transRes.ok) return;
-          const { translatedText } = await transRes.json();
-
-          setTranslationLog((prev) => [
-            {
-              speakerId: lastTranscript.speakerId,
-              source: lastTranscript.text,
-              translated: translatedText,
-              engine: translationEngine,
-              timestamp: Date.now(),
-            },
-            ...prev,
-          ].slice(0, 12));
-
-          const ttsPayload: Record<string, string> = { text: translatedText };
-          if (translationVoiceId) ttsPayload.voiceId = translationVoiceId;
-
-          const ttsRes = await fetch('/api/tts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(ttsPayload),
-          });
-
-          if (!ttsRes.ok) return;
-          const audioBlob = await ttsRes.blob();
-          const audioUrl = URL.createObjectURL(audioBlob);
-          setTranslationQueue((prev) => [...prev, audioUrl]);
-        } catch (error) {
-          console.error('Failed to auto-translate last transcript', error);
-        }
+        await translateAndQueue(lastTranscript.speakerId, lastTranscript.text, true);
       }
     }
   };

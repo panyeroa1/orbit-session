@@ -42,19 +42,59 @@ export async function POST(request: Request) {
       return new NextResponse('Supabase not configured', { status: 503 });
     }
 
-    // Insert a new segment row with optional translation data.
-    const { error: insertError } = await supabase.from('transcript_segments').insert({
-      meeting_id: meetingId,
-      source_text: sourceText,
-      source_lang: sourceLang ?? null,
-      speaker_id: speakerId ?? null,
-      target_lang: targetLang ?? null,
-      translated_text: translatedText ?? null,
-    });
+    // 1. Try to find an existing row for this meeting
+    const { data: existingRows, error: fetchError } = await supabase
+      .from('transcript_segments')
+      .select('id, source_text, translated_text')
+      .eq('meeting_id', meetingId)
+      .order('created_at', { ascending: false })
+      .limit(1);
 
-    if (insertError) {
-      console.error('Insert transcript segment failed', insertError);
-      return new NextResponse('Failed to save segment', { status: 500 });
+    if (fetchError) {
+      console.error('Fetch existing transcript failed', fetchError);
+      return new NextResponse('Database error', { status: 500 });
+    }
+
+    const existing = existingRows && existingRows.length > 0 ? existingRows[0] : null;
+
+    if (existing) {
+      // 2. Accumulate: Append new text to the existing row
+      const newSource = existing.source_text ? existing.source_text + '\n' + sourceText : sourceText;
+      const newTranslated = translatedText 
+        ? (existing.translated_text ? existing.translated_text + '\n' + translatedText : translatedText)
+        : existing.translated_text;
+
+      const { error: updateError } = await supabase
+        .from('transcript_segments')
+        .update({
+          source_text: newSource,
+          translated_text: newTranslated,
+          source_lang: sourceLang ?? null,
+          target_lang: targetLang ?? null,
+          speaker_id: speakerId ?? null,
+          created_at: new Date().toISOString(), // Optional: update timestamp to show latest activity
+        })
+        .eq('id', existing.id);
+
+      if (updateError) {
+        console.error('Update transcript failed', updateError);
+        return new NextResponse('Failed to update transcript', { status: 500 });
+      }
+    } else {
+      // 3. Insert new row if none exists for this meeting
+      const { error: insertError } = await supabase.from('transcript_segments').insert({
+        meeting_id: meetingId,
+        source_text: sourceText,
+        source_lang: sourceLang ?? null,
+        speaker_id: speakerId ?? null,
+        target_lang: targetLang ?? null,
+        translated_text: translatedText ?? null,
+      });
+
+      if (insertError) {
+        console.error('Insert transcript failed', insertError);
+        return new NextResponse('Failed to save transcript', { status: 500 });
+      }
     }
 
     return NextResponse.json({ ok: true });

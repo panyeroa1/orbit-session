@@ -1417,3 +1417,81 @@ Summary:
 
 Test result:
 - PASS
+
+Task ID: T-0046
+Title: Accumulative Single-field Transcription Storage
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 16:05
+
+Current behavior:
+- Transcription saving routes (save and save-live) create a new row for every segment.
+
+Plan and scope:
+- Refactor API routes to find existing meeting rows and append new text to the `source_text` and `translated_text` fields.
+- Ensure only one row per `meeting_id` exists in `transcript_segments`.
+
+END LOG
+
+Timestamp: 2026-01-04 16:08
+
+Summary of what actually changed:
+- Updated `/api/transcription/save-live` and `/api/transcription/save` to use append logic instead of insert-always.
+- Consolidated all segment data into a single text block per meeting.
+
+How it was tested:
+- npm run build (Pass)
+
+Test result:
+- PASS
+
+Task ID: T-0047
+Title: Pipeline-based Translation & TTS
+Status: IN-PROGRESS
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 16:10
+
+Current behavior:
+- Translation and TTS are coupled in a single async block.
+- UI only updates after the full translation fetch completes.
+
+Plan and scope:
+- Implement a sequential event-based pipeline using EventTarget.
+- Step 1: Source arrival triggers 'render-source' event.
+- Step 2: 'render-source' updates UI and triggers 'translate' event.
+- Step 3: 'translate' updates UI and triggers 'tts' event.
+- Step 4: 'tts' updates audio queue.
+- Use distinct event listeners to ensure a clean "per sentence" flow.
+
+END LOG
+
+Task ID: T-0047-End
+Title: Finalize Pipeline-based Translation & TTS
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 16:15
+
+Plan:
+- Verify build after refactoring listeners and fixing scoping.
+
+END LOG
+
+Timestamp: 2026-01-04 16:20
+
+Summary:
+- Successfully implemented EventTarget-based pipeline for Translation & TTS.
+- Decoupled source rendering, translation, and audio generation.
+- Ensured UI updates at every stage of the sentence processing.
+- Verified build and production readiness.
+
+Test result:
+- PASS

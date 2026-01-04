@@ -33,8 +33,8 @@ export async function POST(request: Request) {
       return new NextResponse('Meeting ID is required', { status: 400 });
     }
 
-    if (!Array.isArray(segments)) {
-      return new NextResponse('Segments array is required', { status: 400 });
+    if (!Array.isArray(segments) || segments.length === 0) {
+      return NextResponse.json({ success: true, count: 0 });
     }
 
     const supabase = getSupabaseClient();
@@ -42,30 +42,50 @@ export async function POST(request: Request) {
       return new NextResponse('Supabase client not configured', { status: 503 });
     }
 
-    if (segments.length === 0) {
-      return NextResponse.json({ success: true, count: 0 });
+    // Join all segments into a single text block
+    const fullSourceText = segments.map(s => s.text).join('\n');
+    const fullTranslatedText = segments.map(s => s.translatedText).filter(Boolean).join('\n');
+
+    // 1. Try to find an existing row
+    const { data: existingRows } = await supabase
+      .from('transcript_segments')
+      .select('id, source_text, translated_text')
+      .eq('meeting_id', meetingId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    const existing = existingRows && existingRows.length > 0 ? existingRows[0] : null;
+
+    if (existing) {
+      // 2. Update existing row
+      const newSource = (existing.source_text || '') + '\n' + fullSourceText;
+      const newTranslated = (existing.translated_text || '') + '\n' + fullTranslatedText;
+
+      const { error } = await supabase
+        .from('transcript_segments')
+        .update({
+          source_text: newSource.trim(),
+          translated_text: newTranslated.trim(),
+          created_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id);
+
+      if (error) throw error;
+    } else {
+      // 3. Create new row
+      const { error } = await supabase.from('transcript_segments').insert({
+        meeting_id: meetingId,
+        source_text: fullSourceText.trim(),
+        translated_text: fullTranslatedText.trim(),
+        speaker_id: segments[0].speakerId || 'unknown',
+      });
+
+      if (error) throw error;
     }
 
-    const rows = segments.map((segment: any) => ({
-      meeting_id: meetingId,
-      source_text: segment.text,
-      source_lang: segment.language || null,
-      speaker_id: segment.speakerId || 'unknown',
-      target_lang: segment.targetLang || null,
-      translated_text: segment.translatedText || null,
-      created_at: segment.timestamp ? new Date(segment.timestamp).toISOString() : new Date().toISOString(),
-    }));
-
-    const { error } = await supabase.from('transcript_segments').insert(rows);
-
-    if (error) {
-      console.error('Error saving transcript segments:', error);
-      return new NextResponse('Database error', { status: 500 });
-    }
-
-    return NextResponse.json({ success: true, count: rows.length });
+    return NextResponse.json({ success: true, count: segments.length });
   } catch (error) {
-    console.error('Error in save route:', error);
+    console.error('Error in bulk save route:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
