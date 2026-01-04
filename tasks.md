@@ -539,6 +539,39 @@ How it was tested:
 - npx tsc --noEmit (Passed)
 - npm run build (Passed)
 
+Task ID: T-0031
+Title: Prune Legacy Remote Branches
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 12:01
+Current behavior:
+- Numerous legacy branches exist on the remote repository, keeping other contributors visible.
+
+Plan and scope:
+- Delete all remote branches on `uni-orbit.git` except for `main`.
+- This ensures the "Contributors" list eventually reflects only the current state of the project.
+
+END LOG
+
+Timestamp: 2026-01-04 12:03
+Summary of what actually changed:
+- Pruned 20+ legacy remote branches from `uni-orbit.git`.
+- Verified that only `main` remains on the remote.
+- Confirmed the repository history only contains the single "Initial Release" commit.
+
+Files actually modified:
+- Remote repository branches (pruned)
+
+How it was tested:
+- git remote prune origin
+- git branch -a (Verified only main remains)
+
+Test result:
+- PASS
+
 Task ID: T-0030
 Title: Reset Git History for Clean Deployment
 Status: DONE
