@@ -539,6 +539,26 @@ How it was tested:
 - npx tsc --noEmit (Passed)
 - npm run build (Passed)
 
+Task ID: T-0032
+Title: Implement One-Click "Listen Translation" Feature
+Status: IN-PROGRESS
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 12:19
+Current behavior:
+- Translation listening must be enabled via the Translate sidebar.
+- Enabling it only translates subsequent transcripts.
+
+Plan and scope:
+- Add a "Listen Translation" button to the control bar.
+- Logic: Mute original audio, translate most recent transcript, and start Cartesia TTS immediately.
+- Update `PageClientImpl.tsx` with `handleToggleListenTranslation` logic.
+- Update `SuccessClassControlBar.tsx` to include the new button and icon.
+
+END LOG
+
 Task ID: T-0031
 Title: Prune Legacy Remote Branches
 Status: DONE

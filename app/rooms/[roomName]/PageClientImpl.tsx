@@ -481,20 +481,22 @@ function TranslatePanel({
   isListening,
   isBroadcastActive,
   onListenToggle,
+  onListenTranslationClick,
   targetLanguage,
   onTargetLanguageChange,
-    translationEngine,
-    onTranslationEngineChange,
-    transcriptions,
-    translationLog,
-    translationVoiceSelection,
-    onTranslationVoiceSelectionChange,
-    customTranslationVoice,
-    onCustomTranslationVoiceChange,
+  translationEngine,
+  onTranslationEngineChange,
+  transcriptions,
+  translationLog,
+  translationVoiceSelection,
+  onTranslationVoiceSelectionChange,
+  customTranslationVoice,
+  onCustomTranslationVoiceChange,
 }: {
   isListening: boolean;
   isBroadcastActive: boolean;
   onListenToggle: (enabled: boolean | ((prev: boolean) => boolean)) => void;
+  onListenTranslationClick: () => void;
   targetLanguage: string;
   onTargetLanguageChange: (lang: string | ((prev: string) => string)) => void;
   translationEngine: 'google' | 'ollama';
@@ -562,11 +564,11 @@ function TranslatePanel({
               Select your listener language.
             </span>
           </div>
-          <div
-            role="radiogroup"
-            aria-label="Translation mode"
-            className={roomStyles.translationModeRadioGroup}
-          >
+        <div
+          role="radiogroup"
+          aria-label="Translation mode"
+          className={roomStyles.translationModeRadioGroup}
+        >
             <label
               className={`${roomStyles.translationModeOption} ${
                 !isListening ? roomStyles.translationModeOptionActive : ''
@@ -603,6 +605,13 @@ function TranslatePanel({
               </div>
             </label>
           </div>
+          <button
+            className={roomStyles.sidebarCardButton}
+            onClick={onListenTranslationClick}
+            disabled={!isBroadcastActive || transcriptions.length === 0}
+          >
+            Listen Translation
+          </button>
         </div>
 
         <div className={roomStyles.sidebarCard}>
@@ -899,6 +908,87 @@ function VideoConferenceComponent(props: {
     }
     return undefined;
   }, [translationVoiceSelection, customTranslationVoice]);
+
+  const translateAndQueue = React.useCallback(
+    async (speakerId: string, sourceText: string, playAudio: boolean) => {
+      const text = sourceText.trim();
+      if (!text || text.length < 2) {
+        return;
+      }
+      try {
+        const transRes = await fetch('/api/translate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text,
+            targetLanguage,
+            provider: translationEngine,
+          }),
+        });
+
+        if (!transRes.ok) {
+          return;
+        }
+        const { translatedText } = await transRes.json();
+
+        setTranslationLog((prev) => [
+          {
+            speakerId,
+            source: text,
+            translated: translatedText,
+            engine: translationEngine,
+            timestamp: Date.now(),
+          },
+          ...prev,
+        ].slice(0, 12));
+
+        if (!playAudio) {
+          return;
+        }
+
+        const ttsPayload: Record<string, string> = { text: translatedText };
+        if (translationVoiceId) {
+          ttsPayload.voiceId = translationVoiceId;
+        }
+
+        const ttsRes = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ttsPayload),
+        });
+
+        if (!ttsRes.ok) return;
+        const audioBlob = await ttsRes.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setTranslationQueue((prev) => [...prev, audioUrl]);
+      } catch (error) {
+        console.warn('Failed to translate and queue audio', error);
+      }
+    },
+    [targetLanguage, translationEngine, translationVoiceId],
+  );
+
+  const handleListenTranslationClick = React.useCallback(async () => {
+    const latest = transcriptions.reduce<{
+      id: string;
+      speakerId: string;
+      text: string;
+      timestamp: number;
+    } | null>((prev, next) => {
+      if (!prev || next.timestamp > prev.timestamp) {
+        return next;
+      }
+      return prev;
+    }, null);
+
+    if (!latest || !latest.text) {
+      return;
+    }
+
+    setIsListening(true);
+    setIsAppMuted(true);
+    await translateAndQueue(latest.speakerId, latest.text, true);
+  }, [transcriptions, translateAndQueue]);
 
   const playJoinSound = React.useCallback(() => {
     try {
@@ -1283,57 +1373,12 @@ function VideoConferenceComponent(props: {
           delta = fullText.substring(lastSeen.length).trim();
         }
 
-        // If no meaningful new text, skip
-        if (!delta || delta.length < 2) return;
-
         // Update last seen for this speaker
         lastSeenTextMap.current.set(speakerId, fullText);
 
-        // 1. Translate via selected engine (always update translation log)
-        const transRes = await fetch('/api/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: delta,
-            targetLanguage: targetLanguage,
-            provider: translationEngine,
-          }),
-        });
-        
-        if (!transRes.ok) return;
-        const { translatedText } = await transRes.json();
+        if (!delta || delta.length < 2) return;
 
-        setTranslationLog((prev) => [
-          {
-            speakerId,
-            source: delta,
-            translated: translatedText,
-            engine: translationEngine,
-            timestamp: Date.now(),
-          },
-          ...prev,
-        ].slice(0, 12));
-
-        if (!isListening) return;
-
-        // 2. TTS via Cartesia
-        const ttsPayload: Record<string, string> = { text: translatedText };
-        if (translationVoiceId) {
-          ttsPayload.voiceId = translationVoiceId;
-        }
-
-        const ttsRes = await fetch('/api/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(ttsPayload),
-        });
-
-        if (!ttsRes.ok) return;
-        const audioBlob = await ttsRes.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-
-        // 3. Add to audio queue for playback
-        setTranslationQueue((prev) => [...prev, audioUrl]);
+        await translateAndQueue(speakerId, delta, isListening);
       } catch (error) {
         console.warn('Failed to process message from stream', error);
       }
@@ -1348,7 +1393,7 @@ function VideoConferenceComponent(props: {
       eventSource.close();
       if (broadcastTimeoutRef.current) clearTimeout(broadcastTimeoutRef.current);
     };
-  }, [roomName, isListening, targetLanguage, translationEngine, translationVoiceId, room.localParticipant?.identity]);
+  }, [roomName, isListening, translationVoiceId, translateAndQueue, room.localParticipant?.identity]);
 
   // Audio queue runner
   React.useEffect(() => {
@@ -1517,6 +1562,7 @@ function VideoConferenceComponent(props: {
               onTranslationVoiceSelectionChange={setTranslationVoiceSelection}
               customTranslationVoice={customTranslationVoice}
               onCustomTranslationVoiceChange={setCustomTranslationVoice}
+              onListenTranslationClick={handleListenTranslationClick}
             />
           );
       default:
