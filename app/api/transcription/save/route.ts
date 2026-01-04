@@ -50,7 +50,9 @@ export async function POST(request: Request) {
       meeting_id: meetingId,
       source_text: segment.text,
       source_lang: segment.language || null,
-      speaker_id: 'unknown', // Bulk save from client state does not preserve speaker identity currently
+      speaker_id: segment.speakerId || 'unknown',
+      target_lang: segment.targetLang || null,
+      translated_text: segment.translatedText || null,
       created_at: segment.timestamp ? new Date(segment.timestamp).toISOString() : new Date().toISOString(),
     }));
 

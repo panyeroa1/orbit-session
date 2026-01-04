@@ -24,10 +24,14 @@ function getSupabaseClient() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const meetingId = body.meetingId as string | undefined;
-    const sourceText = body.sourceText as string | undefined;
-    const sourceLang = body.sourceLang as string | undefined;
-    const speakerId = body.speakerId as string | undefined;
+    const { 
+      meetingId, 
+      sourceText, 
+      sourceLang, 
+      speakerId,
+      targetLang,
+      translatedText
+    } = body;
 
     if (!meetingId || !sourceText) {
       return new NextResponse('Missing meetingId or sourceText', { status: 400 });
@@ -38,16 +42,14 @@ export async function POST(request: Request) {
       return new NextResponse('Supabase not configured', { status: 503 });
     }
 
-    // ALWAYS insert a new segment row.
-    // Benefits:
-    // 1. Scalability: No race conditions on appending to a single large text field.
-    // 2. Metadata: Each segment preserves its specific speaker and timestamp.
-    // 3. Search: Easier to query segments by time or speaker.
+    // Insert a new segment row with optional translation data.
     const { error: insertError } = await supabase.from('transcript_segments').insert({
       meeting_id: meetingId,
       source_text: sourceText,
       source_lang: sourceLang ?? null,
       speaker_id: speakerId ?? null,
+      target_lang: targetLang ?? null,
+      translated_text: translatedText ?? null,
     });
 
     if (insertError) {

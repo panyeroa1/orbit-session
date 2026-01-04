@@ -1000,6 +1000,22 @@ function VideoConferenceComponent(props: {
         }
         const { translatedText } = await transRes.json();
 
+        // Persist translation to database if enabled
+        if (continuousSaveEnabled) {
+          fetch('/api/transcription/save-live', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              meetingId: roomName,
+              sourceText: text,
+              sourceLang: 'auto',
+              speakerId,
+              targetLang: targetLanguage,
+              translatedText,
+            }),
+          }).catch((err) => console.warn('Failed to persist translation:', err));
+        }
+
         setTranslationLog((prev) => [
           {
             speakerId,
@@ -1037,7 +1053,7 @@ function VideoConferenceComponent(props: {
         console.warn('Failed to translate and queue audio', error);
       }
     },
-    [targetLanguage, translationEngine, translationVoiceId, ttsEngine],
+    [targetLanguage, translationEngine, translationVoiceId, ttsEngine, continuousSaveEnabled, roomName],
   );
 
   const handleListenTranslationClick = React.useCallback(async () => {

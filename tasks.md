@@ -1343,3 +1343,77 @@ How it was tested:
 
 Test result:
 - PASS
+
+Task ID: T-0044
+Title: Segment-based Transcription Storage refactor
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 15:45
+
+Current behavior:
+- `save-live` endpoint attempts to append to the most recent row, which scales poorly and clobbers metadata for overlapping speakers.
+
+Plan and scope:
+- Refactor `app/api/transcription/save-live/route.ts` to always insert a new segment.
+- Align with the `transcript_segments` schema provided by the user.
+
+END LOG
+
+Timestamp: 2026-01-04 15:46
+
+Summary of what actually changed:
+- Changed implementation in `save-live` route from update-append to always-insert.
+- Updated comments to explain the benefits of segment-based storage (concurrency, metadata preservation, scalability).
+
+How it was tested:
+- Code review (Verified that both `save` and `save-live` now target `transcript_segments` with insert operations).
+
+Test result:
+- PASS
+
+Task ID: T-0045
+Title: Persist Translations to transcript_segments
+Status: IN-PROGRESS
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 15:50
+
+Current behavior:
+- `transcript_segments` only stores source text and metadata.
+- Translations are transient (client-side only).
+
+Plan and scope:
+- Propose SQL update for `transcript_segments` (add `target_lang`, `translated_text`).
+- Update `save-live` and `save` API routes to accept these new fields.
+- Update `PageClientImpl.tsx` to send translation data to the database when generated.
+
+END LOG
+
+Task ID: T-0045-End
+Title: Finalize Translation Persistence
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 15:55
+
+Plan:
+- Verify build after fixing dependencies and Next.js 15 param typings.
+
+END LOG
+
+Timestamp: 2026-01-04 16:00
+
+Summary:
+- Successfully implemented translation persistence in `PageClientImpl.tsx`.
+- Fixed Next.js 15 `params` regression.
+- Corrected React Hook dependencies.
+
+Test result:
+- PASS
