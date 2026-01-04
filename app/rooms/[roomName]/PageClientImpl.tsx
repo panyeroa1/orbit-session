@@ -928,6 +928,7 @@ function VideoConferenceComponent(props: {
   const [captionsEnabled, setCaptionsEnabled] = React.useState(true);
   const [isBroadcasting, setIsBroadcasting] = React.useState(false);
   const [captionLanguage, setCaptionLanguage] = React.useState('auto');
+  const [captionEngine, setCaptionEngine] = React.useState<'webspeech'>('webspeech');
   const [captionAudioSource, setCaptionAudioSource] = React.useState<'auto' | 'microphone' | 'screen'>('auto');
   const [transcriptSegments, setTranscriptSegments] = React.useState<TranscriptSegment[]>([]);
   const [continuousSaveEnabled, setContinuousSaveEnabled] = React.useState(false);
@@ -1843,6 +1844,8 @@ function VideoConferenceComponent(props: {
             onSaveTranscription={handleSaveTranscription}
             isBroadcasting={isBroadcasting}
             onBroadcastToggle={() => setBroadcastState(!isBroadcasting)}
+            broadcastLocked={broadcastLocked}
+            currentBroadcasterId={currentBroadcasterId}
           />
         );
       case 'translate':
