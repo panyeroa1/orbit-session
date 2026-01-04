@@ -316,6 +316,8 @@ function BroadcastPanel({
   onSaveTranscription,
   isBroadcasting,
   onBroadcastToggle,
+  broadcastLocked,
+  currentBroadcasterId,
 }: {
   captionsEnabled: boolean;
   onCaptionsToggle: (enabled: boolean) => void;
@@ -331,8 +333,11 @@ function BroadcastPanel({
   onSaveTranscription: () => void;
   isBroadcasting: boolean;
   onBroadcastToggle: () => void;
+  broadcastLocked: boolean;
+  currentBroadcasterId: string | null;
 }) {
   const room = React.useContext(RoomContext);
+  const isLockedByOther = broadcastLocked && currentBroadcasterId !== room?.localParticipant?.identity;
 
   return (
     <div className={roomStyles.sidebarPanel}>
@@ -347,7 +352,11 @@ function BroadcastPanel({
         <div className={roomStyles.sidebarCard}>
           <div className={roomStyles.sidebarCardText}>
             <span className={roomStyles.sidebarCardLabel}>Broadcast Audio</span>
-            <span className={roomStyles.sidebarCardHint}>Stream your audio for transcription.</span>
+            <span className={roomStyles.sidebarCardHint}>
+              {isLockedByOther
+                ? `Locked by ${currentBroadcasterId}`
+                : 'Stream your audio for transcription.'}
+            </span>
           </div>
           <label className={roomStyles.sidebarSwitch}>
             <input
@@ -355,6 +364,7 @@ function BroadcastPanel({
               checked={isBroadcasting}
               onChange={onBroadcastToggle}
               aria-label="Broadcast audio"
+              disabled={isLockedByOther}
             />
             <span className={roomStyles.sidebarSwitchTrack}>
               <span className={roomStyles.sidebarSwitchThumb} />
@@ -891,7 +901,7 @@ function VideoConferenceComponent(props: {
   const [captionLanguage, setCaptionLanguage] = React.useState('auto');
   const [captionAudioSource, setCaptionAudioSource] = React.useState<'auto' | 'microphone' | 'screen'>('auto');
   const [transcriptSegments, setTranscriptSegments] = React.useState<TranscriptSegment[]>([]);
-  const [continuousSaveEnabled, setContinuousSaveEnabled] = React.useState(true);
+  const [continuousSaveEnabled, setContinuousSaveEnabled] = React.useState(false);
   const [voiceFocusEnabled, setVoiceFocusEnabled] = React.useState(true);
   const [vadEnabled, setVadEnabled] = React.useState(true);
   const [noiseSuppressionEnabled, setNoiseSuppressionEnabled] = React.useState(true);
@@ -911,6 +921,10 @@ function VideoConferenceComponent(props: {
   const [transcriptions, setTranscriptions] = React.useState<{ id: string; speakerId: string; text: string; timestamp: number }[]>([]);
   const lastSeenTextMap = React.useRef<Map<string, string>>(new Map());
   const layoutContext = useCreateLayoutContext();
+  const [broadcastLocked, setBroadcastLocked] = React.useState(false);
+  const [currentBroadcasterId, setCurrentBroadcasterId] = React.useState<string | null>(null);
+  const heartbeatRef = React.useRef<NodeJS.Timeout | null>(null);
+
   const [translationEngine, setTranslationEngine] = React.useState<'google' | 'ollama' | 'gemini'>('google');
   const [translationLog, setTranslationLog] = React.useState<TranslationEntry[]>([]);
   const [translationVoiceSelection, setTranslationVoiceSelection] = React.useState<'default' | 'custom'>(
@@ -1227,6 +1241,24 @@ function VideoConferenceComponent(props: {
     }
   }, [lowPowerMode]);
 
+  // Cleanup broadcast lock on unmount
+  React.useEffect(() => {
+    return () => {
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+      }
+      // Release lock on unmount
+      const localIdentity = room.localParticipant?.identity;
+      if (isBroadcasting && localIdentity && roomName) {
+        fetch('/api/room/broadcast-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomId: roomName, identity: localIdentity, action: 'release' }),
+        }).catch(() => {});
+      }
+    };
+  }, [isBroadcasting, room.localParticipant?.identity, roomName]);
+
   const handleTranscriptSegment = React.useCallback(
     async (segment: TranscriptSegment) => {
       setTranscriptSegments((prev) => [...prev, segment]);
@@ -1305,6 +1337,29 @@ function VideoConferenceComponent(props: {
     };
 
     fetchInitialTranscripts();
+  }, [roomName]);
+
+  // Check broadcast lock status on mount and poll periodically
+  React.useEffect(() => {
+    if (!roomName) return;
+
+    const checkBroadcastLock = async () => {
+      try {
+        const res = await fetch(`/api/room/broadcast-status?roomId=${roomName}`);
+        if (res.ok) {
+          const data = await res.json();
+          setBroadcastLocked(data.isLocked);
+          setCurrentBroadcasterId(data.broadcasterId);
+        }
+      } catch (error) {
+        console.warn('Failed to check broadcast lock', error);
+      }
+    };
+
+    checkBroadcastLock();
+    const pollInterval = setInterval(checkBroadcastLock, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(pollInterval);
   }, [roomName]);
 
   // Audio Muting Logic - Mute others when listening to translation
@@ -1507,12 +1562,65 @@ function VideoConferenceComponent(props: {
     setActiveSidebarPanel(panel);
   };
 
-  const setBroadcastState = (enabled: boolean) => {
-    setIsBroadcasting(enabled);
+  const setBroadcastState = async (enabled: boolean) => {
+    const localIdentity = room.localParticipant?.identity;
+    if (!localIdentity || !roomName) return;
+
     if (enabled) {
+      // Try to claim the broadcast lock
+      try {
+        const res = await fetch('/api/room/broadcast-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomId: roomName, identity: localIdentity, action: 'claim' }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+          console.warn('Failed to claim broadcast lock:', data.error);
+          return; // Don't enable broadcasting if lock failed
+        }
+      } catch (error) {
+        console.error('Failed to claim broadcast lock', error);
+        return;
+      }
+
+      setIsBroadcasting(true);
       setCaptionsEnabled(true);
       setContinuousSaveEnabled(true);
-      setIsListening(false); // Can't listen to own translation
+      setIsListening(false);
+
+      // Start heartbeat
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      heartbeatRef.current = setInterval(async () => {
+        try {
+          await fetch('/api/room/broadcast-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ roomId: roomName, identity: localIdentity, action: 'heartbeat' }),
+          });
+        } catch (error) {
+          console.warn('Heartbeat failed', error);
+        }
+      }, 30000); // Every 30 seconds
+    } else {
+      // Release the broadcast lock
+      try {
+        await fetch('/api/room/broadcast-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomId: roomName, identity: localIdentity, action: 'release' }),
+        });
+      } catch (error) {
+        console.warn('Failed to release broadcast lock', error);
+      }
+
+      setIsBroadcasting(false);
+
+      // Stop heartbeat
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
     }
   };
 
@@ -1642,6 +1750,8 @@ function VideoConferenceComponent(props: {
             onSaveTranscription={handleSaveTranscription}
             isBroadcasting={isBroadcasting}
             onBroadcastToggle={() => setBroadcastState(!isBroadcasting)}
+            broadcastLocked={broadcastLocked}
+            currentBroadcasterId={currentBroadcasterId}
           />
         );
       case 'translate':
