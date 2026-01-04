@@ -987,6 +987,13 @@ function VideoConferenceComponent(props: {
 
     setIsListening(true);
     setIsAppMuted(true);
+    
+    // Prime audio
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+    audioRef.current.load();
+    
     await translateAndQueue(latest.speakerId, latest.text, true);
   }, [transcriptions, translateAndQueue]);
 
@@ -1405,12 +1412,27 @@ function VideoConferenceComponent(props: {
         audioRef.current = new Audio();
       }
       
+      console.log('Playing translation audio:', nextAudio);
       audioRef.current.src = nextAudio;
-      audioRef.current.play().catch(console.error);
+      audioRef.current.play().catch(error => {
+        console.warn('Playback failed (possibly autoplay blocked):', error);
+        // Move to next even if it fails to avoid getting stuck
+        setIsAudioPlaying(false);
+        setTranslationQueue((prev) => prev.slice(1));
+        URL.revokeObjectURL(nextAudio);
+      });
       
       audioRef.current.onended = () => {
+        console.log('Finished playing translation audio');
         setTranslationQueue((prev) => prev.slice(1));
         setIsAudioPlaying(false);
+        URL.revokeObjectURL(nextAudio);
+      };
+
+      audioRef.current.onerror = (e) => {
+        console.error('Audio element error:', e);
+        setIsAudioPlaying(false);
+        setTranslationQueue((prev) => prev.slice(1));
         URL.revokeObjectURL(nextAudio);
       };
     }
@@ -1481,6 +1503,16 @@ function VideoConferenceComponent(props: {
   const handleToggleListenTranslation = async () => {
     const nextValue = !isListening;
     setIsListening(nextValue);
+    
+    // Prime the audio element in direct response to user click to unlock autoplay
+    if (nextValue) {
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
+      // Play a tiny silence or just call load() to unlock
+      audioRef.current.load();
+      console.log('Audio element primed via user interaction');
+    }
 
     if (nextValue && transcriptions.length > 0) {
       // Auto-translate the most recent transcription segment
@@ -1605,6 +1637,10 @@ function VideoConferenceComponent(props: {
                 const nextEnabled = typeof enabled === 'function' ? enabled(isListening) : enabled;
                 setIsListening(nextEnabled);
                 setIsAppMuted(nextEnabled);
+                if (nextEnabled) {
+                  if (!audioRef.current) audioRef.current = new Audio();
+                  audioRef.current.load();
+                }
               }}
               targetLanguage={targetLanguage}
               onTargetLanguageChange={setTargetLanguage}

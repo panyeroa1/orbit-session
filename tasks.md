@@ -866,3 +866,40 @@ How it was tested:
 Test result:
 
 - PASS
+
+Task ID: T-0034
+Title: Debug and Fix Cartesia TTS Audio
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-04 12:45
+Current behavior:
+- Report of no audio output when using Cartesia TTS.
+
+Plan and scope:
+- Verify Cartesia API configuration and backend functionality.
+- Implement audio "priming" on frontend to bypass browser autoplay restrictions.
+- Improve queue runner resilience for playback errors.
+- Add server-side logging for TTS generation.
+
+END LOG
+
+Timestamp: 2026-01-04 12:55
+Summary of what actually changed:
+- Verified backend functionality via `curl` and `ffprobe` (MP3 generation is working correctly).
+- Added audio element priming in `handleToggleListenTranslation`, `handleListenTranslationClick`, and `onListenToggle` to unlock audio on Safari/Chrome.
+- Updated the audio queue runner with `onerror` handling and `play().catch()` to skip failed tracks and prevent runner freezes.
+- Enhanced `api/tts/route.ts` with detailed logging for debugging.
+
+Files actually modified:
+- app/api/tts/route.ts
+- app/rooms/[roomName]/PageClientImpl.tsx
+
+How it was tested:
+- Successfull `curl` test on backend (generated valid MP3).
+- Clean `npm run lint` and `npx tsc --noEmit`.
+
+Test result:
+- PASS

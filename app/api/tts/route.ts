@@ -44,20 +44,27 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('Cartesia API error:', errorData);
-      return new NextResponse('TTS failed', { status: 500 });
+      console.error('Cartesia API error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        modelId,
+        voiceToUse: voiceToUse.substring(0, 8) + '...',
+      });
+      return new NextResponse(`TTS failed: ${response.status}`, { status: response.status });
     }
 
-    // Get the audio data as a buffer
     const audioBuffer = await response.arrayBuffer();
+    console.log(`TTS successful: generated ${audioBuffer.byteLength} bytes for text: "${text.substring(0, 30)}..."`);
 
     return new NextResponse(audioBuffer, {
       headers: {
         'Content-Type': 'audio/mpeg',
+        'Cache-Control': 'no-cache',
       },
     });
   } catch (error) {
-    console.error('TTS route error:', error);
+    console.error('TTS route internal error:', error);
     return new NextResponse('Internal error', { status: 500 });
   }
 }
