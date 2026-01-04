@@ -2,8 +2,8 @@ import Link from 'next/link';
 import styles from '@/styles/DeveloperDocs.module.css';
 
 export const metadata = {
-  title: 'Developer API Documentation | Success Class',
-  description: 'Developer API reference for Success Class rooms, recordings, and integrations.',
+  title: 'Developer API Documentation | Eburon',
+  description: 'Developer API reference for Eburon rooms, recordings, and integrations.',
 };
 
 export default function DeveloperDocsPage() {
@@ -17,10 +17,10 @@ export default function DeveloperDocsPage() {
             Back to lobby
           </Link>
         </div>
-        <h1>Success Class Developer Documentation</h1>
+        <h1>Eburon Developer Documentation</h1>
         <p>
-          Endpoints, auth, and integration patterns for building on top of Success
-          Class. Use these APIs to create rooms, manage participants, and automate
+          Endpoints, auth, and integration patterns for building on top of Eburon.
+          Use these APIs to create rooms, manage participants, and automate
           workflows with your own services.
         </p>
         <div className={styles.heroActions}>
@@ -37,7 +37,7 @@ export default function DeveloperDocsPage() {
         <div className={styles.sectionHeader}>
           <h2>Overview</h2>
           <p>
-            Success Class runs on Orbit Conference. The server-side APIs are exposed as Next.js
+            Eburon runs on Orbit Conference. The server-side APIs are exposed as Next.js
             routes under <code>/api</code> and require the server environment keys to
             access your Orbit Cloud securely.
           </p>
@@ -303,7 +303,7 @@ eventSource.onerror = () => {
       </section>
 
       <footer className={styles.footer}>
-        <span>Success Class Developer API</span>
+        <span>Eburon Developer API</span>
         <a href="https://eburon.ai" target="_blank" rel="noopener noreferrer">
           Powered by Orbit Conference
         </a>

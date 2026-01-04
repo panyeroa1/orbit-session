@@ -1568,8 +1568,64 @@ Summary:
 - Resolved all TypeScript scoping and prop-drilling errors.
 
 How it was tested:
+- npx tsc --noEmit (Passed)
 - npm run build (Pass)
 - Visual code verification for state management and API integration.
 
 Test result:
 - PASS
+
+------------------------------------------------------------
+STANDARD TASK BLOCK
+------------------------------------------------------------
+
+Task ID: T-0050
+Title: Update Branding to Eburon
+Status: IN-PROGRESS
+Owner: Miles
+Related repo or service: uni-orbit
+Branch: main
+Created: 2026-01-05 06:36
+Last updated: 2026-01-05 06:36
+
+START LOG (fill this before you start coding)
+
+Timestamp: 2026-01-05 06:36
+Current behavior or state:
+- App features "Success Class" branding in metadata, UI labels, and file names.
+
+Plan and scope for this task:
+- Replace "Success Class" with "Eburon" in all metadata (titles, descriptions, site name).
+- Update OG images and favicons to refer to Eburon.
+- Rename components and CSS modules from `SuccessClass` to `Eburon`.
+- Update agent knowledge and prompts to use "Eburon".
+- Ensure all visible links point to `eburon.ai`.
+
+Files or modules expected to change:
+- app/layout.tsx
+- lib/app-knowledge.ts
+- lib/AgentPanel.tsx
+- app/api/agent/route.ts
+- app/docs/page.tsx
+- lib/SuccessClassControlBar.tsx
+- styles/SuccessClass.module.css
+- app/rooms/[roomName]/PageClientImpl.tsx
+- app/page.tsx
+- lib/ChatPanel.tsx
+- lib/CameraSettings.tsx
+- lib/ParticipantsPanel.tsx
+- lib/LiveCaptions.tsx
+
+Risks or things to watch out for:
+- Breaking imports when renaming files/classes.
+- Missing some branding in hidden tooltips.
+
+WORK CHECKLIST
+
+- [ ] Metadata updated in layout.tsx
+- [ ] Agent knowledge updated in lib/app-knowledge.ts
+- [ ] UI Components renamed and updated
+- [ ] CSS module classes updated
+- [ ] Verified build and lint
+
+END LOG

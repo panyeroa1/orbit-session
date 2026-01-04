@@ -1,5 +1,5 @@
 export const appKnowledge = `
-App name: Success Class.
+App name: Eburon.
 Underlying technology: Orbit Conference (aliased from LiveKit).
 Purpose: Video conferencing for education with Orbit.
 Stack: Next.js App Router, React, Orbit (LiveKit) Components, Orbit (LiveKit) Server SDK.
