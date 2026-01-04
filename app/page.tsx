@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import React, { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client-utils';
 import styles from '../styles/Home.module.css';
 
@@ -50,7 +49,6 @@ function ControlCard() {
 
 export default function Page() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const router = useRouter();
   const [isRecording, setIsRecording] = useState(false);
   const [recordUrl, setRecordUrl] = useState<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);

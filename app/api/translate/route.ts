@@ -141,9 +141,10 @@ export async function POST(request: Request) {
       }
 
       const data = await response.json();
-      const translatedText =
-        data?.candidates?.[0]?.content?.[0]?.text?.trim() ??
-        data?.candidates?.[0]?.content?.map((part: any) => part?.text ?? '').join('')?.trim();
+      const parts = data?.candidates?.[0]?.content?.parts;
+      const translatedText = Array.isArray(parts)
+        ? parts.map((p: any) => p?.text ?? '').join('').trim()
+        : '';
 
       if (!translatedText) {
         return new NextResponse('Empty translation returned', { status: 500 });

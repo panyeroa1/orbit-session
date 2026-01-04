@@ -293,8 +293,6 @@ export function SuccessClassControlBar({
   React.useEffect(() => {
     const getDevices = async () => {
       try {
-        // Request permission first to get device labels
-        await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => s.getTracks().forEach(t => t.stop()));
         const devices = await navigator.mediaDevices.enumerateDevices();
         const audioInputs = devices.filter(d => d.kind === 'audioinput');
         setAudioDevices(audioInputs);
@@ -316,6 +314,19 @@ export function SuccessClassControlBar({
     navigator.mediaDevices.addEventListener('devicechange', getDevices);
     return () => navigator.mediaDevices.removeEventListener('devicechange', getDevices);
   }, [selectedAudioDevice, selectedSpeakerDevice]);
+
+  const ensureMicPermissionForLabels = React.useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setAudioDevices(devices.filter((d) => d.kind === 'audioinput'));
+      setSpeakerDevices(devices.filter((d) => d.kind === 'audiooutput'));
+    } catch (e) {
+      // Permission denied is fine; keep unlabeled devices.
+      console.warn('Mic permission not granted for device labels.');
+    }
+  }, []);
 
   // Close mic menu on outside click
   React.useEffect(() => {
@@ -550,7 +561,10 @@ export function SuccessClassControlBar({
           </button>
           <button
             className={styles.deviceSelectorTrigger}
-            onClick={() => setIsMicMenuOpen((prev) => !prev)}
+            onClick={async () => {
+              if (!isMicMenuOpen) await ensureMicPermissionForLabels();
+              setIsMicMenuOpen((prev) => !prev);
+            }}
             title="Select microphone"
             aria-expanded={isMicMenuOpen}
             aria-haspopup="listbox"

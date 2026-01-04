@@ -8,6 +8,30 @@ type TtsRequestBody = {
   provider?: 'cartesia' | 'google-genai' | 'livekit-agent';
 };
 
+function pcm16leToWav(pcm: Buffer, sampleRate = 24000, channels = 1): Buffer {
+  const bitsPerSample = 16;
+  const byteRate = sampleRate * channels * (bitsPerSample / 8);
+  const blockAlign = channels * (bitsPerSample / 8);
+  const dataSize = pcm.length;
+  const header = Buffer.alloc(44);
+
+  header.write('RIFF', 0);
+  header.writeUInt32LE(36 + dataSize, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16); // PCM
+  header.writeUInt16LE(1, 20);  // AudioFormat = PCM
+  header.writeUInt16LE(channels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32);
+  header.writeUInt16LE(bitsPerSample, 34);
+  header.write('data', 36);
+  header.writeUInt32LE(dataSize, 40);
+
+  return Buffer.concat([header, pcm]);
+}
+
 export async function POST(request: Request) {
   try {
     const { text, voiceId: requestedVoiceId, provider = 'cartesia' } = (await request.json()) as TtsRequestBody;
@@ -18,7 +42,9 @@ export async function POST(request: Request) {
 
     if (provider === 'google-genai') {
       const apiKey = process.env.GEMINI_API_KEY;
-      const model = process.env.GEMINI_AUDIO_MODEL || 'models/gemini-2.5-flash-native-audio-preview-12-2025';
+      // Gemini TTS models are separate; keep configurable.
+      const model = process.env.GEMINI_AUDIO_MODEL || 'gemini-2.5-flash-preview-tts';
+      const voiceName = process.env.GEMINI_TTS_VOICE_NAME || 'Kore';
 
       if (!apiKey) {
         return new NextResponse('Gemini API key not configured', { status: 503 });
@@ -42,16 +68,13 @@ export async function POST(request: Request) {
                 ],
               },
             ],
-            responseModalities: ['audio'],
-            audioConfig: {
-              audioEncoding: 'WAV',
-              speakingRate: 1.0,
-              pitch: 0.0,
-            },
             generationConfig: {
-              speed: 1.1,
-              volume: 1,
-              emotion: 'calm',
+              responseModalities: ['AUDIO'],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: { voiceName },
+                },
+              },
             },
           }),
         },
@@ -64,19 +87,20 @@ export async function POST(request: Request) {
       }
 
       const data = await response.json();
-      const candidate = data?.candidates?.[0];
-      const audioPart = candidate?.content?.find((part: any) => part?.audio?.data);
+      const part0 = data?.candidates?.[0]?.content?.parts?.[0];
       const audioBase64 =
-        audioPart?.audio?.data ??
-        candidate?.content?.[0]?.audio?.data ??
-        candidate?.output?.audio?.data;
+        part0?.inlineData?.data ??
+        part0?.inline_data?.data ??
+        null;
 
       if (!audioBase64) {
         return new NextResponse('Gemini returned no audio', { status: 500 });
       }
 
-      const buffer = Buffer.from(audioBase64, 'base64');
-      return new NextResponse(buffer, {
+      // Gemini returns PCM (example flow converts PCM -> WAV). Wrap for browser playback.
+      const pcm = Buffer.from(audioBase64, 'base64');
+      const wav = pcm16leToWav(pcm, 24000, 1);
+      return new NextResponse(wav as any, {
         headers: {
           'Content-Type': 'audio/wav',
           'Cache-Control': 'no-cache',
@@ -144,6 +168,9 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        // Cartesia docs: Authorization Bearer + Cartesia-Version.
+        Authorization: `Bearer ${apiKey}`,
+        // Keep X-API-Key as a compatibility fallback for some gateways.
         'X-API-Key': apiKey,
         'Cartesia-Version': '2025-04-16',
       },
