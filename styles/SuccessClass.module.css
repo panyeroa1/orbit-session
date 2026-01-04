@@ -968,6 +968,11 @@
   width: 100%;
 }
 
+.translationClipAction {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 .sidebarCardColumn {
   display: flex;
   flex-direction: column;

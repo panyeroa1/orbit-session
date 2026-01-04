@@ -672,6 +672,17 @@ function TranslatePanel({
             <option value="gemini">Gemini Flash Lite (Google)</option>
           </select>
         </div>
+        <div className={`${roomStyles.sidebarCard} ${roomStyles.translationClipAction}`}>
+          <div className={roomStyles.sidebarCardText}>
+            <span className={roomStyles.sidebarCardLabel}>Clip content</span>
+            <span className={roomStyles.sidebarCardHint}>
+              Capture the highlighted transcript and pin it as a content clip for future playback.
+            </span>
+          </div>
+          <button className={roomStyles.sidebarCardButton} disabled={!transcriptions.length}>
+            Add clip to content
+          </button>
+        </div>
 
         <div className={roomStyles.sidebarCard}>
           <div className={roomStyles.sidebarCardText}>
