@@ -191,19 +191,54 @@ export default function Page() {
         />
       </section>
 
-      <section className={styles.featuresGrid}>
-        {[
-          { title: 'Adaptive AI captions', body: 'Realtime Supabase archive + translation memory.' },
-          { title: 'Translation dashboard', body: 'Ticker-style log, engine switching, TTS playback controls.' },
-          { title: 'Broadcast controls', body: 'Single broadcaster, remote muting, continuous saves.' },
-          { title: 'AI workflows', body: 'Automations that summarize, transcribe, or nudge responders.' },
-        ].map((feature) => (
-          <article key={feature.title} className={styles.featureTile}>
-            <div className={styles.featureIcon}>{feature.title.charAt(0)}</div>
-            <h3>{feature.title}</h3>
-            <p>{feature.body}</p>
-          </article>
-        ))}
+      <section className={styles.zigZagSection}>
+        <div className={styles.zigZagRow}>
+          <div className={styles.zigZagContent}>
+            <h2>Native AI Translation</h2>
+            <p>Live, nuance-aware subtitles that adapt to speaker cadence.</p>
+          </div>
+          <div className={styles.zigZagVisual}>
+             <Image
+              src="/images/feature-translation.png"
+              alt="AI Translation"
+              width={600}
+              height={400}
+              className={styles.featureImg}
+            />
+          </div>
+        </div>
+
+        <div className={`${styles.zigZagRow} ${styles.rowReverse}`}>
+          <div className={styles.zigZagContent}>
+            <h2>Flow Automation</h2>
+            <p>Connect Cartesia, Gemini, and Ollama in one seamless pipe.</p>
+          </div>
+          <div className={styles.zigZagVisual}>
+             <Image
+              src="/images/feature-workflow.png"
+              alt="Workflow Automation"
+              width={600}
+              height={400}
+              className={styles.featureImg}
+            />
+          </div>
+        </div>
+
+        <div className={styles.zigZagRow}>
+          <div className={styles.zigZagContent}>
+            <h2>Enterprise Security</h2>
+            <p>End-to-end encryption with per-room token enforcement.</p>
+          </div>
+          <div className={styles.zigZagVisual}>
+            <Image
+              src="/images/feature-security.png"
+              alt="Security Shield"
+              width={600}
+              height={400}
+              className={styles.featureImg}
+            />
+          </div>
+        </div>
       </section>
 
       <section className={styles.integrationBanner}>
