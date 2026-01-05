@@ -826,6 +826,7 @@ function VideoConferenceComponent(props: {
               broadcastEnabled={true}
               language="auto"
               audioSource="auto"
+              onTranscriptSegment={handleTranscriptSegment}
             />
           )}
 

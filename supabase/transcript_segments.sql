@@ -1,4 +1,6 @@
-create table public.transcript_segments (
+-- Recommended: Run 'DROP TABLE public.transcript_segments;' first if you need to recreate with new constraints.
+
+create table if not exists public.transcript_segments (
   id uuid not null default gen_random_uuid (),
   meeting_id text not null,
   speaker_id text null,
