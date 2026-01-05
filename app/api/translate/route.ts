@@ -10,43 +10,50 @@ export async function POST(request: Request) {
       return new NextResponse('Missing text or targetLang', { status: 400 });
     }
 
-    const apiKey = process.env.OLLAMA_API_KEY;
-    const baseUrl = process.env.OLLAMA_BASE_URL || 'https://ollama.com';
-    const model = process.env.OLLAMA_MODEL || 'gpt-oss:120b';
+    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const modelId = "gemini-2.0-flash-lite";
 
     if (!apiKey) {
-      return new NextResponse('Ollama API key not configured', { status: 503 });
+      return new NextResponse('Gemini API key not configured', { status: 503 });
     }
 
-    const response = await fetch(`${baseUrl}/api/chat`, {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: model,
-        messages: [
+        contents: [
           {
-            role: 'system',
-            content: `You are a professional translator. Translate the following text into ${targetLang}. Only provide the translation.`,
-          },
-          { role: 'user', content: text },
+            role: "user",
+            parts: [
+              {
+                text: `You are a professional translator. Translate the following text into ${targetLang}. Only provide the translation.\n\nText: ${text}`
+              }
+            ]
+          }
         ],
-        stream: false,
+        generationConfig: {
+          temperature: 0.1,
+          topP: 0.95,
+          topK: 40,
+          maxOutputTokens: 1024,
+        }
       }),
     });
 
     if (!response.ok) {
       const err = await response.text();
-      console.error('Ollama Translation API Error:', err);
+      console.error('Gemini Translation API Error:', err);
       return new NextResponse(err, { status: response.status });
     }
 
     const data = await response.json();
-    const translation = data.message?.content || text;
+    const translation = data.candidates?.[0]?.content?.parts?.[0]?.text || text;
 
-    return NextResponse.json({ translation });
+    return NextResponse.json({ translation: translation.trim() });
   } catch (error) {
     console.error('Translation route internal error:', error);
     return new NextResponse('Internal error', { status: 500 });
