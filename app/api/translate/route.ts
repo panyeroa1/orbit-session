@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenAI } from "@google/genai";
 
 export const runtime = 'nodejs';
 
@@ -11,29 +10,50 @@ export async function POST(request: Request) {
       return new NextResponse('Missing text or targetLang', { status: 400 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.OLLAMA_API_KEY;
     if (!apiKey) {
-      return new NextResponse('Gemini API key not configured', { status: 503 });
+      return new NextResponse('Ollama API key not configured', { status: 503 });
     }
 
-    const genAI = new GoogleGenAI({ apiKey });
-    
-    const result = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: `You are a professional translator. Translate the following text into ${targetLang}. Only provide the translation.\n\nText: ${text}` }]
-        }
-      ]
-    });
-    
-    // The response structure might differ, checking typical @google/genai response
-    const translation = result.candidates?.[0]?.content?.parts?.[0]?.text || text;
+    const model = process.env.OLLAMA_MODEL || 'gpt-oss:120b-cloud';
 
-    return NextResponse.json({ translation: translation.trim() });
+    const body = {
+      model,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a professional translator. Translate user text as literally as possible while keeping natural grammar, and reply with only the translated text.',
+        },
+        {
+          role: 'user',
+          content: `Translate the following text into ${targetLang}.\n\n${text}`,
+        },
+      ],
+      stream: false,
+    };
+
+    const res = await fetch('https://ollama.com/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const errorMessage = await res.text();
+      console.error('Ollama translation error:', res.status, errorMessage);
+      return new NextResponse(`Ollama translation failed: ${res.status}`, { status: res.status });
+    }
+
+    const data = await res.json();
+    const translation = data?.message?.content?.trim() || text;
+
+    return NextResponse.json({ translation });
   } catch (error: any) {
-    console.error('Gemini SDK Translation Error:', error);
+    console.error('Ollama translation route error:', error);
     return new NextResponse(error.message || 'Internal error', { status: 500 });
   }
 }

@@ -1,4 +1,36 @@
-# Tasks Log
+
+Task ID: T-0034
+Title: Disable Translation and TTS
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-05 21:25
+Plan:
+- Remove Gemini service integration.
+- Strip out Translation and TTS state and logic from OrbitApp.tsx.
+- Remove Translation and TTS UI controls from TranslatorDock.tsx.
+- Verify STT still works.
+Risks:
+- Breaking existing STT or Room State logic during cleanup.
+
+END LOG
+
+Timestamp: 2026-01-05 21:28
+Changed:
+- Removed `geminiService` import and all translation state/refs from `OrbitApp.tsx`.
+- Removed `processNextInQueue` and translation update logic.
+- Cleaned up `TranslatorDock` to remove Language Selector and Listen Button.
+- Removed translation text overlay rendering.
+Tests:
+- Manual verification: Checked that only "Speak" and "Queue" buttons remain.
+- Validated that translation text does not appear and no TTS logic is triggered.
+Result: PASS
+Status: DONE
+
+
+
 
 Task ID: T-0001
 Title: Fix invalid ARIA attribute in page.tsx

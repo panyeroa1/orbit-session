@@ -5,7 +5,7 @@ import { AppMode, Language, LANGUAGES, RoomState, AudioSource, EmotionType, EMOT
 import TranslatorDock from './components/TranslatorDock';
 import ErrorBanner from './components/ErrorBanner';
 import * as roomStateService from './services/roomStateService';
-import * as geminiService from './services/geminiService';
+
 
 const getStoredUserId = () => {
   if (typeof window === 'undefined') return 'user_guest';
@@ -66,12 +66,7 @@ export function OrbitApp() {
   
   const [lastFinalText, setLastFinalText] = useState<string>('');
   const [livePartialText, setLivePartialText] = useState<string>('');
-  const [translatedStreamText, setTranslatedStreamText] = useState<string>('');
   
-  const [emotion, setEmotion] = useState<EmotionType>('neutral');
-  const [audioData, setAudioData] = useState<Uint8Array>(new Uint8Array(0));
-  const [isTtsLoading, setIsTtsLoading] = useState(false);
-
   const [fullTranscript, setFullTranscript] = useState('');
 
   const selectedLanguageRef = useRef<Language>(LANGUAGES[0]);
@@ -81,10 +76,7 @@ export function OrbitApp() {
 
   const recognitionRef = useRef<any>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const isTtsActiveRef = useRef(false);
-  const lastProcessedSegmentIdRef = useRef<string | null>(null);
   
-  const segmentQueueRef = useRef<any[]>([]);
   const realtimeChannelRef = useRef<any>(null);
 
   // VAD & Segmentation tracking
@@ -148,140 +140,16 @@ export function OrbitApp() {
     }
   };
 
-  const updateTranslation = useCallback(async (segmentId: string, translation: string, targetLang: string) => {
-    try {
-      if (!meetingId || !segmentId || !translation) return;
-
-      const { error } = await supabase.from('transcript_segments')
-        .update({ 
-          translated_text: translation,
-          target_lang: targetLang
-        })
-        .eq('meeting_id', meetingId)
-        .eq('last_segment_id', segmentId);
-
-      if (error) console.error("Failed to save translation:", error);
-    } catch (err) {
-      console.error("Error updating translation:", err);
-    }
-  }, [meetingId]);
-
-  const processNextInQueue = useCallback(async () => {
-    if (segmentQueueRef.current.length === 0 || isTtsActiveRef.current) return;
-
-    const row = segmentQueueRef.current.shift();
-    if (!row) return; // || row.speaker_id === MY_USER_ID) return;
-    if (row.last_segment_id === lastProcessedSegmentIdRef.current) {
-      processNextInQueue();
-      return;
-    }
-
-    lastProcessedSegmentIdRef.current = row.last_segment_id;
-    setIsTtsLoading(true);
-    
-    const currentTargetLang = selectedLanguageRef.current;
-    const targetName = currentTargetLang.code === 'auto' ? 'English' : currentTargetLang.name;
-    const ctx = ensureAudioContext();
-    
-    if (!ctx) {
-      setIsTtsLoading(false);
-      return;
-    }
-
-    try {
-      isTtsActiveRef.current = true;
-      
-      await geminiService.streamTranslation(
-        row.source_text,
-        targetName,
-        ctx,
-        (data) => {
-          setAudioData(data);
-          setIsTtsLoading(false);
-        },
-        (text) => setTranslatedStreamText(text),
-        (finalText) => {
-          if (finalText && row.last_segment_id) {
-            updateTranslation(row.last_segment_id, finalText, currentTargetLang.code);
-          }
-          isTtsActiveRef.current = false;
-          setAudioData(new Uint8Array(0));
-          if (segmentQueueRef.current.length > 0) processNextInQueue();
-          else setTimeout(() => { if (!isTtsActiveRef.current) setTranslatedStreamText(''); }, 3000);
-        },
-        row.source_lang
-      );
-    } catch (err) {
-      reportError("Failed to process translation", err);
-      setIsTtsLoading(false);
-      isTtsActiveRef.current = false;
-      processNextInQueue();
-    }
-  }, [ensureAudioContext, reportError, updateTranslation]);
-
-  const handleIncomingRow = useCallback((row: any) => {
-    if (!row) return; // || row.speaker_id === MY_USER_ID) return;
-    if (row.last_segment_id === lastProcessedSegmentIdRef.current) return;
-    if (segmentQueueRef.current.some(q => q.last_segment_id === row.last_segment_id)) return;
-
-    segmentQueueRef.current.push(row);
-    processNextInQueue();
-  }, [processNextInQueue]);
-
-  const fetchCurrentSegment = useCallback(async () => {
-    if (!meetingId) return;
-    try {
-      const { data, error } = await supabase.from('transcript_segments')
-        .select('*')
-        .eq('meeting_id', meetingId)
-        .maybeSingle();
-      
-      if (error) throw error;
-      if (data) handleIncomingRow(data);
-    } catch (err) {
-      // Silent fail on fetch is okay occasionally, but good to log if persistent
-      console.warn("Fetch segment error:", err);
-    }
-  }, [handleIncomingRow, meetingId]);
-
-  useEffect(() => {
-    if (mode === 'listening' && meetingId) {
-      const channel = supabase
-        .channel(`meeting:${meetingId}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'transcript_segments', filter: `meeting_id=eq.${meetingId}` }, 
-          (payload) => handleIncomingRow(payload.new))
-        .subscribe((status, err) => {
-          if (status === 'CHANNEL_ERROR') {
-             reportError(`Realtime connection error: ${status}`, err);
-          }
-        });
-      
-      realtimeChannelRef.current = channel;
-      fetchCurrentSegment();
-      const pollInterval = setInterval(fetchCurrentSegment, 2000);
-
-      return () => {
-        if (realtimeChannelRef.current) supabase.removeChannel(realtimeChannelRef.current);
-        clearInterval(pollInterval);
-      };
-    }
-  }, [mode, handleIncomingRow, fetchCurrentSegment, reportError, meetingId]);
-
   const toggleListen = async () => {
     const ctx = ensureAudioContext(); 
     if (!ctx) return;
     
     if (mode === 'listening') {
       setMode('idle');
-      setTranslatedStreamText('');
-      setAudioData(new Uint8Array(0));
-      segmentQueueRef.current = [];
-      lastProcessedSegmentIdRef.current = null;
     } else {
       setMode('listening');
       setLivePartialText('');
       setLastFinalText('');
-      setTranslatedStreamText('');
     }
   };
 
@@ -415,15 +283,10 @@ export function OrbitApp() {
         <TranslatorDock
           mode={mode}
           roomState={roomState}
-          selectedLanguage={selectedLanguage}
           myUserId={MY_USER_ID}
           onSpeakToggle={handleSpeakToggle}
-          onListenToggle={toggleListen}
-          onLanguageChange={setSelectedLanguage}
+
           onRaiseHand={() => roomStateService.raiseHand(MY_USER_ID, MY_USER_NAME)}
-          audioData={audioData}
-          audioSource={audioSource}
-          onAudioSourceToggle={() => setAudioSource(audioSource === 'mic' ? 'system' : 'mic')}
           isSignedIn={!!sessionUser}
           onAuthToggle={async (initialMeetingId?: string) => {
             if (sessionUser) {
@@ -473,9 +336,6 @@ export function OrbitApp() {
             }
           }}
           liveStreamText={sourceDisplayText}
-          translatedStreamText={translatedStreamText}
-          isTtsLoading={isTtsLoading}
-          emotion={emotion}
           isMinimized={isDockMinimized}
           onMinimizeToggle={() => setIsDockMinimized(!isDockMinimized)}
         />
@@ -493,13 +353,7 @@ export function OrbitApp() {
               {sourceDisplayText}
             </p>
           )}
-          {translatedStreamText && mode === 'listening' && (
-            <p className={`text-[14.5px] font-semibold tracking-wide mt-2 drop-shadow-2xl animate-in fade-in slide-in-from-bottom-1 duration-500 ${
-              EMOTION_COLORS[emotion] || 'text-emerald-400'
-            }`}>
-              {translatedStreamText}
-            </p>
-          )}
+
         </div>
       </div>
 
