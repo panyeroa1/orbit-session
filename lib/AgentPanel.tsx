@@ -4,12 +4,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from '@/styles/Eburon.module.css';
 import { supabase } from '@/lib/orbit/services/supabaseClient';
 import { streamTranslation } from '@/lib/orbit/services/geminiService';
-import { LANGUAGES, Language, AUTO_DETECT } from '@/lib/orbit/types';
-import { Volume2, VolumeX, Loader2 } from 'lucide-react';
+import { LANGUAGES, Language } from '@/lib/orbit/types';
+import { Volume2, Loader2, Mic, MicOff, Sparkles, StopCircle } from 'lucide-react';
 
 interface AgentPanelProps {
   meetingId?: string;
   onSpeakingStateChange?: (isSpeaking: boolean) => void;
+  isTranscriptionEnabled: boolean;
+  onToggleTranscription: () => void;
 }
 
 interface TranslationLog {
@@ -19,9 +21,9 @@ interface TranslationLog {
   lang: string;
 }
 
-export function AgentPanel({ meetingId, onSpeakingStateChange }: AgentPanelProps) {
+export function AgentPanel({ meetingId, onSpeakingStateChange, isTranscriptionEnabled, onToggleTranscription }: AgentPanelProps) {
   const [targetLang, setTargetLang] = useState<Language>(LANGUAGES.find(l => l.code === 'es-ES') || LANGUAGES[1]);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isAgentActive, setIsAgentActive] = useState(false);
   const [logs, setLogs] = useState<TranslationLog[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -52,7 +54,7 @@ export function AgentPanel({ meetingId, onSpeakingStateChange }: AgentPanelProps
   }, []);
 
   const processQueue = useCallback(async () => {
-    if (processingRef.current || queueRef.current.length === 0 || isMuted) return;
+    if (processingRef.current || queueRef.current.length === 0 || !isAgentActive) return;
 
     processingRef.current = true;
     const segment = queueRef.current.shift();
@@ -78,7 +80,7 @@ export function AgentPanel({ meetingId, onSpeakingStateChange }: AgentPanelProps
         ctx,
         () => {}, // Audio handled by service
         (text) => {
-          // Live update (optional, service sends full text updates)
+          // Live update (optional)
         },
         (finalText) => {
           finalTranslation = finalText;
@@ -99,14 +101,23 @@ export function AgentPanel({ meetingId, onSpeakingStateChange }: AgentPanelProps
       setIsSpeaking(false);
       processQueue();
     }
-  }, [isMuted, targetLang, ensureAudioContext]);
+  }, [isAgentActive, targetLang, ensureAudioContext]);
 
-  // Trigger queue processing when unmuted or new items added
+  // Trigger queue processing when active or new items added
   useEffect(() => {
-    if (!isMuted && !processingRef.current && queueRef.current.length > 0) {
+    if (isAgentActive && !processingRef.current && queueRef.current.length > 0) {
       processQueue();
     }
-  }, [isMuted, processQueue]);
+  }, [isAgentActive, processQueue]);
+
+  // Stop audio when agent is disabled
+  useEffect(() => {
+    if (!isAgentActive && audioCtxRef.current) {
+        audioCtxRef.current.suspend();
+        setIsSpeaking(false);
+        processingRef.current = false; 
+    }
+  }, [isAgentActive]);
 
   // Subscribe to transcription
   useEffect(() => {
@@ -137,7 +148,6 @@ export function AgentPanel({ meetingId, onSpeakingStateChange }: AgentPanelProps
   }, [meetingId, processQueue]);
 
   return (
-
     <div className="flex flex-col h-full bg-[#0a0f18] text-white font-sans">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-gradient-to-r from-blue-950/20 to-slate-900/20 backdrop-blur-sm">
@@ -152,27 +162,41 @@ export function AgentPanel({ meetingId, onSpeakingStateChange }: AgentPanelProps
              </span>
           </div>
         </div>
-        <button 
-           onClick={() => {
-              const newState = !isMuted;
-              setIsMuted(newState);
-              if (newState) {
-                 if (audioCtxRef.current) audioCtxRef.current.suspend();
-              } else {
-                 ensureAudioContext();
-              }
-           }}
-           className={`p-2.5 rounded-xl transition-all duration-300 border ${isMuted 
-             ? 'bg-red-500/5 border-red-500/20 text-red-400 hover:bg-red-500/10' 
-             : 'bg-emerald-500/5 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 hover:shadow-[0_0_15px_rgba(52,211,153,0.15)]'}`}
-           title={isMuted ? "Unmute Agent" : "Mute Agent"}
+      </div>
+
+      {/* Main Controls */}
+      <div className="grid grid-cols-2 gap-3 p-4 border-b border-white/5">
+        <button
+          onClick={onToggleTranscription}
+          className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-300 ${
+             isTranscriptionEnabled 
+             ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.15)]' 
+             : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
+          }`}
         >
-           {isMuted ? <VolumeX size={18} strokeWidth={1.5} /> : <Volume2 size={18} strokeWidth={1.5} />}
+          {isTranscriptionEnabled ? <Mic size={20} className="mb-1.5" /> : <MicOff size={20} className="mb-1.5" />}
+          <span className="text-[10px] uppercase font-bold tracking-wider">Speak</span>
+        </button>
+
+        <button
+          onClick={() => {
+             const newState = !isAgentActive;
+             setIsAgentActive(newState);
+             if (newState) ensureAudioContext();
+          }}
+          className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-300 ${
+             isAgentActive 
+             ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
+             : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
+          }`}
+        >
+          {isAgentActive ? <Sparkles size={20} className="mb-1.5" /> : <StopCircle size={20} className="mb-1.5" />}
+          <span className="text-[10px] uppercase font-bold tracking-wider">Translate</span>
         </button>
       </div>
 
-      {/* Controls */}
-      <div className="p-5 border-b border-white/5 bg-white/[0.01]">
+      {/* Target Language */}
+      <div className="px-5 py-3 border-b border-white/5 bg-white/[0.01]">
         <label className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-2.5 block flex items-center gap-2">
            <span>Target Language</span>
            <div className="h-px bg-slate-800 flex-1"/>
