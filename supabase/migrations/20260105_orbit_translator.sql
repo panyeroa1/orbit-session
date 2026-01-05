@@ -188,7 +188,19 @@ $$;
 -- ===========================
 -- REALTIME SETUP
 -- ===========================
--- Enable real-time for the tables we need to watch
--- This is required for the 'postgres_changes' listeners in the frontend.
-alter publication supabase_realtime add table public.room_state;
-alter publication supabase_realtime add table public.utterances;
+-- Enable real-time for the tables we need to watch (idempotent)
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.room_state;
+EXCEPTION WHEN duplicate_object THEN
+  -- Already added, ignore
+END;
+$$;
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.utterances;
+EXCEPTION WHEN duplicate_object THEN
+  -- Already added, ignore
+END;
+$$;

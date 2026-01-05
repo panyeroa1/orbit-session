@@ -760,12 +760,10 @@ function VideoConferenceComponent(props: {
         );
       case 'agent':
         return (
-          <div className="p-4 flex flex-col items-center">
-            <OrbitTranslatorVertical 
-              roomCode={roomName} 
-              userId={user?.id || 'guest-user'} 
-            />
-          </div>
+          <OrbitTranslatorVertical 
+            roomCode={roomName} 
+            userId={user?.id || 'guest-user'} 
+          />
         );
       case 'chat':
         return <ChatPanel />;

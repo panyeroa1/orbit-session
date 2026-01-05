@@ -2013,3 +2013,16 @@
   border-color: rgba(34, 197, 94, 0.8);
   background: rgba(34, 197, 94, 0.08);
 }
+
+/* Orbit Icon Styles */
+.orbitIcon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.orbitIconMobile {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}

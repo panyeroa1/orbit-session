@@ -5,6 +5,7 @@ import { useLocalParticipant, useRoomContext } from '@livekit/components-react';
 import { Track, type ScreenShareCaptureOptions, type AudioCaptureOptions } from 'livekit-client';
 import toast from 'react-hot-toast';
 import styles from '../styles/Eburon.module.css';
+import { OrbitIcon } from '@/lib/orbit/components/OrbitTranslatorVertical';
 
 // Jitsi-style SVG Icons (simple, line-based)
 const MicIcon = () => (
@@ -699,25 +700,14 @@ export function EburonControlBar({
             </button>
           )}
 
-          {onTranscriptionToggle && (
-            <button
-              className={`${styles.controlButton} ${isTranscriptionOpen ? styles.controlButtonActive : ''} ${roomState?.activeSpeaker?.userId && roomState.activeSpeaker.userId !== userId ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={onTranscriptionToggle}
-              disabled={!!(roomState?.activeSpeaker?.userId && roomState.activeSpeaker.userId !== userId)}
-              title={roomState?.activeSpeaker?.userId && roomState.activeSpeaker.userId !== userId ? 'Someone else is speaking' : 'Transcription'}
-              aria-pressed={isTranscriptionOpen}
-            >
-              <CaptionsIcon />
-            </button>
-          )}
 
           {onAgentToggle && (
             <button
               className={`${styles.controlButton} ${isAgentOpen ? styles.controlButtonActive : ''}`}
               onClick={onAgentToggle}
-              title="Agent"
+              title="Translator"
             >
-              <BotIcon />
+              <OrbitIcon size={20} />
             </button>
           )}
 
@@ -780,18 +770,6 @@ export function EburonControlBar({
           <ChatIcon />
           <span>Chat</span>
         </button>
-        {onTranscriptionToggle && (
-          <button 
-            className={`${styles.mobileNavbarItem} ${isTranscriptionOpen ? styles.mobileNavbarItemActive : ''}`}
-            onClick={() => {
-              onTranscriptionToggle();
-              setIsMobileMenuOpen(false);
-            }}
-          >
-            <CaptionsIcon />
-            <span>Captions</span>
-          </button>
-        )}
         <button 
           className={`${styles.mobileNavbarItem} ${isParticipantsOpen ? styles.mobileNavbarItemActive : ''}`}
           onClick={() => {
@@ -842,8 +820,8 @@ export function EburonControlBar({
                   setIsMobileMenuOpen(false);
                 }}
               >
-                <div className={styles.mobileGridIcon}><BotIcon /></div>
-                <span className={styles.mobileGridLabel}>Agent</span>
+                <div className={styles.mobileGridIcon}><OrbitIcon size={24} /></div>
+                <span className={styles.mobileGridLabel}>Translator</span>
               </button>
             )}
 
