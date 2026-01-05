@@ -165,16 +165,16 @@ export function AgentPanel({ meetingId, onSpeakingStateChange, isTranscriptionEn
       </div>
 
       {/* Main Controls */}
-      <div className="grid grid-cols-2 gap-3 p-4 border-b border-white/5">
+      <div className="flex flex-col gap-3 p-4 border-b border-white/5">
         <button
           onClick={onToggleTranscription}
-          className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-300 ${
+          className={`group flex items-center justify-center p-3 rounded-xl border transition-all duration-300 w-full hover:scale-[1.02] ${
              isTranscriptionEnabled 
              ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.15)]' 
              : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
           }`}
         >
-          {isTranscriptionEnabled ? <Mic size={20} className="mb-1.5" /> : <MicOff size={20} className="mb-1.5" />}
+          {isTranscriptionEnabled ? <Mic size={20} className="mr-3" /> : <MicOff size={20} className="mr-3" />}
           <span className="text-[10px] uppercase font-bold tracking-wider">Speak</span>
         </button>
 
@@ -184,13 +184,13 @@ export function AgentPanel({ meetingId, onSpeakingStateChange, isTranscriptionEn
              setIsAgentActive(newState);
              if (newState) ensureAudioContext();
           }}
-          className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-300 ${
+          className={`group flex items-center justify-center p-3 rounded-xl border transition-all duration-300 w-full hover:scale-[1.02] ${
              isAgentActive 
              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
              : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
           }`}
         >
-          {isAgentActive ? <Sparkles size={20} className="mb-1.5" /> : <StopCircle size={20} className="mb-1.5" />}
+          {isAgentActive ? <Sparkles size={20} className="mr-3" /> : <StopCircle size={20} className="mr-3" />}
           <span className="text-[10px] uppercase font-bold tracking-wider">Translate</span>
         </button>
       </div>
