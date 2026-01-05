@@ -15,7 +15,10 @@ export async function POST(request: Request) {
     // We proceed to fetch even if apiKey is undefined.
 
     const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
-    console.log(`Sending translation request to: ${ollamaUrl}/v1/chat/completions`, { model: 'gemini-3-flash-preview:latest', targetLang });
+    
+    if (!process.env.OLLAMA_BASE_URL) {
+      console.warn(`[Production Warning] OLLAMA_BASE_URL not set, falling back to: ${ollamaUrl}. This may fail in cloud environments.`);
+    }
 
     const response = await fetch(`${ollamaUrl}/v1/chat/completions`, {
       method: 'POST',
@@ -35,7 +38,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       const err = await response.text();
-      console.error('Ollama Translation Error:', err);
+      console.error(`[Translation Failed] Ollama at ${ollamaUrl} returned ${response.status}:`, err);
       return new NextResponse(err, { status: response.status });
     }
 

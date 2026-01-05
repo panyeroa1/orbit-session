@@ -55,13 +55,15 @@ export function OrbitApp() {
         
         if (session?.user) {
           setSessionUser(session.user);
-          let currentMeetingId = sessionStorage.getItem('eburon_meeting_id');
-          if (!currentMeetingId) {
-            currentMeetingId = `MEETING_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-            sessionStorage.setItem('eburon_meeting_id', currentMeetingId);
-          }
-          setMeetingId(currentMeetingId);
         }
+
+        // Initialize meetingId regardless of session (allows guest use)
+        let currentMeetingId = sessionStorage.getItem('eburon_meeting_id');
+        if (!currentMeetingId) {
+          currentMeetingId = `MEETING_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+          sessionStorage.setItem('eburon_meeting_id', currentMeetingId);
+        }
+        setMeetingId(currentMeetingId);
       } catch (err) {
         reportError("Session initialization failed", err);
       }
