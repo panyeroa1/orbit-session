@@ -6,12 +6,12 @@ import { DebugMode } from '@/lib/Debug';
 import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { RecordingIndicator } from '@/lib/RecordingIndicator';
 import { ConnectionDetails } from '@/lib/types';
-import { SuccessClassControlBar } from '@/lib/SuccessClassControlBar';
+import { EburonControlBar } from '@/lib/EburonControlBar';
 import { TranslatorPluginFrame } from '@/lib/TranslatorPluginFrame';
 import { ChatPanel } from '@/lib/ChatPanel';
 import { ParticipantsPanel } from '@/lib/ParticipantsPanel';
 import { AgentPanel } from '@/lib/AgentPanel';
-import roomStyles from '@/styles/SuccessClass.module.css';
+import roomStyles from '@/styles/Eburon.module.css';
 import {
   LocalUserChoices,
   PreJoin,
@@ -752,7 +752,7 @@ function VideoConferenceComponent(props: {
           <TranslatorPluginFrame isOpen={isTranslatorOpen} />
 
           {/* Custom control bar */}
-          <SuccessClassControlBar 
+          <EburonControlBar 
             onParticipantsToggle={() => handleSidebarPanelToggle('participants')}
             onAgentToggle={() => handleSidebarPanelToggle('agent')}
             onChatToggle={() => handleSidebarPanelToggle('chat')}

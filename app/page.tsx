@@ -94,7 +94,7 @@ export default function Page() {
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
             <span className={styles.badgeDot} />
-            Success Class • Powered by Orbit AI
+            Eburon • Powered by Eburon AI
           </div>
           <a href="/integrations" className={styles.integrationIcon} aria-label="View integrations">
             🔗
@@ -108,17 +108,17 @@ export default function Page() {
           </button>
           <Image
             className={styles.logo}
-            src="/images/success-class-logo.svg"
-            alt="Success Class"
+            src="/images/eburon-logo.svg"
+            alt="Eburon"
             width={220}
             height={36}
             priority
           />
           <h1 className={styles.headline}>
-            Success Class meetings with <span className={styles.headlineAccent}>Orbit AI intelligence</span>
+            Eburon meetings with <span className={styles.headlineAccent}>Eburon AI intelligence</span>
           </h1>
           <p className={styles.subheadline}>
-            Crystal-clear video, Orbit AI insights, and live session summaries that stay on pace with every speaker.
+            Crystal-clear video, Eburon AI insights, and live session summaries that stay on pace with every speaker.
           </p>
           <div className={styles.heroStats}>
             <div>
@@ -126,7 +126,7 @@ export default function Page() {
               <span>Ultra HD streaming</span>
             </div>
             <div>
-              <strong>Orbit AI</strong>
+              <strong>Eburon AI</strong>
               <span>Insights + Summaries</span>
             </div>
             <div>
@@ -167,7 +167,7 @@ export default function Page() {
           <div className={styles.zigZagContent}>
             <h2>Analytics & Insights</h2>
             <p>
-              Real-time sentiment analysis, speaker highlights, and Orbit AI engagement streams.
+              Real-time sentiment analysis, speaker highlights, and Eburon AI engagement streams.
               Visualize your meeting data with our premium dashboard.
             </p>
           </div>
@@ -185,7 +185,7 @@ export default function Page() {
         {/* Item 2: Translation (Right Text, Left Image) */}
         <div className={`${styles.zigZagRow} ${styles.rowReverse}`}>
           <div className={styles.zigZagContent}>
-            <h2>Orbit AI Highlights</h2>
+            <h2>Eburon AI Highlights</h2>
             <p>Live, nuance-aware insights that adapt to speaker cadence.</p>
           </div>
           <div className={styles.zigZagVisual}>
@@ -203,7 +203,7 @@ export default function Page() {
         <div className={styles.zigZagRow}>
           <div className={styles.zigZagContent}>
             <h2>Flow Automation</h2>
-            <p>Connect Orbit AI voice, insights, and automations in one seamless pipe.</p>
+            <p>Connect Eburon AI voice, insights, and automations in one seamless pipe.</p>
           </div>
           <div className={styles.zigZagVisual}>
              <Image
@@ -238,8 +238,8 @@ export default function Page() {
         <div>
           <h2>Integrations for every workflow</h2>
           <p>
-            Push clips to Orbit AI Narration, run Orbit AI Voice, or sync Orbit AI analytics from a single panel.
-            More Orbit AI tools keep your workspace superior to the rest.
+            Push clips to Eburon AI Narration, run Eburon AI Voice, or sync Eburon AI analytics from a single panel.
+            More Eburon AI tools keep your workspace superior to the rest.
           </p>
         </div>
         <button className={styles.primaryButton} onClick={() => window.location.assign('/integrations')}>

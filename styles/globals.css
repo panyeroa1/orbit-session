@@ -2,32 +2,21 @@
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   
-  /* Palette - Dark (Default) */
-  --color-bg-dark: #03040a;
-  --color-bg-gradient-dark: radial-gradient(circle at top, rgba(59, 130, 246, 0.15), transparent 45%),
-                            radial-gradient(circle at bottom, rgba(34, 197, 94, 0.12), transparent 50%),
-                            #03040a;
+  /* Palette - Eburon */
+  --color-bg-dark: #1D0E32;
+  --color-bg-gradient-dark: radial-gradient(circle at top, rgba(141, 22, 88, 0.15), transparent 45%),
+                            radial-gradient(circle at bottom, rgba(235, 192, 113, 0.12), transparent 50%),
+                            #1D0E32;
   
-  --color-card-dark: rgba(255, 255, 255, 0.03);
-  --color-border-dark: rgba(255, 255, 255, 0.08);
-  --color-text-main: #ffffff;
-  --color-text-muted: rgba(255, 255, 255, 0.65);
+  --color-card-dark: rgba(255, 255, 255, 0.04);
+  --color-border-dark: rgba(255, 255, 255, 0.1);
+  --color-text-main: #FDF0E0;
+  --color-text-muted: rgba(253, 240, 224, 0.65);
 
-  /* Palette - Brand */
-  --color-primary: #22c55e;
-  --color-secondary: #16a34a;
-  --color-accent: #3b82f6;
-
-  /* Palette - Light (Theme) */
-  --color-bg-light: #f8fafc;
-  --color-bg-gradient-light: radial-gradient(circle at top, rgba(59, 130, 246, 0.08), transparent 45%),
-                             radial-gradient(circle at bottom, rgba(34, 197, 94, 0.08), transparent 50%),
-                             #f8fafc;
-  
-  --color-card-light: #ffffff;
-  --color-border-light: rgba(0, 0, 0, 0.08);
-  --color-text-main-light: #0f172a;
-  --color-text-muted-light: #475569;
+  /* Palette - Brand Accents */
+  --color-primary: #8D1658;
+  --color-secondary: #EBC071;
+  --color-accent: #8D1658;
 }
 
 * {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Chat, formatChatMessageLinks, useParticipants, useRoomContext } from '@livekit/components-react';
-import styles from '../styles/SuccessClass.module.css';
+import styles from '../styles/Eburon.module.css';
 
 export function ChatPanel() {
   const room = useRoomContext();

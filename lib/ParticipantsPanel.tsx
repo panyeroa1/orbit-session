@@ -14,7 +14,7 @@ import {
   type TrackReference,
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import styles from '../styles/SuccessClass.module.css';
+import styles from '../styles/Eburon.module.css';
 
 // Icons
 const MicIcon = () => (

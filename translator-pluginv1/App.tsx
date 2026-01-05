@@ -244,7 +244,7 @@ const App: React.FC = () => {
   const sourceDisplayText = [...transcriptHistory, livePartialText].filter(Boolean).join(' ');
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center pt-48 p-4 overflow-hidden relative">
+    <div className="min-h-screen bg-[#1D0E32] flex flex-col items-center pt-48 p-4 overflow-hidden relative">
       <TranslatorDock
         mode={mode}
         roomState={roomState}
@@ -263,9 +263,9 @@ const App: React.FC = () => {
         emotion={emotion}
       />
       <div className="fixed inset-0 pointer-events-none -z-10 opacity-30">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(17,24,39,1)_0%,rgba(0,0,0,1)_100%)]" />
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-900/10 blur-[120px] rounded-full" />
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(29,14,50,1)_0%,rgba(20,10,35,1)_100%)]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#8D1658]/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#EBC071]/10 blur-[120px] rounded-full" />
       </div>
     </div>
   );

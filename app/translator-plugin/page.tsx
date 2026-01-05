@@ -31,8 +31,8 @@ export default function TranslatorPluginPage() {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #000000;
-  color: #f8fafc;
+  background-color: #1D0E32;
+  color: #FDF0E0;
   margin: 0;
 }
 @keyframes live-pulse {
@@ -89,8 +89,8 @@ body {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#000',
-          color: '#f8fafc',
+          background: '#1D0E32',
+          color: '#FDF0E0',
           fontFamily: 'Inter, sans-serif',
         }}
       >

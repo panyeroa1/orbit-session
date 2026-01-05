@@ -6,37 +6,37 @@ import ClientOnlyToaster from '@/components/ClientOnlyToaster';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Success Class | Orbit AI Meetings',
+    default: 'Eburon | AI Meetings',
     template: '%s',
   },
   description:
-    'Success Class is a video conferencing platform designed for education, powered by Orbit AI.',
+    'Eburon is a video conferencing platform designed for education, powered by Eburon AI.',
   twitter: {
-    creator: '@orbit_ai',
-    site: '@orbit_ai',
+    creator: '@eburon_ai',
+    site: '@eburon_ai',
     card: 'summary_large_image',
   },
   openGraph: {
-    url: 'https://successclass.ai',
+    url: 'https://eburon.ai',
     images: [
       {
-        url: 'https://successclass.ai/images/success-class-open-graph.png',
+        url: 'https://eburon.ai/images/eburon-open-graph.png',
         width: 2000,
         height: 1000,
         type: 'image/png',
       },
     ],
-    siteName: 'Success Class',
+    siteName: 'Eburon',
   },
   icons: {
     icon: {
       rel: 'icon',
-      url: '/images/success-class-open-graph.png',
+      url: '/images/eburon-open-graph.png',
     },
     apple: [
       {
         rel: 'apple-touch-icon',
-        url: '/images/success-class-apple-touch.png',
+        url: '/images/eburon-apple-touch.png',
         sizes: '180x180',
       },
     ],

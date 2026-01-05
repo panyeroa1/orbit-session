@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { LocalAudioTrack, Room, RoomEvent, Track, createAudioAnalyser } from 'livekit-client';
-import styles from '@/styles/SuccessClass.module.css';
+import styles from '@/styles/Eburon.module.css';
 
 export type TranscriptSegment = {
   text: string;

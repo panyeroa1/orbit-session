@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import styles from '../styles/SuccessClass.module.css';
+import styles from '../styles/Eburon.module.css';
 
 type AgentMessage = {
   role: 'user' | 'assistant';
@@ -10,7 +10,7 @@ type AgentMessage = {
 
 const INITIAL_MESSAGE: AgentMessage = {
   role: 'assistant',
-  content: 'Ask me anything about Success Class, features, or how the app works.',
+  content: 'Ask me anything about Eburon, features, or how the app works.',
 };
 
 export function AgentPanel() {

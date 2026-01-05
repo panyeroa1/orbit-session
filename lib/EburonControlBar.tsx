@@ -4,7 +4,7 @@ import React from 'react';
 import { useLocalParticipant, useRoomContext } from '@livekit/components-react';
 import { Track, type ScreenShareCaptureOptions, type AudioCaptureOptions } from 'livekit-client';
 import toast from 'react-hot-toast';
-import styles from '../styles/SuccessClass.module.css';
+import styles from '../styles/Eburon.module.css';
 
 // Jitsi-style SVG Icons (simple, line-based)
 const MicIcon = () => (
@@ -166,7 +166,7 @@ const CloseIcon = () => (
   </svg>
 );
 
-interface SuccessClassControlBarProps {
+interface EburonControlBarProps {
   onChatToggle?: () => void;
   onParticipantsToggle?: () => void;
   onAgentToggle?: () => void;
@@ -182,7 +182,7 @@ interface SuccessClassControlBarProps {
   onAppMuteToggle?: (muted: boolean | ((prev: boolean) => boolean)) => void;
 }
 
-export function SuccessClassControlBar({
+export function EburonControlBar({
   onChatToggle,
   onParticipantsToggle,
   onAgentToggle,
@@ -196,7 +196,7 @@ export function SuccessClassControlBar({
   isTranslatorOpen,
   isAppMuted = false,
   onAppMuteToggle,
-}: SuccessClassControlBarProps) {
+}: EburonControlBarProps) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
   
@@ -508,238 +508,230 @@ export function SuccessClassControlBar({
   return (
     <>
       <div className={`${styles.controlBar} ${isSidebarOpen ? styles.controlBarShifted : ''}`}>
-        {/* Microphone with Device Selector */}
-        <div className={styles.screenShareWrapper} ref={micMenuRef}>
+        {/* Left Group: AV Controls */}
+        <div className={styles.controlGroup}>
+          <div className={styles.screenShareWrapper} ref={micMenuRef}>
+            <button
+              className={`${styles.controlButton} ${isMicEnabled ? styles.controlButtonActive : styles.controlButtonMuted}`}
+              onClick={toggleMicrophone}
+              title={isMicEnabled ? 'Mute microphone' : 'Unmute microphone'}
+            >
+              {isMicEnabled ? <MicIcon /> : <MicOffIcon />}
+            </button>
+            <button
+              className={styles.deviceSelectorTrigger}
+              onClick={async () => {
+                if (!isMicMenuOpen) await ensureMicPermissionForLabels();
+                setIsMicMenuOpen((prev) => !prev);
+              }}
+              title="Select microphone"
+              aria-expanded={isMicMenuOpen}
+              aria-haspopup="listbox"
+            >
+              <ChevronDownIcon />
+            </button>
+            {isMicMenuOpen && audioDevices.length > 0 && (
+              <div className={styles.deviceMenu} role="listbox" aria-label="Select Microphone">
+                {audioDevices.map((device) => (
+                  <button
+                    key={device.deviceId}
+                    className={`${styles.deviceOption} ${selectedAudioDevice === device.deviceId ? styles.deviceOptionActive : ''}`}
+                    onClick={() => switchAudioDevice(device.deviceId)}
+                    role="option"
+                    aria-selected={selectedAudioDevice === device.deviceId}
+                  >
+                    {device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <button
-            className={`${styles.controlButton} ${isMicEnabled ? styles.controlButtonActive : styles.controlButtonMuted}`}
-            onClick={toggleMicrophone}
-            title={isMicEnabled ? 'Mute microphone' : 'Unmute microphone'}
+            className={`${styles.controlButton} ${isCameraEnabled ? styles.controlButtonActive : styles.controlButtonMuted}`}
+            onClick={toggleCamera}
+            title={isCameraEnabled ? 'Turn off camera' : 'Turn on camera'}
           >
-            {isMicEnabled ? <MicIcon /> : <MicOffIcon />}
+            {isCameraEnabled ? <CameraIcon /> : <CameraOffIcon />}
           </button>
-          <button
-            className={styles.deviceSelectorTrigger}
-            onClick={async () => {
-              if (!isMicMenuOpen) await ensureMicPermissionForLabels();
-              setIsMicMenuOpen((prev) => !prev);
-            }}
-            title="Select microphone"
-            aria-expanded={isMicMenuOpen}
-            aria-haspopup="listbox"
-          >
-            <ChevronDownIcon />
-          </button>
-          {isMicMenuOpen && audioDevices.length > 0 && (
-            <div className={styles.deviceMenu} role="listbox" aria-label="Select Microphone">
-              {audioDevices.map((device) => (
+
+          <div className={styles.screenShareWrapper} ref={screenShareMenuRef}>
+            <button
+              className={`${styles.controlButton} ${isScreenSharing ? styles.controlButtonActive : ''}`}
+              onClick={() => {
+                if (isScreenSharing) {
+                  stopScreenShare();
+                  return;
+                }
+                setIsScreenShareMenuOpen((prev) => !prev);
+              }}
+              title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
+              aria-expanded={isScreenShareMenuOpen ? 'true' : 'false'}
+              aria-haspopup="dialog"
+            >
+              <ScreenShareIcon />
+            </button>
+            {isScreenShareMenuOpen && !isScreenSharing && (
+              <div className={styles.screenShareMenu} role="dialog" aria-label="Screen Share Options">
                 <button
-                  key={device.deviceId}
-                  className={`${styles.deviceOption} ${selectedAudioDevice === device.deviceId ? styles.deviceOptionActive : ''}`}
-                  onClick={() => switchAudioDevice(device.deviceId)}
-                  role="option"
-                  aria-selected={selectedAudioDevice === device.deviceId}
+                  className={styles.screenShareOption}
+                  type="button"
+                  onClick={() => startScreenShare('browser')}
                 >
-                  {device.label || `Microphone ${audioDevices.indexOf(device) + 1}`}
+                  Share tab
                 </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Camera */}
-        <button
-          className={`${styles.controlButton} ${isCameraEnabled ? styles.controlButtonActive : styles.controlButtonMuted}`}
-          onClick={toggleCamera}
-          title={isCameraEnabled ? 'Turn off camera' : 'Turn on camera'}
-        >
-          {isCameraEnabled ? <CameraIcon /> : <CameraOffIcon />}
-        </button>
-
-        {/* Screen Share */}
-        <div className={styles.screenShareWrapper} ref={screenShareMenuRef}>
-          <button
-            className={`${styles.controlButton} ${isScreenSharing ? styles.controlButtonActive : ''}`}
-            onClick={() => {
-              if (isScreenSharing) {
-                stopScreenShare();
-                return;
-              }
-              setIsScreenShareMenuOpen((prev) => !prev);
-            }}
-            title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
-            aria-expanded={isScreenShareMenuOpen ? 'true' : 'false'}
-            aria-haspopup="dialog"
-          >
-            <ScreenShareIcon />
-          </button>
-          {isScreenShareMenuOpen && !isScreenSharing && (
-            <div className={styles.screenShareMenu} role="dialog" aria-label="Screen Share Options">
-              <button
-                className={styles.screenShareOption}
-                type="button"
-                onClick={() => startScreenShare('browser')}
-              >
-                Share tab
-              </button>
-              <button
-                className={styles.screenShareOption}
-                type="button"
-                onClick={() => startScreenShare('monitor')}
-              >
-                Share screen
-              </button>
-              <label className={styles.screenShareToggle}>
-                <span className={styles.screenShareToggleLabel}>Share audio</span>
-                <span className={styles.screenShareToggleControl}>
-                  <input
-                    className={styles.screenShareToggleInput}
-                    type="checkbox"
-                    checked={shareAudioEnabled}
-                    onChange={(event) => setShareAudioEnabled(event.target.checked)}
-                    aria-label="Share screen audio"
-                  />
-                  <span className={styles.screenShareToggleTrack}>
-                    <span className={styles.screenShareToggleThumb} />
+                <button
+                  className={styles.screenShareOption}
+                  type="button"
+                  onClick={() => startScreenShare('monitor')}
+                >
+                  Share screen
+                </button>
+                <label className={styles.screenShareToggle}>
+                  <span className={styles.screenShareToggleLabel}>Share audio</span>
+                  <span className={styles.screenShareToggleControl}>
+                    <input
+                      className={styles.screenShareToggleInput}
+                      type="checkbox"
+                      checked={shareAudioEnabled}
+                      onChange={(event) => setShareAudioEnabled(event.target.checked)}
+                      aria-label="Share screen audio"
+                    />
+                    <span className={styles.screenShareToggleTrack}>
+                      <span className={styles.screenShareToggleThumb} />
+                    </span>
                   </span>
-                </span>
-              </label>
-            </div>
+                </label>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.screenShareWrapper} ref={speakerMenuRef}>
+            <button
+              className={`${styles.controlButton} ${isAppMuted ? styles.controlButtonMuted : styles.controlButtonActive}`}
+              onClick={() => onAppMuteToggle?.((prev) => !prev)}
+              title={isAppMuted ? 'Unmute app audio' : 'Mute app audio'}
+            >
+              {isAppMuted ? <SpeakerOffIcon /> : <SpeakerIcon />}
+            </button>
+            <button
+              className={styles.deviceSelectorTrigger}
+              onClick={() => setIsSpeakerMenuOpen((prev) => !prev)}
+              title="Select speaker"
+              aria-expanded={isSpeakerMenuOpen}
+              aria-haspopup="listbox"
+            >
+              <ChevronDownIcon />
+            </button>
+            {isSpeakerMenuOpen && speakerDevices.length > 0 && (
+              <div className={styles.deviceMenu} role="listbox" aria-label="Select Speaker">
+                {speakerDevices.map((device) => (
+                  <button
+                    key={device.deviceId}
+                    className={`${styles.deviceOption} ${selectedSpeakerDevice === device.deviceId ? styles.deviceOptionActive : ''}`}
+                    onClick={async () => {
+                      setSelectedSpeakerDevice(device.deviceId);
+                      setIsSpeakerMenuOpen(false);
+                      try {
+                        await room.switchActiveDevice('audiooutput', device.deviceId);
+                        toast.success(`Switched to ${device.label || 'new speaker'}`);
+                      } catch (error) {
+                        console.error('Failed to switch speaker:', error);
+                        toast.error('Failed to switch speaker');
+                      }
+                    }}
+                    role="option"
+                    aria-selected={selectedSpeakerDevice === device.deviceId}
+                  >
+                    {device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Center Group: Navigation/Feature Controls */}
+        <div className={styles.controlGroupCenter}>
+          {onParticipantsToggle && (
+            <button
+              className={`${styles.controlButton} ${isParticipantsOpen ? styles.controlButtonActive : ''}`}
+              onClick={onParticipantsToggle}
+              title="Participants"
+            >
+              <ParticipantsIcon />
+            </button>
+          )}
+
+          <button
+            className={`${styles.controlButton} ${isHandRaised ? styles.raiseHandActive : ''}`}
+            onClick={toggleRaiseHand}
+            title={isHandRaised ? 'Lower hand' : 'Raise hand'}
+            aria-pressed={isHandRaised}
+          >
+            <RaiseHandIcon />
+          </button>
+
+          {onChatToggle && (
+            <button
+              className={`${styles.controlButton} ${isChatOpen ? styles.chatActive : ''}`}
+              onClick={onChatToggle}
+              title="Toggle chat"
+            >
+              <ChatIcon />
+            </button>
+          )}
+
+          {onTranslatorToggle && (
+            <button
+              className={`${styles.controlButton} ${isTranslatorOpen ? styles.controlButtonActive : ''}`}
+              onClick={onTranslatorToggle}
+              title="Translator"
+              aria-pressed={isTranslatorOpen}
+            >
+              <TranslateIcon />
+            </button>
+          )}
+
+          {onAgentToggle && (
+            <button
+              className={`${styles.controlButton} ${isAgentOpen ? styles.controlButtonActive : ''}`}
+              onClick={onAgentToggle}
+              title="Agent"
+            >
+              <BotIcon />
+            </button>
+          )}
+
+          {onSettingsToggle && (
+            <button
+              className={`${styles.controlButton} ${isSettingsOpen ? styles.controlButtonActive : ''}`}
+              onClick={onSettingsToggle}
+              title="Settings"
+            >
+              <SettingsIcon />
+            </button>
           )}
         </div>
 
-        {/* Speaker with Device Selector */}
-        <div className={styles.screenShareWrapper} ref={speakerMenuRef}>
+        {/* Right Group: Action Controls */}
+        <div className={`${styles.controlGroup} ${styles.controlGroupEnd}`}>
           <button
-            className={`${styles.controlButton} ${isAppMuted ? styles.controlButtonMuted : styles.controlButtonActive}`}
-            onClick={() => onAppMuteToggle?.((prev) => !prev)}
-            title={isAppMuted ? 'Unmute app audio' : 'Mute app audio'}
+            className={`${styles.controlButton} ${styles.inviteButton}`}
+            onClick={copyInviteLink}
+            title="Copy invite link"
           >
-            {isAppMuted ? <SpeakerOffIcon /> : <SpeakerIcon />}
+            <InviteIcon />
           </button>
+
           <button
-            className={styles.deviceSelectorTrigger}
-            onClick={() => setIsSpeakerMenuOpen((prev) => !prev)}
-            title="Select speaker"
-            aria-expanded={isSpeakerMenuOpen}
-            aria-haspopup="listbox"
+            className={`${styles.controlButton} ${styles.leaveButton}`}
+            onClick={handleLeave}
+            title="Leave meeting"
           >
-            <ChevronDownIcon />
+            <LeaveIcon />
           </button>
-          {isSpeakerMenuOpen && speakerDevices.length > 0 && (
-            <div className={styles.deviceMenu} role="listbox" aria-label="Select Speaker">
-              {speakerDevices.map((device) => (
-                <button
-                  key={device.deviceId}
-                  className={`${styles.deviceOption} ${selectedSpeakerDevice === device.deviceId ? styles.deviceOptionActive : ''}`}
-                  onClick={async () => {
-                    setSelectedSpeakerDevice(device.deviceId);
-                    setIsSpeakerMenuOpen(false);
-                    try {
-                      await room.switchActiveDevice('audiooutput', device.deviceId);
-                      toast.success(`Switched to ${device.label || 'new speaker'}`);
-                    } catch (error) {
-                      console.error('Failed to switch speaker:', error);
-                      toast.error('Failed to switch speaker');
-                    }
-                  }}
-                  role="option"
-                  aria-selected={selectedSpeakerDevice === device.deviceId}
-                >
-                  {device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
-
-        <div className={styles.divider} />
-
-        {/* Participants */}
-        {onParticipantsToggle && (
-          <button
-            className={`${styles.controlButton} ${isParticipantsOpen ? styles.controlButtonActive : ''}`}
-            onClick={onParticipantsToggle}
-            title="Participants"
-          >
-            <ParticipantsIcon />
-          </button>
-        )}
-
-        {/* Raise Hand */}
-        <button
-          className={`${styles.controlButton} ${isHandRaised ? styles.raiseHandActive : ''}`}
-          onClick={toggleRaiseHand}
-          title={isHandRaised ? 'Lower hand' : 'Raise hand'}
-          aria-pressed={isHandRaised}
-        >
-          <RaiseHandIcon />
-        </button>
-
-        {/* Chat */}
-        {onChatToggle && (
-          <button
-            className={`${styles.controlButton} ${isChatOpen ? styles.chatActive : ''}`}
-            onClick={onChatToggle}
-            title="Toggle chat"
-          >
-            {/* If unread indicator is needed, add it here */}
-            <ChatIcon />
-          </button>
-        )}
-
-        {/* Translator */}
-        {onTranslatorToggle && (
-          <button
-            className={`${styles.controlButton} ${isTranslatorOpen ? styles.controlButtonActive : ''}`}
-            onClick={onTranslatorToggle}
-            title="Translator"
-            aria-pressed={isTranslatorOpen}
-          >
-            <TranslateIcon />
-          </button>
-        )}
-
-        {/* Agent */}
-        {onAgentToggle && (
-          <button
-            className={`${styles.controlButton} ${isAgentOpen ? styles.controlButtonActive : ''}`}
-            onClick={onAgentToggle}
-            title="Agent"
-          >
-            <BotIcon />
-          </button>
-        )}
-
-        {/* Settings */}
-        {onSettingsToggle && (
-          <button
-            className={`${styles.controlButton} ${isSettingsOpen ? styles.controlButtonActive : ''}`}
-            onClick={onSettingsToggle}
-            title="Settings"
-          >
-            <SettingsIcon />
-          </button>
-        )}
-
-        {/* Invite */}
-        <button
-          className={`${styles.controlButton} ${styles.inviteButton}`}
-          onClick={copyInviteLink}
-          title="Copy invite link"
-        >
-          <InviteIcon />
-        </button>
-
-        <div className={styles.divider} />
-
-        {/* Leave */}
-        <button
-          className={`${styles.controlButton} ${styles.leaveButton}`}
-          onClick={handleLeave}
-          title="Leave meeting"
-        >
-          <LeaveIcon />
-        </button>
       </div>
 
       {/* Mobile Navbar */}

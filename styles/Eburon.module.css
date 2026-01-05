@@ -5,45 +5,62 @@
 .controlBar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  gap: 1rem;
   row-gap: 0.5rem;
-  flex-wrap: wrap;
-  width: max-content;
-  max-width: calc(100% - 2rem);
-  padding: 0.75rem 1rem;
-  background: rgba(16, 16, 18, 0.92);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  border-radius: 12px;
-  border: 1px solid var(--sc-border, rgba(255, 255, 255, 0.1));
+  flex-wrap: nowrap;
+  width: 100%;
+  height: calc(var(--sc-controlbar-height, 80px) + env(safe-area-inset-bottom, 0px));
+  padding: 0 2rem env(safe-area-inset-bottom, 0px);
+  background: rgba(29, 14, 50, 0.95);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   position: fixed;
-  bottom: var(--sc-controlbar-bottom, 1rem);
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 0;
+  left: 0;
   z-index: 100;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 -10px 48px rgba(0, 0, 0, 0.6);
+  transition: padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.controlGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 200px;
+}
+
+.controlGroupEnd {
+  justify-content: flex-end;
+}
+
+.controlGroupCenter {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center;
+  flex: 1;
 }
 
 @media (min-width: 769px) {
   .controlBarShifted {
-    left: calc(50% - var(--sidebar-width, 360px) / 2);
+    padding-right: calc(2rem + var(--sidebar-width, 360px));
   }
 }
 
 /* Room layout + sidebar sizing */
 .roomLayout {
   --sidebar-width: 360px;
-  --sc-surface: rgba(12, 12, 14, 0.94);
-  --sc-surface-strong: rgba(18, 18, 20, 0.96);
-  --sc-card: rgba(255, 255, 255, 0.06);
-  --sc-card-strong: rgba(255, 255, 255, 0.1);
-  --sc-border: rgba(255, 255, 255, 0.08);
-  --sc-border-strong: rgba(255, 255, 255, 0.16);
-  --sc-muted: rgba(255, 255, 255, 0.6);
-  --sc-controlbar-height: 68px;
-  --sc-controlbar-bottom: 1rem;
+  --sc-surface: rgba(29, 14, 50, 0.94);
+  --sc-surface-strong: rgba(20, 10, 35, 0.96);
+  --sc-card: rgba(255, 255, 255, 0.04);
+  --sc-card-strong: rgba(255, 255, 255, 0.08);
+  --sc-border: rgba(255, 255, 255, 0.1);
+  --sc-border-strong: rgba(255, 255, 255, 0.18);
+  --sc-muted: rgba(253, 240, 224, 0.6);
+  --sc-controlbar-height: 80px;
+  --sc-controlbar-bottom: 1.5rem;
   --sc-controlbar-offset: 10px;
 }
 
@@ -334,14 +351,15 @@
   transform: translateX(14px);
 }
 
-/* Active (enabled) state - green for on */
+/* Active (enabled) state - magenta for on */
 .controlButtonActive {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  background: linear-gradient(135deg, #8D1658 0%, #6D1044 100%);
+  box-shadow: 0 4px 14px rgba(141, 22, 88, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .controlButtonActive:hover {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background: linear-gradient(135deg, #6D1044 0%, #500C32 100%);
 }
 
 /* Muted/disabled state */
@@ -363,14 +381,14 @@
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
 }
 
-/* Invite button - green accent */
+/* Invite button - magenta accent */
 .inviteButton {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  background: linear-gradient(135deg, #8D1658 0%, #6D1044 100%);
+  box-shadow: 0 4px 14px rgba(141, 22, 88, 0.4);
 }
 
 .inviteButton:hover {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background: linear-gradient(135deg, #6D1044 0%, #500C32 100%);
 }
 
 /* Chat active state - blue */
@@ -706,7 +724,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  background: linear-gradient(135deg, #8D1658 0%, #6D1044 100%);
   border-radius: 10px;
   font-size: 0.875rem;
   font-weight: 600;
@@ -1642,10 +1660,10 @@
   left: 0;
   right: 0;
   height: calc(64px + env(safe-area-inset-bottom, 0px));
-  background: rgba(16, 16, 18, 0.96);
+  background: rgba(29, 14, 50, 0.96);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
-  border-top: 1px solid var(--sc-border, rgba(255, 255, 255, 0.1));
+  border-top: 1px solid var(--sc-border, rgba(255, 255, 255, 0.15));
   z-index: 1000;
   padding: 0 1rem env(safe-area-inset-bottom, 0px);
   justify-content: space-around;
@@ -1677,7 +1695,7 @@
 }
 
 .mobileNavbarItemActive {
-  color: #22c55e;
+  color: #8D1658;
 }
 
 .mobileNavbarItem svg {
@@ -1716,7 +1734,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: #121214;
+  background: #1D0E32;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
   padding: 1.5rem;
@@ -1724,7 +1743,7 @@
   z-index: 1002;
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
 }
 
 .mobileMenuVisible .mobileMenuDrawer {
@@ -1794,8 +1813,8 @@
 }
 
 .mobileGridItemActive .mobileGridIcon {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-  border-color: #22c55e;
+  background: linear-gradient(135deg, #8D1658 0%, #6D1044 100%);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .mobileGridLabel {

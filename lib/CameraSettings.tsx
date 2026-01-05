@@ -13,7 +13,7 @@ import {
 } from '@livekit/components-react';
 import { BackgroundBlur, VirtualBackground } from '@livekit/track-processors';
 import { isLocalTrack, LocalTrackPublication, Track } from 'livekit-client';
-import roomStyles from '@/styles/SuccessClass.module.css';
+import roomStyles from '@/styles/Eburon.module.css';
 
 type BackgroundImage = {
   name: string;

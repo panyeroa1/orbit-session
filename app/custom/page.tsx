@@ -1,7 +1,7 @@
 import { videoCodecs } from 'livekit-client';
 import { VideoConferenceClientImpl } from './VideoConferenceClientImpl';
 import { isVideoCodec } from '@/lib/types';
-import styles from '@/styles/SuccessClass.module.css';
+import styles from '@/styles/Eburon.module.css';
 
 export default async function CustomRoomConnection(props: {
   searchParams: Promise<{
