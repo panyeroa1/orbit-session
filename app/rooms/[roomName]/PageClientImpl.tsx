@@ -11,6 +11,7 @@ import { TranslatorPluginFrame } from '@/lib/TranslatorPluginFrame';
 import { ChatPanel } from '@/lib/ChatPanel';
 import { ParticipantsPanel } from '@/lib/ParticipantsPanel';
 import { AgentPanel } from '@/lib/AgentPanel';
+import { LiveCaptions } from '@/lib/LiveCaptions';
 import roomStyles from '@/styles/Eburon.module.css';
 import {
   LocalUserChoices,
@@ -433,6 +434,7 @@ function VideoConferenceComponent(props: {
   const [admittedIds, setAdmittedIds] = React.useState<Set<string>>(new Set());
   const [isAppMuted, setIsAppMuted] = React.useState(false);
   const [isTranslatorOpen, setIsTranslatorOpen] = React.useState(true);
+  const [isTranscriptionEnabled, setIsTranscriptionEnabled] = React.useState(false);
 
   const layoutContext = useCreateLayoutContext();
 
@@ -750,6 +752,16 @@ function VideoConferenceComponent(props: {
           </div>
           
           <TranslatorPluginFrame isOpen={isTranslatorOpen} />
+          {isTranscriptionEnabled && (
+            <LiveCaptions 
+              room={room}
+              enabled={isTranscriptionEnabled}
+              vadEnabled={vadEnabled}
+              broadcastEnabled={true}
+              language="auto"
+              audioSource="auto"
+            />
+          )}
 
           {/* Custom control bar */}
           <EburonControlBar 
@@ -758,11 +770,13 @@ function VideoConferenceComponent(props: {
             onChatToggle={() => handleSidebarPanelToggle('chat')}
             onSettingsToggle={() => handleSidebarPanelToggle('settings')}
             onTranslatorToggle={() => setIsTranslatorOpen((prev) => !prev)}
+            onTranscriptionToggle={() => setIsTranscriptionEnabled((prev) => !prev)}
             isParticipantsOpen={!sidebarCollapsed && activeSidebarPanel === 'participants'}
             isAgentOpen={!sidebarCollapsed && activeSidebarPanel === 'agent'}
             isChatOpen={!sidebarCollapsed && activeSidebarPanel === 'chat'}
             isSettingsOpen={!sidebarCollapsed && activeSidebarPanel === 'settings'}
             isTranslatorOpen={isTranslatorOpen}
+            isTranscriptionOpen={isTranscriptionEnabled}
             isAppMuted={isAppMuted}
             onAppMuteToggle={setIsAppMuted}
             audioCaptureOptions={audioCaptureOptions}
