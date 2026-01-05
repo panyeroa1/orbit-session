@@ -191,72 +191,126 @@ export function OrbitTranslatorVertical({ roomCode, userId }: OrbitTranslatorVer
     setMode(mode === 'listening' ? 'idle' : 'listening');
   };
 
+  // Get status text for display
+  const getStatusText = () => {
+    if (!roomUuid) return 'Connecting...';
+    if (mode === 'speaking') return 'You are speaking';
+    if (mode === 'listening') return 'Listening for translations';
+    if (isLockedByOther) return 'Someone else is speaking';
+    return 'Ready';
+  };
+
+  const getStatusColor = () => {
+    if (!roomUuid) return 'text-yellow-400';
+    if (mode === 'speaking') return 'text-red-400';
+    if (mode === 'listening') return 'text-emerald-400';
+    if (isLockedByOther) return 'text-orange-400';
+    return 'text-gray-400';
+  };
+
   return (
-    <div className="flex flex-col gap-4 w-full max-w-xs p-4 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
-      {/* 1. Speak Now */}
-      <button
-        onClick={mode === 'speaking' ? stopSpeaking : startSpeaking}
-        disabled={isLockedByOther || mode === 'listening'}
-        className={`flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-bold transition-all duration-300 ${
-          mode === 'speaking' 
-            ? 'bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.4)] animate-pulse' 
-            : 'bg-white text-black hover:bg-gray-200 shadow-lg'
-        } disabled:opacity-50 disabled:cursor-not-allowed`}
-      >
-        <span className="text-xl">
-          {mode === 'speaking' ? '●' : '🎤'}
-        </span>
-        {mode === 'speaking' ? 'Stop Speaking' : isLockedByOther ? 'Locked' : 'Speak Now'}
-      </button>
-
-      {/* 2. Listen Translation */}
-      <button
-        onClick={toggleListen}
-        disabled={mode === 'speaking'}
-        className={`flex items-center justify-center gap-2 py-4 px-6 rounded-xl font-bold transition-all duration-300 ${
-          mode === 'listening'
-            ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]'
-            : 'bg-zinc-800 text-white hover:bg-zinc-700 border border-white/5'
-        } disabled:opacity-50 disabled:cursor-not-allowed`}
-      >
-        <span className="text-xl">
-          {mode === 'listening' ? '🔊' : '🎧'}
-        </span>
-        {mode === 'listening' ? 'Listening...' : 'Listen Translation'}
-      </button>
-
-      {/* 3. Full Languages Dropdown */}
-      <div className="relative">
-        <select
-          value={targetLanguage}
-          title="Select Target Language"
-          onChange={(e) => {
-            const lang = e.target.value;
-            setTargetLanguage(lang);
-            if (roomUuid) {
-              orbitService.updateParticipantLanguage(roomUuid, userId, lang);
-            }
-          }}
-          className="w-full py-4 px-6 bg-zinc-800/50 text-white rounded-xl border border-white/5 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/20 transition-all font-medium"
-        >
-          {LANGUAGES.map((lang) => (
-            <option key={lang.code} value={lang.code}>
-              {lang.name}
-            </option>
-          ))}
-        </select>
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none opacity-50">
-          ▼
-        </div>
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="p-4 border-b border-white/10">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          🌐 ORBIT Translator
+        </h2>
+        <p className={`text-sm mt-1 ${getStatusColor()}`}>
+          ● {getStatusText()}
+        </p>
       </div>
 
-      {/* Debug Display (Optional based on requirements but helpful) */}
-      {(lastFinalText || lastTranslatedText) && (
-        <div className="mt-2 p-3 bg-white/5 rounded-lg text-xs space-y-2 animate-in fade-in duration-500">
-          {lastFinalText && <div className="text-gray-400 italic">&quot;{lastFinalText}&quot;</div>}
-          {lastTranslatedText && <div className="text-emerald-400 font-medium">→ {lastTranslatedText}</div>}
+      {/* Controls */}
+      <div className="flex-1 p-4 space-y-4">
+        {/* Language Selection */}
+        <div>
+          <label className="block text-xs text-gray-400 mb-2 uppercase tracking-wider">
+            Translate To
+          </label>
+          <div className="relative">
+            <select
+              value={targetLanguage}
+              title="Select Target Language"
+              onChange={(e) => {
+                const lang = e.target.value;
+                setTargetLanguage(lang);
+                if (roomUuid) {
+                  orbitService.updateParticipantLanguage(roomUuid, userId, lang);
+                }
+              }}
+              className="w-full py-3 px-4 bg-zinc-800/80 text-white rounded-lg border border-white/10 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm font-medium"
+            >
+              {LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500 text-xs">
+              ▼
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Speak Button */}
+        <button
+          onClick={mode === 'speaking' ? stopSpeaking : startSpeaking}
+          disabled={isLockedByOther || mode === 'listening' || !roomUuid}
+          className={`w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-semibold text-sm transition-all duration-300 ${
+            mode === 'speaking' 
+              ? 'bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-500/30 animate-pulse' 
+              : 'bg-gradient-to-r from-white to-gray-100 text-gray-900 hover:shadow-lg hover:shadow-white/20'
+          } disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-none`}
+        >
+          <span className="text-lg">
+            {mode === 'speaking' ? '⏹️' : '🎤'}
+          </span>
+          {mode === 'speaking' ? 'Stop Speaking' : isLockedByOther ? '🔒 Locked' : 'Speak Now'}
+        </button>
+
+        {/* Listen Button */}
+        <button
+          onClick={toggleListen}
+          disabled={mode === 'speaking' || !roomUuid}
+          className={`w-full flex items-center justify-center gap-3 py-4 px-6 rounded-xl font-semibold text-sm transition-all duration-300 ${
+            mode === 'listening'
+              ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white shadow-lg shadow-emerald-500/30'
+              : 'bg-zinc-800 text-white hover:bg-zinc-700 border border-white/10'
+          } disabled:opacity-40 disabled:cursor-not-allowed`}
+        >
+          <span className="text-lg">
+            {mode === 'listening' ? '🔊' : '🎧'}
+          </span>
+          {mode === 'listening' ? 'Listening...' : 'Listen to Translations'}
+        </button>
+      </div>
+
+      {/* Transcript Display */}
+      <div className="p-4 border-t border-white/10">
+        <div className="text-xs text-gray-500 uppercase tracking-wider mb-2">
+          Recent Activity
+        </div>
+        <div className="bg-black/30 rounded-lg p-3 min-h-[80px] max-h-[150px] overflow-y-auto">
+          {lastFinalText || lastTranslatedText ? (
+            <div className="space-y-2 text-sm">
+              {lastFinalText && (
+                <div className="text-gray-400">
+                  <span className="text-gray-600">Original:</span> &quot;{lastFinalText}&quot;
+                </div>
+              )}
+              {lastTranslatedText && (
+                <div className="text-emerald-400 font-medium">
+                  <span className="text-emerald-600">Translated:</span> {lastTranslatedText}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-gray-600 text-sm italic">
+              No recent translations
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
