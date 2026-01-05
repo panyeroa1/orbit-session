@@ -60,8 +60,11 @@ const Bar: React.FC<{ val: number; colorClass: string }> = ({ val, colorClass })
 const TranslatorDock: React.FC<TranslatorDockProps> = ({
   mode,
   roomState,
+  selectedLanguage,
   myUserId,
   onSpeakToggle,
+  onListenToggle,
+  onLanguageChange,
   onRaiseHand,
   onJoin,
   meetingId,
@@ -70,35 +73,54 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
   onAuthToggle,
   isMinimized,
   onMinimizeToggle,
-  liveStreamText
+  liveStreamText,
+  // New props
+  audioData,
+  audioSource,
+  onAudioSourceToggle,
+  translatedStreamText,
+  isTtsLoading,
+  emotion
 }) => {
   const [meetingIdInput, setMeetingIdInput] = React.useState(meetingId || '');
+  const [isLangOpen, setIsLangOpen] = React.useState(false);
   
-  // Update local input if external meetingId changes (and we aren't typing)
+  // Update local input if external meetingId changes
   React.useEffect(() => {
     if (meetingId) setMeetingIdInput(meetingId);
   }, [meetingId]);
 
   const handleStart = () => {
-    // If signed in, treat as switch/join (reload). 
-    // If signed out, treat as start with ID (auth + set ID).
     if (isSignedIn && onJoin && meetingIdInput.trim()) {
       onJoin(meetingIdInput.trim());
     } else if (!isSignedIn && meetingIdInput.trim()) {
        onAuthToggle(meetingIdInput.trim());
     } else if (!isSignedIn) {
-       onAuthToggle(); // standard random start
+       onAuthToggle(); 
     }
   };
   const isSomeoneElseSpeaking = roomState.activeSpeaker && roomState.activeSpeaker.userId !== myUserId;
   const isMeSpeaking = mode === 'speaking';
+  const isListening = mode === 'listening';
   
   const myQueuePosition = roomState.raiseHandQueue.findIndex(q => q.userId === myUserId);
   const isQueued = myQueuePosition !== -1;
 
+  // Language Dropdown Logic
+  const langMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setIsLangOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
     <>
-      {/* Minimize/Restore Toggle Tab - Centered at the very top */}
+      {/* Minimize/Restore Toggle Tab */}
       <div className={`fixed top-0 left-1/2 -translate-x-1/2 z-[60] transition-all duration-300 ${isMinimized ? 'translate-y-0' : 'translate-y-[60px]'}`}>
         <button
           onClick={onMinimizeToggle}
@@ -115,7 +137,7 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
       >
         <div className="flex items-stretch h-full w-full max-w-5xl">
         
-        {/* Speak Button */}
+        {/* Speak Now Button */}
         <div className="relative flex-1 flex items-stretch border-r border-white/5">
           <button
             onClick={onSpeakToggle}
@@ -125,8 +147,61 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
             }`}
           >
             {isMeSpeaking ? <X className="w-4 h-4" /> : (isSomeoneElseSpeaking ? <Lock className="w-4 h-4 opacity-40" /> : <Mic className="w-4 h-4" />)}
-            <span className="font-bold text-[16px] tracking-tight">Speak</span>
+            <span className="font-bold text-[16px] tracking-tight">Speak Now</span>
           </button>
+        </div>
+
+        {/* Listen Translation Button & Language Selector */}
+        <div className="relative flex-1 flex flex-col items-stretch border-r border-white/5 group">
+             {/* Main Listen Button */}
+            <div className="flex-1 flex items-stretch">
+                <button
+                    onClick={onListenToggle}
+                    className={`flex-1 flex items-center justify-center gap-3 px-4 transition-all ${
+                    isListening ? 'bg-emerald-500/10 text-emerald-400' : 'hover:bg-white/5 text-slate-300'
+                    }`}
+                >
+                    {isListening ? <Volume2 className="w-4 h-4 animate-pulse" /> : <Globe className="w-4 h-4" />}
+                    <span className="font-bold text-[16px] tracking-tight">Listen Translation</span>
+                </button>
+                
+                {/* Language Trigger */}
+                <button
+                    onClick={() => setIsLangOpen(!isLangOpen)}
+                    className="px-3 hover:bg-white/5 text-slate-400 border-l border-white/5 flex items-center justify-center transition-colors"
+                    title="Select Language"
+                >
+                    <span className="mr-2 text-xs font-medium">{selectedLanguage.flag}</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
+                </button>
+            </div>
+
+             {/* Language Dropdown - "Below the listen translation" */}
+             {isLangOpen && (
+                <div ref={langMenuRef} className="absolute top-[65px] left-0 right-0 bg-[#1a2333]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[100] max-h-[60vh] overflow-y-auto">
+                     {/* Search or Categories could go here, but implementing flat list for now */}
+                     <div className="p-2 grid grid-cols-1 gap-0.5">
+                        {LANGUAGES.map((lang) => (
+                             <button
+                                key={lang.code}
+                                onClick={() => {
+                                    onLanguageChange(lang);
+                                    setIsLangOpen(false);
+                                }}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                                    selectedLanguage.code === lang.code 
+                                    ? 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20' 
+                                    : 'hover:bg-white/5 text-slate-300'
+                                }`}
+                             >
+                                <span className="text-xl">{lang.flag}</span>
+                                <span className="text-sm font-medium">{lang.name}</span>
+                                {selectedLanguage.code === lang.code && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+                             </button>
+                        ))}
+                     </div>
+                </div>
+             )}
         </div>
 
         {/* Raise Hand Queue */}
@@ -142,7 +217,7 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
         </button>
 
         {/* Meeting ID Input & Join */}
-        <div className="flex items-center border-l border-white/5 h-full animate-in fade-in slide-in-from-right-4 duration-300">
+        <div className="flex items-center border-l border-white/5 h-full">
           <input 
             type="text" 
             value={meetingIdInput}
@@ -175,7 +250,7 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
           <span className="font-bold text-[16px] tracking-tight">{isSignedIn ? 'Stop' : (meetingIdInput ? 'Join' : 'Start')}</span>
         </button>
 
-        {/* Share Button - Only Visible when Signed In */}
+        {/* Share Button */}
         {isSignedIn && (
           <button
             onClick={onInvite}

@@ -85,6 +85,18 @@ export function OrbitApp() {
   const shippedCharsRef = useRef(0);
   const silenceTimerRef = useRef<any>(null);
 
+  // -- Translation & TTS State --
+  const [translatedStreamText, setTranslatedStreamText] = useState<string>('');
+  const [isTtsLoading, setIsTtsLoading] = useState(false);
+  const [audioData, setAudioData] = useState<Uint8Array | undefined>(undefined);
+  const [emotion, setEmotion] = useState<EmotionType>('neutral');
+
+  // Queues for sequential processing
+  const processingQueueRef = useRef<any[]>([]);
+  const isProcessingRef = useRef(false);
+  const audioQueueRef = useRef<ArrayBuffer[]>([]);
+  const isPlayingRef = useRef(false);
+
   const ensureAudioContext = useCallback(() => {
     try {
       if (!audioCtxRef.current) {
@@ -277,6 +289,103 @@ export function OrbitApp() {
 
   const sourceDisplayText = livePartialText || lastFinalText;
 
+  // -- Translation & TTS Logic --
+
+  const playNextAudio = async () => {
+    if (isPlayingRef.current || audioQueueRef.current.length === 0) return;
+    isPlayingRef.current = true;
+
+    const audioCtx = ensureAudioContext();
+    if (!audioCtx) {
+      isPlayingRef.current = false;
+      return;
+    }
+
+    const nextBuffer = audioQueueRef.current.shift();
+    if (!nextBuffer) {
+      isPlayingRef.current = false;
+      return;
+    }
+
+    try {
+      const audioBuffer = await audioCtx.decodeAudioData(nextBuffer);
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+      
+      // Visualize
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      source.connect(analyser);
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      
+      const draw = () => {
+        if (!isPlayingRef.current) return;
+        analyser.getByteFrequencyData(dataArray);
+        setAudioData(new Uint8Array(dataArray));
+        requestAnimationFrame(draw);
+      };
+      draw();
+
+      source.onended = () => {
+        isPlayingRef.current = false;
+        setAudioData(undefined);
+        playNextAudio();
+      };
+      
+      source.start();
+    } catch (e) {
+      console.error("Audio playback error", e);
+      isPlayingRef.current = false;
+      playNextAudio();
+    }
+  };
+
+  const processNextInQueue = async () => {
+    if (isProcessingRef.current || processingQueueRef.current.length === 0) return;
+    isProcessingRef.current = true;
+
+    const item = processingQueueRef.current.shift();
+    if (!item) {
+        isProcessingRef.current = false;
+        return;
+    }
+
+    try {
+        setIsTtsLoading(true);
+        // 1. Translate
+        const tRes = await fetch('/api/orbit/translate', {
+            method: 'POST',
+            body: JSON.stringify({
+                text: item.text,
+                targetLang: selectedLanguageRef.current.code
+            })
+        });
+        const tData = await tRes.json();
+        const translated = tData.translation || item.text;
+        setTranslatedStreamText(translated);
+
+        // 2. TTS
+        if (mode === 'listening') {
+             const ttsRes = await fetch('/api/orbit/tts', {
+                method: 'POST',
+                body: JSON.stringify({ text: translated })
+             });
+             const arrayBuffer = await ttsRes.arrayBuffer();
+             if (arrayBuffer.byteLength > 0) {
+                 audioQueueRef.current.push(arrayBuffer);
+                 playNextAudio();
+             }
+        }
+    } catch (e) {
+        console.error("Translation/TTS pipeline error", e);
+    } finally {
+        setIsTtsLoading(false);
+        isProcessingRef.current = false;
+        processNextInQueue();
+    }
+  };
+
   // Join meeting DB logic
   const joinMeetingDB = async (mId: string, uId: string) => {
     try {
@@ -311,9 +420,11 @@ export function OrbitApp() {
         <TranslatorDock
           mode={mode}
           roomState={roomState}
+          selectedLanguage={selectedLanguage}
           myUserId={MY_USER_ID}
           onSpeakToggle={handleSpeakToggle}
-
+          onListenToggle={toggleListen}
+          onLanguageChange={setSelectedLanguage}
           onRaiseHand={() => roomStateService.raiseHand(MY_USER_ID, MY_USER_NAME)}
           isSignedIn={!!sessionUser}
           onAuthToggle={async (initialMeetingId?: string) => {
