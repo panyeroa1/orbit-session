@@ -86,7 +86,7 @@ export async function streamTranslation(
       },
       onmessage: async (message: LiveServerMessage) => {
         // Handle Audio Output
-        const base64Audio = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+        const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
         if (base64Audio) {
           const rawData = decode(base64Audio);
           onAudioData(rawData);
