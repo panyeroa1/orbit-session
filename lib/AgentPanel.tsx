@@ -148,14 +148,23 @@ export function AgentPanel({ meetingId, onSpeakingStateChange, isTranscriptionEn
        }
     };
 
+    console.log(`Subscribing to transcript_segments for meeting: ${meetingId}`);
     const channel = supabase.channel(`agent:${meetingId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'transcript_segments', filter: `meeting_id=eq.${meetingId}` }, 
-        (payload) => handleRow(payload.new)
+        (payload) => {
+          console.log("Realtime INSERT:", payload);
+          handleRow(payload.new);
+        }
       )
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'transcript_segments', filter: `meeting_id=eq.${meetingId}` },
-        (payload) => handleRow(payload.new)
+        (payload) => {
+          console.log("Realtime UPDATE:", payload);
+          handleRow(payload.new);
+        }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`Realtime Subscription for ${meetingId} status:`, status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

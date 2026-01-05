@@ -113,19 +113,27 @@ export async function streamTranslation(
           }));
         },
         onmessage: async (message: LiveServerMessage) => {
-          const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
-          if (base64Audio) {
-            const rawData = decode(base64Audio);
-            onAudioData(rawData);
-            
-            nextStartTime = Math.max(nextStartTime, audioCtx.currentTime);
-            const buffer = await decodeAudioData(rawData, audioCtx);
-            const source = audioCtx.createBufferSource();
-            source.buffer = buffer;
-            source.connect(audioCtx.destination);
-            
-            source.start(nextStartTime);
-            nextStartTime += buffer.duration;
+          const parts = message.serverContent?.modelTurn?.parts;
+          if (parts) {
+            for (const part of parts) {
+              if (part.inlineData?.data) {
+                const rawData = decode(part.inlineData.data);
+                onAudioData(rawData);
+                
+                nextStartTime = Math.max(nextStartTime, audioCtx.currentTime);
+                const buffer = await decodeAudioData(rawData, audioCtx);
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioCtx.destination);
+                
+                source.start(nextStartTime);
+                nextStartTime += buffer.duration;
+              }
+              if (part.text) {
+                fullTranslation += part.text;
+                onTranscript(fullTranslation);
+              }
+            }
           }
 
           if (message.serverContent?.outputTranscription) {

@@ -16,3 +16,6 @@ create table if not exists public.transcript_segments (
 ) TABLESPACE pg_default;
 
 create index IF not exists idx_transcript_segments_meeting on public.transcript_segments using btree (meeting_id) TABLESPACE pg_default;
+
+-- Enable Realtime for this table
+alter publication supabase_realtime add table public.transcript_segments;
