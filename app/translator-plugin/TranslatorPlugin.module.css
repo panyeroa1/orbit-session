@@ -1,9 +1,0 @@
-.loadingContainer {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #1D0E32;
-  color: #FDF0E0;
-  font-family: 'Inter', sans-serif;
-}
