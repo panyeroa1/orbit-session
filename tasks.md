@@ -2484,3 +2484,27 @@ Changed:
 Tests:
 - `npm run build`: PASS.
 Result: PASS
+
+Task ID: T-0076
+Title: Integrate Gemini Live Transcription
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-06 00:50
+Plan:
+- Add Gemini Live audio streaming logic to `geminiService.ts`.
+- Implement real-time PCM audio capture and transmission in `OrbitApp.tsx`.
+- Update `TranslatorDock.tsx` to support rotating between 3 engines (Standard, Pro, Live).
+
+END LOG
+
+Timestamp: 2026-01-06 00:55
+Changed:
+- `lib/orbit/services/geminiService.ts`: Added `startTranscriptionSession`.
+- `lib/orbit/OrbitApp.tsx`: Added Gemini recording loop and engine state.
+- `lib/orbit/components/TranslatorDock.tsx`: Updated toggle rotation (STD -> PRO -> LIVE).
+Tests:
+- `npm run build`: PASS.
+Result: PASS

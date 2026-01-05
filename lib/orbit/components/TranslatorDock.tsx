@@ -25,8 +25,8 @@ interface TranslatorDockProps {
   onAuthToggle: (meetingId?: string) => void;
   isMinimized: boolean;
   onMinimizeToggle: () => void;
-  transcriptionEngine?: 'webspeech' | 'deepgram';
-  onEngineChange?: (engine: 'webspeech' | 'deepgram') => void;
+  transcriptionEngine?: 'webspeech' | 'deepgram' | 'gemini';
+  onEngineChange?: (engine: 'webspeech' | 'deepgram' | 'gemini') => void;
 }
 
 const AudioVisualizer: React.FC<{ data: Uint8Array; colorClass?: string }> = ({ data, colorClass = 'bg-white' }) => {
@@ -171,14 +171,20 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
                 
                 {/* Engine Toggle */}
                 <button
-                    onClick={() => onEngineChange?.(transcriptionEngine === 'webspeech' ? 'deepgram' : 'webspeech')}
+                    onClick={() => {
+                        if (transcriptionEngine === 'webspeech') onEngineChange?.('deepgram');
+                        else if (transcriptionEngine === 'deepgram') onEngineChange?.('gemini');
+                        else onEngineChange?.('webspeech');
+                    }}
                     className={`px-3 hover:bg-white/5 border-l border-white/5 flex items-center justify-center transition-colors ${
-                        transcriptionEngine === 'deepgram' ? 'text-purple-400' : 'text-slate-400'
+                        transcriptionEngine === 'gemini' ? 'text-emerald-400' : (transcriptionEngine === 'deepgram' ? 'text-purple-400' : 'text-slate-400')
                     }`}
-                    title={`Engine: ${transcriptionEngine === 'deepgram' ? 'Eburon Pro' : 'Eburon Standard'}`}
+                    title={`Engine: ${transcriptionEngine === 'gemini' ? 'Eburon Live' : (transcriptionEngine === 'deepgram' ? 'Eburon Pro' : 'Eburon Standard')}`}
                 >
-                    <span className="text-[10px] font-bold tracking-wider mr-1 uppercase">{transcriptionEngine === 'deepgram' ? 'PRO' : 'STD'}</span>
-                    <Sparkles className={`w-3 h-3 ${transcriptionEngine === 'deepgram' ? 'fill-current' : ''}`} />
+                    <span className="text-[10px] font-bold tracking-wider mr-1 uppercase">
+                        {transcriptionEngine === 'gemini' ? 'LIVE' : (transcriptionEngine === 'deepgram' ? 'PRO' : 'STD')}
+                    </span>
+                    <Sparkles className={`w-3 h-3 ${transcriptionEngine !== 'webspeech' ? 'fill-current' : ''}`} />
                 </button>
 
                 {/* Language Trigger */}

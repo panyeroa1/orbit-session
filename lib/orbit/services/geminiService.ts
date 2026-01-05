@@ -194,11 +194,74 @@ export async function streamTranslation(
   }
 }
 
-export async function translateAndAnalyze(text: string, targetLangName: string): Promise<TranslationResult> {
-  return { 
-    translatedText: text, 
-    detectedLanguage: "unknown", 
-    emotion: "neutral",
-    pronunciationGuide: ""
-  };
+
+/**
+ * Starts a Gemini Multimodal Live session for real-time transcription.
+ */
+export async function startTranscriptionSession(
+  onTranscript: (text: string) => void,
+  onEnd: () => void,
+  targetLangName: string = "English"
+) {
+  let fullTranscript = "";
+  
+  try {
+    const sessionPromise = ai.live.connect({
+      model: 'models/gemini-2.5-flash-native-audio-preview-12-2025',
+      config: {
+        responseModalities: [Modality.TEXT],
+        outputAudioTranscription: {},
+        systemInstruction: `You are a high-fidelity real-time transcription engine. 
+        Transcribe the incoming audio into ${targetLangName}. 
+        Provide ONLY the transcript, no other commentary. 
+        If the audio is in another language, translate it to ${targetLangName} in real-time.
+        Focus on accuracy and speed.`
+      },
+      callbacks: {
+        onmessage: (message: LiveServerMessage) => {
+          // Some versions of the API return transcript in modelTurn.parts
+          const parts = message.serverContent?.modelTurn?.parts;
+          if (parts) {
+            for (const part of parts) {
+              if (part.text) {
+                fullTranscript += part.text;
+                onTranscript(part.text);
+              }
+            }
+          }
+          // Other versions return it in outputTranscription
+          if (message.serverContent?.outputTranscription) {
+            const text = message.serverContent.outputTranscription.text;
+            onTranscript(text);
+          }
+        },
+        onclose: () => onEnd(),
+        onerror: (e) => {
+          console.error("Gemini Live STT Error:", e);
+          onEnd();
+        }
+      }
+    });
+
+    const session = await sessionPromise;
+
+    return {
+      sendAudio: (base64Audio: string) => {
+        session.sendRealtimeInput([{
+          mimeType: "audio/pcm;rate=16000",
+          data: base64Audio
+        }]);
+      },
+      stop: () => {
+        try {
+          session.close();
+        } catch (e) {
+          console.warn("Error closing Gemini session", e);
+        }
+      }
+    };
+  } catch (err) {
+    console.error("Failed to connect to Gemini Live:", err);
+    throw err;
+  }
 }

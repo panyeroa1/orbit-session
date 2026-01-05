@@ -6,6 +6,7 @@ import TranslatorDock from './components/TranslatorDock';
 import ErrorBanner from './components/ErrorBanner';
 import * as orbitService from './services/orbitService';
 import * as roomStateService from './services/roomStateService';
+import { startTranscriptionSession } from './services/geminiService';
 
 
 const getStoredUserId = () => {
@@ -37,11 +38,12 @@ export function OrbitApp() {
   const [isDockMinimized, setIsDockMinimized] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState('');
-  const [transcriptionEngine, setTranscriptionEngine] = useState<'webspeech' | 'deepgram'>('webspeech');
+  const [transcriptionEngine, setTranscriptionEngine] = useState<'webspeech' | 'deepgram' | 'gemini'>('webspeech');
   
-  // Deepgram Refs
+  // Deepgram / Gemini Refs
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const geminiSessionRef = useRef<any>(null);
   const reportError = useCallback((message: string, error?: any) => {
     console.error(message, error);
     setErrorMessage(message + (error?.message ? `: ${error.message}` : ''));
@@ -193,6 +195,68 @@ export function OrbitApp() {
       };
 
       const cleanupPromise = startRecording();
+      return () => { cleanupPromise.then(cleanup => cleanup && cleanup()); };
+    }
+  }, [mode, transcriptionEngine]);
+
+  // Gemini Recording Loop
+  useEffect(() => {
+    if (mode === 'speaking' && transcriptionEngine === 'gemini') {
+      let audioContext: AudioContext;
+      let processor: ScriptProcessorNode;
+      let stream: MediaStream;
+
+      const startGeminiSession = async () => {
+        try {
+          geminiSessionRef.current = await startTranscriptionSession(
+            (text) => {
+               if (text.trim()) {
+                 console.log(`[Eburon Live] Transcript: "${text}"`);
+                 shipSegment(text);
+                 setLastFinalText(prev => prev + ' ' + text);
+               }
+            },
+            () => {
+               console.log("[Eburon Live] Session ended");
+            },
+            selectedLanguageRef.current.name || "English"
+          );
+
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+          const source = audioContext.createMediaStreamSource(stream);
+          processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+          source.connect(processor);
+          processor.connect(audioContext.destination);
+
+          processor.onaudioprocess = (e) => {
+            const inputData = e.inputBuffer.getChannelData(0);
+            // Convert to 16-bit PCM
+            const pcm16 = new Int16Array(inputData.length);
+            for (let i = 0; i < inputData.length; i++) {
+              pcm16[i] = Math.max(-1, Math.min(1, inputData[i])) * 0x7FFF;
+            }
+            // Base64 encode
+            const base64 = btoa(String.fromCharCode(...new Uint8Array(pcm16.buffer)));
+            if (geminiSessionRef.current) {
+              geminiSessionRef.current.sendAudio(base64);
+            }
+          };
+
+          return () => {
+            if (geminiSessionRef.current) geminiSessionRef.current.stop();
+            if (processor) processor.disconnect();
+            if (audioContext) audioContext.close();
+            if (stream) stream.getTracks().forEach(t => t.stop());
+          };
+        } catch (e) {
+          console.error("Eburon Live Init Error", e);
+          setErrorMessage("Microphone access denied for Eburon Live");
+        }
+      };
+
+      const cleanupPromise = startGeminiSession();
       return () => { cleanupPromise.then(cleanup => cleanup && cleanup()); };
     }
   }, [mode, transcriptionEngine]);
