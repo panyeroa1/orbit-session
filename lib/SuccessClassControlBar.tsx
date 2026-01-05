@@ -150,6 +150,15 @@ const MenuIcon = () => (
   </svg>
 );
 
+const TranslateIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 6h8a3 3 0 0 1 3 3v2" />
+    <path d="M4 10h8a3 3 0 0 0 3-3" />
+    <path d="M14 14h6" />
+    <path d="M18 10l4 4-4 4" />
+  </svg>
+);
+
 const CloseIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="6" x2="6" y2="18" />
@@ -162,11 +171,13 @@ interface SuccessClassControlBarProps {
   onParticipantsToggle?: () => void;
   onAgentToggle?: () => void;
   onSettingsToggle?: () => void;
+  onTranslatorToggle?: () => void;
   audioCaptureOptions?: AudioCaptureOptions;
   isChatOpen?: boolean;
   isParticipantsOpen?: boolean;
   isAgentOpen?: boolean;
   isSettingsOpen?: boolean;
+  isTranslatorOpen?: boolean;
   isAppMuted?: boolean;
   onAppMuteToggle?: (muted: boolean | ((prev: boolean) => boolean)) => void;
 }
@@ -176,11 +187,13 @@ export function SuccessClassControlBar({
   onParticipantsToggle,
   onAgentToggle,
   onSettingsToggle,
+  onTranslatorToggle,
   audioCaptureOptions,
   isChatOpen,
   isParticipantsOpen,
   isAgentOpen,
   isSettingsOpen,
+  isTranslatorOpen,
   isAppMuted = false,
   onAppMuteToggle,
 }: SuccessClassControlBarProps) {
@@ -674,6 +687,18 @@ export function SuccessClassControlBar({
           </button>
         )}
 
+        {/* Translator */}
+        {onTranslatorToggle && (
+          <button
+            className={`${styles.controlButton} ${isTranslatorOpen ? styles.controlButtonActive : ''}`}
+            onClick={onTranslatorToggle}
+            title="Translator"
+            aria-pressed={isTranslatorOpen}
+          >
+            <TranslateIcon />
+          </button>
+        )}
+
         {/* Agent */}
         {onAgentToggle && (
           <button
@@ -743,6 +768,18 @@ export function SuccessClassControlBar({
           <ChatIcon />
           <span>Chat</span>
         </button>
+        {onTranslatorToggle && (
+          <button 
+            className={`${styles.mobileNavbarItem} ${isTranslatorOpen ? styles.mobileNavbarItemActive : ''}`}
+            onClick={() => {
+              onTranslatorToggle();
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            <TranslateIcon />
+            <span>Translate</span>
+          </button>
+        )}
         <button 
           className={`${styles.mobileNavbarItem} ${isParticipantsOpen ? styles.mobileNavbarItemActive : ''}`}
           onClick={() => {

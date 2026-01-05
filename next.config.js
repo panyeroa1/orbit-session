@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: false,
   productionBrowserSourceMaps: true,
+  env: {
+    API_KEY: process.env.GEMINI_API_KEY,
+  },
   images: {
     formats: ['image/webp'],
   },

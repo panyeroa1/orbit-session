@@ -7,6 +7,7 @@ import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { RecordingIndicator } from '@/lib/RecordingIndicator';
 import { ConnectionDetails } from '@/lib/types';
 import { SuccessClassControlBar } from '@/lib/SuccessClassControlBar';
+import { TranslatorPluginFrame } from '@/lib/TranslatorPluginFrame';
 import { ChatPanel } from '@/lib/ChatPanel';
 import { ParticipantsPanel } from '@/lib/ParticipantsPanel';
 import { AgentPanel } from '@/lib/AgentPanel';
@@ -431,6 +432,7 @@ function VideoConferenceComponent(props: {
   const [waitingList, setWaitingList] = React.useState<{ identity: string; name: string }[]>([]);
   const [admittedIds, setAdmittedIds] = React.useState<Set<string>>(new Set());
   const [isAppMuted, setIsAppMuted] = React.useState(false);
+  const [isTranslatorOpen, setIsTranslatorOpen] = React.useState(true);
 
   const layoutContext = useCreateLayoutContext();
 
@@ -747,16 +749,20 @@ function VideoConferenceComponent(props: {
             </div>
           </div>
           
+          <TranslatorPluginFrame isOpen={isTranslatorOpen} />
+
           {/* Custom control bar */}
           <SuccessClassControlBar 
             onParticipantsToggle={() => handleSidebarPanelToggle('participants')}
             onAgentToggle={() => handleSidebarPanelToggle('agent')}
             onChatToggle={() => handleSidebarPanelToggle('chat')}
             onSettingsToggle={() => handleSidebarPanelToggle('settings')}
+            onTranslatorToggle={() => setIsTranslatorOpen((prev) => !prev)}
             isParticipantsOpen={!sidebarCollapsed && activeSidebarPanel === 'participants'}
             isAgentOpen={!sidebarCollapsed && activeSidebarPanel === 'agent'}
             isChatOpen={!sidebarCollapsed && activeSidebarPanel === 'chat'}
             isSettingsOpen={!sidebarCollapsed && activeSidebarPanel === 'settings'}
+            isTranslatorOpen={isTranslatorOpen}
             isAppMuted={isAppMuted}
             onAppMuteToggle={setIsAppMuted}
             audioCaptureOptions={audioCaptureOptions}
