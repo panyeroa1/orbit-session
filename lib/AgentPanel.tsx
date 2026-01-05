@@ -235,8 +235,8 @@ export function AgentPanel({ meetingId, onSpeakingStateChange, isTranscriptionEn
                  value={ttsProvider}
                  onChange={(e) => setTtsProvider(e.target.value as any)}
                >
-                 <option value="gemini">Orbit (Gemini)</option>
-                 <option value="cartesia">Agent (Cartesia)</option>
+                 <option value="cartesia">Agent</option>
+                 <option value="gemini">Orbit</option>
                </select>
                <div className={styles.agentSelectIcon}>
                   <ChevronDown size={14} />
