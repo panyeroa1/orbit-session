@@ -17,6 +17,7 @@ import { RoomState } from '@/lib/orbit/types';
 import { ChatPanel } from '@/lib/ChatPanel';
 import { ParticipantsPanel } from '@/lib/ParticipantsPanel';
 import { OrbitTranslatorVertical } from '@/lib/orbit/components/OrbitTranslatorVertical';
+import { OrbitIntegrations } from '@/lib/orbit/components/OrbitIntegrations';
 import { LiveCaptions } from '@/lib/LiveCaptions';
 import roomStyles from '@/styles/Eburon.module.css';
 import {
