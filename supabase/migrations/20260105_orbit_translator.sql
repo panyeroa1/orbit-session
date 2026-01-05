@@ -204,3 +204,50 @@ EXCEPTION WHEN duplicate_object THEN
   -- Already added, ignore
 END;
 $$;
+
+-- 7) Transcriptions (Real-time segments)
+-- DROP to ensure schema update (User reported column mismatch)
+DROP TABLE IF EXISTS public.transcriptions CASCADE;
+
+create table if not exists public.transcriptions (
+  id uuid not null default gen_random_uuid (),
+  meeting_id text not null,
+  speaker_id uuid not null,
+  transcribe_text_segment text not null,
+  full_transcription text,
+  users_all text[],
+  created_at timestamp with time zone null default now(),
+  constraint transcriptions_pkey primary key (id)
+) TABLESPACE pg_default;
+
+create index IF not exists idx_transcriptions_meeting_id on public.transcriptions using btree (meeting_id, created_at desc) TABLESPACE pg_default;
+
+create index IF not exists idx_orbit_transcriptions_meeting on public.transcriptions using btree (meeting_id) TABLESPACE pg_default;
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.transcriptions;
+EXCEPTION WHEN duplicate_object THEN
+  -- Already added
+END;
+$$;
+
+-- 8) Meetings Table (Missing dependency for joinMeetingDB)
+create table if not exists public.meetings (
+  id uuid not null default gen_random_uuid(),
+  meeting_id text not null,
+  host_id uuid null,
+  created_at timestamp with time zone null default now(),
+  constraint meetings_pkey primary key (id),
+  constraint meetings_meeting_id_key unique (meeting_id)
+) TABLESPACE pg_default;
+
+create index IF not exists idx_meetings_meeting_id on public.meetings using btree (meeting_id) TABLESPACE pg_default;
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.meetings;
+EXCEPTION WHEN duplicate_object THEN
+  -- Already added
+END;
+$$;

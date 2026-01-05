@@ -214,7 +214,7 @@ export function OrbitTranslatorVertical({ roomCode, userId, onLiveTextChange }: 
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'transcript_segments',
+          table: 'transcriptions',
           filter: `meeting_id=eq.${roomUuid}`,
         },
         (payload: any) => {
@@ -223,7 +223,7 @@ export function OrbitTranslatorVertical({ roomCode, userId, onLiveTextChange }: 
           if (!isMe) {
             if (isListeningRef.current) {
               processingQueueRef.current.push({ 
-                text: payload.new.source_text || '',
+                text: payload.new.transcribe_text_segment || '',
                 id: payload.new.id,
                 speakerId: payload.new.speaker_id
               });
@@ -231,7 +231,7 @@ export function OrbitTranslatorVertical({ roomCode, userId, onLiveTextChange }: 
             } else {
               setMessages(prev => [...prev, {
                 id: payload.new.id || Math.random().toString(),
-                text: payload.new.source_text || '',
+                text: payload.new.transcribe_text_segment || '',
                 speakerId: payload.new.speaker_id,
                 isMe: false,
                 timestamp: new Date()

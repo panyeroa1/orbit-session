@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AppMode, RoomState, Language, LANGUAGES, AudioSource, EmotionType, EMOTION_COLORS } from '../types';
-import { ChevronDown, Mic, Hand, X, Lock, Play, Share2, LogOut, ChevronUp, Volume2, Loader2, Globe } from 'lucide-react';
+import { ChevronDown, Mic, Hand, X, Lock, Play, Share2, LogOut, ChevronUp, Volume2, Loader2, Globe, Sparkles } from 'lucide-react';
 
 interface TranslatorDockProps {
   mode: AppMode;
@@ -25,6 +25,8 @@ interface TranslatorDockProps {
   onAuthToggle: (meetingId?: string) => void;
   isMinimized: boolean;
   onMinimizeToggle: () => void;
+  transcriptionEngine?: 'webspeech' | 'deepgram';
+  onEngineChange?: (engine: 'webspeech' | 'deepgram') => void;
 }
 
 const AudioVisualizer: React.FC<{ data: Uint8Array; colorClass?: string }> = ({ data, colorClass = 'bg-white' }) => {
@@ -80,7 +82,9 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
   onAudioSourceToggle,
   translatedStreamText,
   isTtsLoading,
-  emotion
+  emotion,
+  transcriptionEngine = 'webspeech',
+  onEngineChange
 }) => {
   const [meetingIdInput, setMeetingIdInput] = React.useState(meetingId || '');
   const [isLangOpen, setIsLangOpen] = React.useState(false);
@@ -165,6 +169,18 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
                     <span className="font-bold text-[16px] tracking-tight">Listen Translation</span>
                 </button>
                 
+                {/* Engine Toggle */}
+                <button
+                    onClick={() => onEngineChange?.(transcriptionEngine === 'webspeech' ? 'deepgram' : 'webspeech')}
+                    className={`px-3 hover:bg-white/5 border-l border-white/5 flex items-center justify-center transition-colors ${
+                        transcriptionEngine === 'deepgram' ? 'text-purple-400' : 'text-slate-400'
+                    }`}
+                    title={`Engine: ${transcriptionEngine === 'deepgram' ? 'Deepgram' : 'WebSpeech'}`}
+                >
+                    <span className="text-[10px] font-bold tracking-wider mr-1 uppercase">{transcriptionEngine === 'deepgram' ? 'DG' : 'WS'}</span>
+                    <Sparkles className={`w-3 h-3 ${transcriptionEngine === 'deepgram' ? 'fill-current' : ''}`} />
+                </button>
+
                 {/* Language Trigger */}
                 <button
                     onClick={() => setIsLangOpen(!isLangOpen)}

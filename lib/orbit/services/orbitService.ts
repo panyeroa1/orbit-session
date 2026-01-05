@@ -45,25 +45,27 @@ export async function releaseSpeakerLock(roomCode: string, userId: string): Prom
 
 export const releaseSpeaker = releaseSpeakerLock;
 
-export async function saveUtterance(roomId: string, userId: string, text: string, sourceLang: string = 'auto') {
-  const { data, error } = await supabase
-    .from('transcript_segments')
-    .insert({
-      meeting_id: roomId,
-      speaker_id: userId,
-      source_text: text,
-      source_lang: sourceLang,
-      created_at: new Date().toISOString()
-    })
-    .select()
-    .single();
+export const saveUtterance = async (
+  meetingId: string,
+  speakerId: string,
+  text: string,
+  language: string
+) => {
+  try {
+    const { error } = await supabase.from('transcriptions').insert({
+      meeting_id: meetingId,
+      speaker_id: speakerId,
+      transcribe_text_segment: text,
+      full_transcription: text, // Fallback for simple save
+      users_all: []
+      // created_at is default now()
+    });
 
-  if (error) {
-    console.error('Error saving utterance:', error);
-    return null;
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error saving transcription:', error);
   }
-  return data;
-}
+};
 
 export async function saveTranslation(roomId: string, utteranceId: string, listenerUserId: string | null, targetLang: string, translatedText: string) {
   const { data, error } = await supabase

@@ -19,9 +19,16 @@ export async function POST(request: Request) {
     // Convert blob to buffer
     const arrayBuffer = await audioBlob.arrayBuffer();
 
+    let dgUrl = 'https://api.deepgram.com/v1/listen?model=nova-2&punctuate=true&smart_format=true';
+    if (language === 'auto') {
+      dgUrl += '&detect_language=true';
+    } else {
+      dgUrl += `&language=${language}`;
+    }
+
     // Call Deepgram API
     const response = await fetch(
-      `https://api.deepgram.com/v1/listen?model=nova-2&language=${language}&punctuate=true&smart_format=true`,
+      dgUrl,
       {
         method: 'POST',
         headers: {
