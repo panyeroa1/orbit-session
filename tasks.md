@@ -2681,3 +2681,38 @@ Test result:
 
 Known limitations or follow-up tasks:
 - None.
+
+Task ID: T-0039
+Title: Add Audio Source Selection to Translation Sidebar
+Status: TODO
+Owner: Miles
+Related repo or service: livekit-meet
+
+START LOG
+
+Timestamp: 2026-01-06 05:25
+Current behavior or state:
+- "Orbit Translator" sidebar (`OrbitTranslatorVertical`) allows language selection but not microphone source selection.
+- Users cannot change their input device from within the sidebar.
+
+Plan and scope for this task:
+- Update `PageClientImpl.tsx` to enumerate audio input devices and manage selection state (syncing with `userChoices` if possible).
+- Update `OrbitTranslatorVertical.tsx` to accept device props and render a source selection dropdown.
+- Ensure the selection updates the app-wide state (LiveKit input).
+
+Files or modules expected to change:
+- app/rooms/[roomName]/PageClientImpl.tsx
+- lib/orbit/components/OrbitTranslatorVertical.tsx
+
+Risks or things to watch out for:
+- WebSpeech API might not respect the selected device ID (browser limitation), but LiveKit/Deepgram will.
+- Ensuring the dropdown UI matches the existing styling.
+
+WORK CHECKLIST
+
+- [ ] Implement device enumeration in `PageClientImpl`
+- [ ] Pass device props to `OrbitTranslatorVertical`
+- [ ] Implement dropdown UI in `OrbitTranslatorVertical`
+- [ ] Verify selection updates state
+
+END LOG

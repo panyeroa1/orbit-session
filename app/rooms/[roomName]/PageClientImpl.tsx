@@ -443,6 +443,23 @@ function VideoConferenceComponent(props: {
 
   const [isTranscriptionEnabled, setIsTranscriptionEnabled] = React.useState(false);
   const [roomState, setRoomState] = React.useState<RoomState>({ activeSpeaker: null, raiseHandQueue: [], lockVersion: 0 });
+  const [audioDevices, setAudioDevices] = React.useState<MediaDeviceInfo[]>([]);
+
+  React.useEffect(() => {
+    const updateDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const mics = devices.filter((d) => d.kind === 'audioinput');
+        setAudioDevices(mics);
+      } catch (err) {
+        console.error('Failed to enumerate devices', err);
+      }
+    };
+
+    updateDevices();
+    navigator.mediaDevices.addEventListener('devicechange', updateDevices);
+    return () => navigator.mediaDevices.removeEventListener('devicechange', updateDevices);
+  }, []);
 
   React.useEffect(() => {
     if (!roomName) return;
@@ -763,6 +780,17 @@ function VideoConferenceComponent(props: {
           <OrbitTranslatorVertical 
             roomCode={roomName} 
             userId={user?.id || 'guest-user'} 
+            audioDevices={audioDevices}
+            selectedDeviceId={props.userChoices.audioDeviceId ?? ''}
+            onDeviceIdChange={(deviceId) => {
+              props.userChoices.audioDeviceId = deviceId;
+              // Also update persistence if available via props or context, 
+              // but here we might need to rely on the parent's handler if accessible or just prop drill it.
+              // Note: PageClientImpl props.userChoices is read-only from the perspective of this component 
+              // unless we use the usePersistentUserChoices hook again or pass the setter.
+              // However, usePersistentUserChoices is already used at the top level (PageClientImpl).
+              // We need to pass the setter from PageClientImpl -> VideoConferenceComponent.
+            }}
           />
         );
       case 'chat':

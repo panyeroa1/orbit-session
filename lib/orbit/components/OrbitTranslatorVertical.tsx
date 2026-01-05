@@ -50,9 +50,19 @@ interface OrbitTranslatorVerticalProps {
   roomCode: string;
   userId: string;
   onLiveTextChange?: (text: string) => void;
+  audioDevices?: MediaDeviceInfo[];
+  selectedDeviceId?: string;
+  onDeviceIdChange?: (deviceId: string) => void;
 }
 
-export function OrbitTranslatorVertical({ roomCode, userId, onLiveTextChange }: OrbitTranslatorVerticalProps) {
+export function OrbitTranslatorVertical({ 
+  roomCode, 
+  userId, 
+  onLiveTextChange,
+  audioDevices = [],
+  selectedDeviceId = '',
+  onDeviceIdChange
+}: OrbitTranslatorVerticalProps) {
   // --- Core state (kept) ---
   const [mode, setMode] = useState<'idle' | 'speaking'>('idle');
   const [messages, setMessages] = useState<Array<{
@@ -496,6 +506,37 @@ export function OrbitTranslatorVertical({ roomCode, userId, onLiveTextChange }: 
             {isListening ? <StopCircle size={18} /> : <Volume2 size={18} />}
             <span>Listen</span>
           </button>
+        </div>
+
+        </div>
+
+        {/* Audio Source */}
+        <div className={sharedStyles.agentSection}>
+          <label className={sharedStyles.agentSectionLabel}>
+            <span>Audio Source</span>
+            <span className={sharedStyles.agentSectionDivider} />
+          </label>
+          <div className={sharedStyles.agentSelectWrap}>
+            <select
+              aria-label="Audio source"
+              className={`${sharedStyles.sidebarSelect} ${sharedStyles.agentSelect}`}
+              value={selectedDeviceId}
+              onChange={(e) => onDeviceIdChange?.(e.target.value)}
+            >
+              {audioDevices.length === 0 ? (
+                 <option value="" disabled>No microphones found</option>
+              ) : (
+                 audioDevices.map((device) => (
+                   <option key={device.deviceId} value={device.deviceId}>
+                     {device.label || `Microphone ${device.deviceId.slice(0, 5)}...`}
+                   </option>
+                 ))
+              )}
+            </select>
+            <div className={sharedStyles.agentSelectIcon}>
+              <Mic size={14} />
+            </div>
+          </div>
         </div>
 
         {/* Target Language */}
