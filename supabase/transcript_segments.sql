@@ -1,28 +1,16 @@
--- Supabase schema for transcript segments
--- Run this in your Supabase SQL editor
+create table public.transcript_segments (
+  id uuid not null default gen_random_uuid (),
+  meeting_id text not null,
+  speaker_id text null,
+  source_lang text null,
+  source_text text not null,
+  created_at timestamp with time zone null default now(),
+  target_lang text null,
+  translated_text text null,
+  full_transcription text null default ''::text,
+  last_segment_id text null,
+  constraint transcript_segments_pkey primary key (id),
+  constraint transcript_segments_meeting_id_key unique (meeting_id)
+) TABLESPACE pg_default;
 
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-
-CREATE TABLE IF NOT EXISTS transcript_segments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  meeting_id TEXT NOT NULL,
-  speaker_id TEXT,
-  source_lang TEXT,
-  source_text TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  target_lang TEXT,
-  translated_text TEXT,
-  full_transcription TEXT DEFAULT '',
-  last_segment_id TEXT,
-  CONSTRAINT transcript_segments_meeting_id_key UNIQUE (meeting_id)
-);
-
--- Enable RLS
-ALTER TABLE transcript_segments ENABLE ROW LEVEL SECURITY;
-
--- Allow anonymous access for reads and writes
-CREATE POLICY "Allow all access to transcript_segments" ON transcript_segments
-  FOR ALL USING (true) WITH CHECK (true);
-
--- Create index for faster lookups
-CREATE INDEX IF NOT EXISTS idx_transcript_segments_meeting ON transcript_segments(meeting_id);
+create index IF not exists idx_transcript_segments_meeting on public.transcript_segments using btree (meeting_id) TABLESPACE pg_default;

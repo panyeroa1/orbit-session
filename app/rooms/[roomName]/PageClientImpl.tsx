@@ -4,6 +4,7 @@ import React from 'react';
 import { decodePassphrase } from '@/lib/client-utils';
 import { DebugMode } from '@/lib/Debug';
 import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
+import { supabase } from '@/lib/orbit/services/supabaseClient';
 import { RecordingIndicator } from '@/lib/RecordingIndicator';
 import { ConnectionDetails } from '@/lib/types';
 import { EburonControlBar } from '@/lib/EburonControlBar';
@@ -757,6 +758,34 @@ function VideoConferenceComponent(props: {
         return null;
     }
   };
+
+  const handleTranscriptSegment = React.useCallback(async (segment: any) => {
+    if (!roomName) return;
+    
+    try {
+        const { data: current } = await supabase
+            .from('transcript_segments')
+            .select('full_transcription')
+            .eq('meeting_id', roomName)
+            .single();
+            
+        const previousFull = current?.full_transcription || '';
+        const newFull = previousFull + (previousFull ? ' ' : '') + segment.text;
+        const segmentId = crypto.randomUUID();
+        
+        await supabase.from('transcript_segments').upsert({
+            meeting_id: roomName,
+            speaker_id: room.localParticipant.identity,
+            source_text: segment.text,
+            source_lang: segment.language || 'auto',
+            last_segment_id: segmentId,
+            full_transcription: newFull,
+        }, { onConflict: 'meeting_id' });
+        
+    } catch (err) {
+        console.error('Failed to save transcript', err);
+    }
+  }, [roomName, room.localParticipant.identity]);
 
   return (
     <div
