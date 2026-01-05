@@ -2980,36 +2980,75 @@ Known limitations or follow-up tasks:
 - None
 
 
-Task ID: T-0049
-Title: Enhance Leave Button & Fix Inline Styles
-Status: IN-PROGRESS
+Task ID: T-0050
+Title: AI Integrations, Grid View & Next.js Update
+Status: DONE
 Owner: Miles
 Related repo or service: livekit-meet
 
 START LOG
 
-Timestamp: 2026-01-06 07:30
+Timestamp: 2026-01-06 06:40
 Current behavior or state:
-- "Leave" is an icon-only button.
-- Language dropdown uses inline styles (causing lint warnings).
+- Old sidebar design was floating and restricted.
+- No Grid View option for participants.
+- Next.js 15.5.6 had security vulnerabilities.
+- Deepgram SDK usage was outdated.
 
 Plan and scope for this task:
-- details: Redesign Leave button (Text+Icon, 16px radius, solid bg).
-- details: Refactor inline styles to CSS modules.
+- details: Implement AI Integrations sidebar with audio visualizer.
+- details: Add Grid View toggle to navbar.
+- details: Upgrade Next.js to 16.1.1 and fix build/security issues.
+- details: Refine sidebar layout to join navbar height.
 
 Files or modules expected to change:
 - lib/EburonControlBar.tsx
+- lib/orbit/components/OrbitIntegrations.tsx
+- app/rooms/[roomName]/PageClientImpl.tsx
 - styles/Eburon.module.css
+- package.json
+- next.config.js
+- app/api/deepgram/token/route.ts
 
 Risks or things to watch out for:
-- None
+- Turbopack conflict in Next.js 16 (resolved via --webpack).
 
 WORK CHECKLIST
 
-- [ ] Update Leave Button UI
-- [ ] Move inline styles to CSS
+- [x] Implement AI sidebar & Visualizer
+- [x] Move styles to CSS modules
+- [x] Implement Grid View Toggle
+- [x] Upgrade Next.js to 16.1.1
+- [x] Fix Vercel security warnings
 
 END LOG
+
+Timestamp: 2026-01-06 06:46
+Summary of what actually changed:
+- Integrated AI Integrations sidebar with a dynamic local microphone visualizer.
+- Added a "Grid" toggle button that forces GridLayout for all participants.
+- Upgraded Next.js to 16.1.1 and configured `next build --webpack` for stability.
+- Adjusted sidebar CSS to match the "joined" full-height design stopping at the navbar top.
+
+Files actually modified:
+- lib/EburonControlBar.tsx
+- lib/orbit/components/OrbitIntegrations.tsx
+- app/rooms/[roomName]/PageClientImpl.tsx
+- styles/Eburon.module.css
+- package.json
+- next.config.js
+- app/api/deepgram/token/route.ts
+
+How it was tested:
+- Production build verified with `npm run build`.
+- Pushed to `joe` repository.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- None
+
 
 
 
