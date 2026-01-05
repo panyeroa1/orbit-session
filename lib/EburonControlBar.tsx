@@ -15,6 +15,14 @@ const MicIcon = () => (
   </svg>
 );
 
+const CaptionsIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
+    <path d="M7 15h2.5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2H7" />
+    <path d="M15 15h2.5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2H15" />
+  </svg>
+);
+
 const MicOffIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="2" y1="2" x2="22" y2="22" />
@@ -172,12 +180,14 @@ interface EburonControlBarProps {
   onAgentToggle?: () => void;
   onSettingsToggle?: () => void;
   onTranslatorToggle?: () => void;
+  onTranscriptionToggle?: () => void;
   audioCaptureOptions?: AudioCaptureOptions;
   isChatOpen?: boolean;
   isParticipantsOpen?: boolean;
   isAgentOpen?: boolean;
   isSettingsOpen?: boolean;
   isTranslatorOpen?: boolean;
+  isTranscriptionOpen?: boolean;
   isAppMuted?: boolean;
   onAppMuteToggle?: (muted: boolean | ((prev: boolean) => boolean)) => void;
 }
@@ -188,12 +198,14 @@ export function EburonControlBar({
   onAgentToggle,
   onSettingsToggle,
   onTranslatorToggle,
+  onTranscriptionToggle,
   audioCaptureOptions,
   isChatOpen,
   isParticipantsOpen,
   isAgentOpen,
   isSettingsOpen,
   isTranslatorOpen,
+  isTranscriptionOpen,
   isAppMuted = false,
   onAppMuteToggle,
 }: EburonControlBarProps) {
@@ -682,6 +694,17 @@ export function EburonControlBar({
             </button>
           )}
 
+          {onTranscriptionToggle && (
+            <button
+              className={`${styles.controlButton} ${isTranscriptionOpen ? styles.controlButtonActive : ''}`}
+              onClick={onTranscriptionToggle}
+              title="Transcription"
+              aria-pressed={isTranscriptionOpen}
+            >
+              <CaptionsIcon />
+            </button>
+          )}
+
           {onTranslatorToggle && (
             <button
               className={`${styles.controlButton} ${isTranslatorOpen ? styles.controlButtonActive : ''}`}
@@ -760,6 +783,18 @@ export function EburonControlBar({
           <ChatIcon />
           <span>Chat</span>
         </button>
+        {onTranscriptionToggle && (
+          <button 
+            className={`${styles.mobileNavbarItem} ${isTranscriptionOpen ? styles.mobileNavbarItemActive : ''}`}
+            onClick={() => {
+              onTranscriptionToggle();
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            <CaptionsIcon />
+            <span>Captions</span>
+          </button>
+        )}
         {onTranslatorToggle && (
           <button 
             className={`${styles.mobileNavbarItem} ${isTranslatorOpen ? styles.mobileNavbarItemActive : ''}`}
