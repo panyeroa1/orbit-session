@@ -153,7 +153,6 @@ export async function streamTranslation(
             const delay = RETRY_DELAY * Math.pow(2, retryCount);
             console.log(`Retrying in ${delay}ms...`);
             setTimeout(() => {
-            setTimeout(() => {
               streamTranslation(sourceText, targetLangName, audioCtx, onAudioData, onTranscript, onEnd, sourceLangCode, retryCount + 1, ttsProvider);
             }, delay);
           } else {

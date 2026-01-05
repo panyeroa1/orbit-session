@@ -5,7 +5,7 @@ import styles from '@/styles/Eburon.module.css';
 import { supabase } from '@/lib/orbit/services/supabaseClient';
 import { streamTranslation } from '@/lib/orbit/services/geminiService';
 import { LANGUAGES, Language } from '@/lib/orbit/types';
-import { Volume2, Loader2, Mic, MicOff, Sparkles, StopCircle, ChevronDown } from 'lucide-react';
+import { Volume2, Mic, MicOff, StopCircle, ChevronDown } from 'lucide-react';
 
 interface AgentPanelProps {
   meetingId?: string;
@@ -178,19 +178,15 @@ export function AgentPanel({ meetingId, onSpeakingStateChange, isTranscriptionEn
         </div>
       </div>
 
-      <div className="flex flex-col flex-1 min-h-0">
+      <div className={styles.agentPanelBody}>
         {/* Main Controls */}
-        <div className="flex flex-col gap-3 p-4 border-b border-white/5">
+        <div className={styles.agentControls}>
           <button
             onClick={onToggleTranscription}
-            className={`group flex items-center justify-center p-3 rounded-xl border transition-all duration-300 w-full hover:scale-[1.02] ${
-               isTranscriptionEnabled 
-               ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.15)]' 
-               : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
-            }`}
+            className={`${styles.agentControlButton} ${isTranscriptionEnabled ? styles.agentControlButtonActiveSpeak : ''}`}
           >
-            {isTranscriptionEnabled ? <Mic size={20} className="mr-3" /> : <MicOff size={20} className="mr-3" />}
-            <span className="text-[10px] uppercase font-bold tracking-wider">Speak</span>
+            {isTranscriptionEnabled ? <Mic size={20} /> : <MicOff size={20} />}
+            <span>Speak</span>
           </button>
 
           <button
@@ -199,62 +195,62 @@ export function AgentPanel({ meetingId, onSpeakingStateChange, isTranscriptionEn
                setIsAgentActive(newState);
                if (newState) ensureAudioContext();
             }}
-            className={`group flex items-center justify-center p-3 rounded-xl border transition-all duration-300 w-full hover:scale-[1.02] ${
-               isAgentActive 
-               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]' 
-               : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
-            }`}
+            className={`${styles.agentControlButton} ${isAgentActive ? styles.agentControlButtonActiveListen : ''}`}
           >
-            {isAgentActive ? <Sparkles size={20} className="mr-3" /> : <StopCircle size={20} className="mr-3" />}
-            <span className="text-[10px] uppercase font-bold tracking-wider">Translate</span>
+            {isAgentActive ? <StopCircle size={20} /> : <Volume2 size={20} />}
+            <span>Listen</span>
           </button>
           
-          {/* TTS Provider Dropdown */}
-          <div className="relative group mt-1">
-             <select 
-               aria-label="TTS Provider"
-               className="w-full appearance-none bg-[#131b2c] border border-slate-700/50 group-hover:border-slate-600 text-slate-200 text-xs font-medium rounded-lg pl-3 pr-8 py-2.5 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all cursor-pointer shadow-sm"
-               value={ttsProvider}
-               onChange={(e) => setTtsProvider(e.target.value as any)}
-             >
-               <option value="gemini" className="bg-[#131b2c]">Agent</option>
-               <option value="cartesia" className="bg-[#131b2c]">Orbit</option>
-             </select>
-             {/* Custom Chevron */}
-             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-slate-400 transition-colors">
-                <ChevronDown size={14} />
+          {/* Voice Model Dropdown */}
+          <div className={styles.agentVoiceModel}>
+             <label className={styles.agentControlLabel} htmlFor="agent-voice-model">
+               Voice Model
+             </label>
+             <div className={styles.agentSelectWrap}>
+               <select 
+                 id="agent-voice-model"
+                 aria-label="Voice model"
+                 className={`${styles.sidebarSelect} ${styles.agentSelect}`}
+                 value={ttsProvider}
+                 onChange={(e) => setTtsProvider(e.target.value as any)}
+               >
+                 <option value="gemini">Agent</option>
+                 <option value="cartesia">Orbit</option>
+               </select>
+               <div className={styles.agentSelectIcon}>
+                  <ChevronDown size={14} />
+               </div>
              </div>
           </div>
         </div>
 
         {/* Target Language */}
-        <div className="px-5 py-3 border-b border-white/5 bg-white/[0.01]">
-          <label className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-2.5 block flex items-center gap-2">
+        <div className={styles.agentSection}>
+          <label className={styles.agentSectionLabel}>
              <span>Target Language</span>
-             <div className="h-px bg-slate-800 flex-1"/>
+             <span className={styles.agentSectionDivider} />
           </label>
-          <div className="relative group">
+          <div className={styles.agentSelectWrap}>
              <select 
                aria-label="Target language"
-               className="w-full appearance-none bg-[#131b2c] border border-slate-700/50 group-hover:border-slate-600 text-slate-200 text-sm rounded-xl pl-4 pr-10 py-3 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all cursor-pointer shadow-sm"
+               className={`${styles.sidebarSelect} ${styles.agentSelect}`}
                value={targetLang.code}
                onChange={(e) => setTargetLang(LANGUAGES.find(l => l.code === e.target.value) || LANGUAGES[0])}
              >
                {LANGUAGES.map(lang => (
-                 <option key={lang.code} value={lang.code} className="bg-[#131b2c]">
+                 <option key={lang.code} value={lang.code}>
                    {lang.flag} {lang.name}
                  </option>
                ))}
              </select>
-             {/* Custom Chevron */}
-             <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 group-hover:text-slate-400 transition-colors">
+             <div className={styles.agentSelectIcon}>
                 <ChevronDown size={14} />
              </div>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+        <div className={styles.agentLogs}>
             {logs.length === 0 && (
                <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-4 opacity-50">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-white/5 flex items-center justify-center">
