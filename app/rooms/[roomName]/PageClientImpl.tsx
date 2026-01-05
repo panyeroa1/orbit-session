@@ -433,7 +433,7 @@ function VideoConferenceComponent(props: {
   const [waitingList, setWaitingList] = React.useState<{ identity: string; name: string }[]>([]);
   const [admittedIds, setAdmittedIds] = React.useState<Set<string>>(new Set());
   const [isAppMuted, setIsAppMuted] = React.useState(false);
-  const [isTranslatorOpen, setIsTranslatorOpen] = React.useState(true);
+  const [isTranslatorOpen, setIsTranslatorOpen] = React.useState(false);
   const [isTranscriptionEnabled, setIsTranscriptionEnabled] = React.useState(false);
 
   const layoutContext = useCreateLayoutContext();

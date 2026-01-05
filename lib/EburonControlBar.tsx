@@ -522,6 +522,16 @@ export function EburonControlBar({
       <div className={`${styles.controlBar} ${isSidebarOpen ? styles.controlBarShifted : ''}`}>
         {/* Left Group: AV Controls */}
         <div className={styles.controlGroup}>
+          {onTranslatorToggle && (
+            <button
+              className={`${styles.controlButton} ${isTranslatorOpen ? styles.controlButtonActive : ''}`}
+              onClick={onTranslatorToggle}
+              title="Translator"
+              aria-pressed={isTranslatorOpen}
+            >
+              <TranslateIcon />
+            </button>
+          )}
           <div className={styles.screenShareWrapper} ref={micMenuRef}>
             <button
               className={`${styles.controlButton} ${isMicEnabled ? styles.controlButtonActive : styles.controlButtonMuted}`}
@@ -705,17 +715,6 @@ export function EburonControlBar({
             </button>
           )}
 
-          {onTranslatorToggle && (
-            <button
-              className={`${styles.controlButton} ${isTranslatorOpen ? styles.controlButtonActive : ''}`}
-              onClick={onTranslatorToggle}
-              title="Translator"
-              aria-pressed={isTranslatorOpen}
-            >
-              <TranslateIcon />
-            </button>
-          )}
-
           {onAgentToggle && (
             <button
               className={`${styles.controlButton} ${isAgentOpen ? styles.controlButtonActive : ''}`}
@@ -759,6 +758,18 @@ export function EburonControlBar({
 
       {/* Mobile Navbar */}
       <nav className={styles.mobileNavbar}>
+        {onTranslatorToggle && (
+          <button 
+            className={`${styles.mobileNavbarItem} ${isTranslatorOpen ? styles.mobileNavbarItemActive : ''}`}
+            onClick={() => {
+              onTranslatorToggle();
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            <TranslateIcon />
+            <span>Translate</span>
+          </button>
+        )}
         <button 
           className={`${styles.mobileNavbarItem} ${isMicEnabled ? styles.mobileNavbarItemActive : ''}`}
           onClick={toggleMicrophone}
@@ -793,18 +804,6 @@ export function EburonControlBar({
           >
             <CaptionsIcon />
             <span>Captions</span>
-          </button>
-        )}
-        {onTranslatorToggle && (
-          <button 
-            className={`${styles.mobileNavbarItem} ${isTranslatorOpen ? styles.mobileNavbarItemActive : ''}`}
-            onClick={() => {
-              onTranslatorToggle();
-              setIsMobileMenuOpen(false);
-            }}
-          >
-            <TranslateIcon />
-            <span>Translate</span>
           </button>
         )}
         <button 
