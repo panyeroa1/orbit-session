@@ -6,26 +6,21 @@ const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '
 
 export async function translateWithOllama(text: string, targetLang: string): Promise<string> {
   try {
-    const res = await fetch(`${process.env.OLLAMA_BASE_URL}/api/chat`, {
+    const res = await fetch('/api/translate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}`
       },
       body: JSON.stringify({
-        model: process.env.OLLAMA_MODEL || "gpt-oss:120b",
-        messages: [
-          { role: 'system', content: `You are a professional translator. Translate the following text into ${targetLang}. Only provide the translation.` },
-          { role: 'user', content: text }
-        ],
-        stream: false
+        text,
+        targetLang
       })
     });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-    return data.message?.content || text;
+    return data.translation || text;
   } catch (e) {
-    console.error("Ollama Translation Error", e);
+    console.error("Internal Translation API Error", e);
     return text;
   }
 }
