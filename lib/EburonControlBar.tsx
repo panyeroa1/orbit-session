@@ -528,6 +528,7 @@ export function EburonControlBar({
         <div className={styles.controlGroup}>
 
 
+
           <div className={styles.screenShareWrapper} ref={micMenuRef}>
             <button
               className={`${styles.controlButton} ${isMicEnabled ? styles.controlButtonActive : styles.controlButtonMuted}`}
@@ -565,6 +566,53 @@ export function EburonControlBar({
             )}
           </div>
 
+          <div className={styles.screenShareWrapper} ref={speakerMenuRef}>
+            <button
+              className={`${styles.controlButton} ${isAppMuted ? styles.controlButtonMuted : styles.controlButtonActive}`}
+              onClick={() => onAppMuteToggle?.((prev) => !prev)}
+              title={isAppMuted ? 'Unmute app audio' : 'Mute app audio'}
+            >
+              {isAppMuted ? <SpeakerOffIcon /> : <SpeakerIcon />}
+            </button>
+            <button
+              className={styles.deviceSelectorTrigger}
+              onClick={() => setIsSpeakerMenuOpen((prev) => !prev)}
+              title="Select speaker"
+              aria-expanded={isSpeakerMenuOpen}
+              aria-haspopup="listbox"
+            >
+              <ChevronDownIcon />
+            </button>
+            {isSpeakerMenuOpen && speakerDevices.length > 0 && (
+              <div className={styles.deviceMenu} role="listbox" aria-label="Select Speaker">
+                {speakerDevices.map((device) => (
+                  <button
+                    key={device.deviceId}
+                    className={`${styles.deviceOption} ${selectedSpeakerDevice === device.deviceId ? styles.deviceOptionActive : ''}`}
+                    onClick={async () => {
+                      setSelectedSpeakerDevice(device.deviceId);
+                      setIsSpeakerMenuOpen(false);
+                      try {
+                        await room.switchActiveDevice('audiooutput', device.deviceId);
+                        toast.success(`Switched to ${device.label || 'new speaker'}`);
+                      } catch (error) {
+                        console.error('Failed to switch speaker:', error);
+                        toast.error('Failed to switch speaker');
+                      }
+                    }}
+                    role="option"
+                    aria-selected={selectedSpeakerDevice === device.deviceId}
+                  >
+                    {device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Center Group: Navigation/Feature Controls */}
+        <div className={styles.controlGroupCenter}>
           <button
             className={`${styles.controlButton} ${isCameraEnabled ? styles.controlButtonActive : styles.controlButtonMuted}`}
             onClick={toggleCamera}
@@ -623,54 +671,7 @@ export function EburonControlBar({
               </div>
             )}
           </div>
-
-          <div className={styles.screenShareWrapper} ref={speakerMenuRef}>
-            <button
-              className={`${styles.controlButton} ${isAppMuted ? styles.controlButtonMuted : styles.controlButtonActive}`}
-              onClick={() => onAppMuteToggle?.((prev) => !prev)}
-              title={isAppMuted ? 'Unmute app audio' : 'Mute app audio'}
-            >
-              {isAppMuted ? <SpeakerOffIcon /> : <SpeakerIcon />}
-            </button>
-            <button
-              className={styles.deviceSelectorTrigger}
-              onClick={() => setIsSpeakerMenuOpen((prev) => !prev)}
-              title="Select speaker"
-              aria-expanded={isSpeakerMenuOpen}
-              aria-haspopup="listbox"
-            >
-              <ChevronDownIcon />
-            </button>
-            {isSpeakerMenuOpen && speakerDevices.length > 0 && (
-              <div className={styles.deviceMenu} role="listbox" aria-label="Select Speaker">
-                {speakerDevices.map((device) => (
-                  <button
-                    key={device.deviceId}
-                    className={`${styles.deviceOption} ${selectedSpeakerDevice === device.deviceId ? styles.deviceOptionActive : ''}`}
-                    onClick={async () => {
-                      setSelectedSpeakerDevice(device.deviceId);
-                      setIsSpeakerMenuOpen(false);
-                      try {
-                        await room.switchActiveDevice('audiooutput', device.deviceId);
-                        toast.success(`Switched to ${device.label || 'new speaker'}`);
-                      } catch (error) {
-                        console.error('Failed to switch speaker:', error);
-                        toast.error('Failed to switch speaker');
-                      }
-                    }}
-                    role="option"
-                    aria-selected={selectedSpeakerDevice === device.deviceId}
-                  >
-                    {device.label || `Speaker ${speakerDevices.indexOf(device) + 1}`}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Center Group: Navigation/Feature Controls */}
-        <div className={styles.controlGroupCenter}>
+          
           {onParticipantsToggle && (
             <button
               className={`${styles.controlButton} ${isParticipantsOpen ? styles.controlButtonActive : ''}`}
