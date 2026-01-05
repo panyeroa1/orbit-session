@@ -2021,8 +2021,115 @@
   object-fit: contain;
 }
 
+
 .orbitIconMobile {
   width: 24px;
   height: 24px;
   object-fit: contain;
+}
+
+/* Audio Split Control (Speak | Listen) */
+.audioSplitControl {
+  display: flex;
+  align-items: center;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid #32CD32;
+  padding: 2px;
+  overflow: visible;
+  height: 48px;
+  box-shadow: 0 0 8px rgba(50, 205, 50, 0.5);
+}
+
+.audioSplitSection {
+  display: flex;
+  align-items: center;
+  position: relative;
+  height: 100%;
+}
+
+.audioSplitLeft {
+  padding-left: 4px;
+}
+
+.audioSplitRight {
+  padding-right: 4px;
+}
+
+.audioSplitMain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 100%;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.audioSplitMain:hover {
+  background: rgba(50, 205, 50, 0.15);
+}
+
+.audioSplitLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.audioSplitIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.audioSplitIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.iconActive {
+  color: #32CD32;
+}
+
+.iconMuted {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.audioSplitDropdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 100%;
+  cursor: pointer;
+  color: #32CD32;
+  border: none;
+  background: transparent;
+  transition: color 0.15s ease;
+  border-radius: 0 4px 4px 0;
+}
+
+.audioSplitLeft .audioSplitDropdown {
+  border-radius: 0 4px 4px 0;
+}
+
+.audioSplitRight .audioSplitDropdown {
+  border-radius: 4px 0 0 4px;
+}
+
+.audioSplitDropdown:hover {
+  color: #fff;
+}
+
+.audioSplitDivider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 2px;
 }

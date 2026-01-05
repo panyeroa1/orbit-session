@@ -168,7 +168,7 @@ const CloseIcon = () => (
   </svg>
 );
 
-import { RoomState } from '@/lib/orbit/types';
+import { RoomState, LANGUAGES, Language } from '@/lib/orbit/types';
 
 interface EburonControlBarProps {
   onChatToggle?: () => void;
@@ -228,6 +228,12 @@ export function EburonControlBar({
   const [speakerDevices, setSpeakerDevices] = React.useState<MediaDeviceInfo[]>([]);
   const [selectedSpeakerDevice, setSelectedSpeakerDevice] = React.useState<string>('');
   const [isSpeakerMenuOpen, setIsSpeakerMenuOpen] = React.useState(false);
+  
+  // Language Selector State
+  const [selectedLanguage, setSelectedLanguage] = React.useState<Language>(LANGUAGES[0]);
+  const [isLangMenuOpen, setIsLangMenuOpen] = React.useState(false);
+  const langMenuRef = React.useRef<HTMLDivElement | null>(null);
+
   const screenShareMenuRef = React.useRef<HTMLDivElement | null>(null);
   const micMenuRef = React.useRef<HTMLDivElement | null>(null);
   const speakerMenuRef = React.useRef<HTMLDivElement | null>(null);
@@ -327,6 +333,18 @@ export function EburonControlBar({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isSpeakerMenuOpen]);
+
+  // Close language menu on outside click
+  React.useEffect(() => {
+    if (!isLangMenuOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setIsLangMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isLangMenuOpen]);
 
   const switchAudioDevice = async (deviceId: string) => {
     setSelectedAudioDevice(deviceId);
@@ -432,8 +450,19 @@ export function EburonControlBar({
             deviceId: room.getActiveDevice('audioinput') ?? audioCaptureOptions?.deviceId,
           }
         : undefined;
-      await localParticipant.setMicrophoneEnabled(enabled, captureOptions);
-      setIsMicEnabled(enabled);
+      try {
+        await localParticipant.setMicrophoneEnabled(enabled, captureOptions);
+        setIsMicEnabled(enabled);
+      } catch (error: any) {
+        console.error('Failed to toggle microphone:', error);
+        if (error.name === 'NotAllowedError' || error.message?.includes('Permission denied')) {
+          toast.error('Microphone permission denied. Please enable it in your browser settings.');
+        } else {
+          toast.error('Failed to toggle microphone');
+        }
+        // Revert state if needed, though here we only set it on success.
+        // If we optimistically updated, we would revert here.
+      }
     }
   };
 
@@ -567,6 +596,53 @@ export function EburonControlBar({
                     </button>
                   ))}
                 </div>
+              )}
+            </div>
+
+
+
+            <div className={styles.audioSplitDivider} />
+
+            {/* Language Selector (Center) */}
+            <div className={`${styles.audioSplitSection} ${styles.audioSplitCenter}`} ref={langMenuRef}>
+              <div 
+                className={styles.audioSplitMain} 
+                onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                title="Select Language"
+                style={{ padding: '0 8px', gap: '6px' }}
+              >
+                <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{selectedLanguage.flag}</span>
+                <ChevronDownIcon />
+              </div>
+
+              {isLangMenuOpen && (
+                 <div 
+                  className={styles.deviceMenu} 
+                  role="listbox" 
+                  aria-label="Select Language"
+                  style={{ 
+                    maxHeight: '300px', 
+                    overflowY: 'auto',
+                    width: '280px' 
+                  }}
+                 >
+                   {LANGUAGES.map((lang) => (
+                     <button
+                       key={lang.code}
+                       className={`${styles.deviceOption} ${selectedLanguage.code === lang.code ? styles.deviceOptionActive : ''}`}
+                       onClick={() => {
+                         setSelectedLanguage(lang);
+                         setIsLangMenuOpen(false);
+                       }}
+                       role="option"
+                       aria-selected={selectedLanguage.code === lang.code}
+                       style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                     >
+                       <span style={{ fontSize: '1.2rem' }}>{lang.flag}</span>
+                       <span>{lang.name}</span>
+                     </button>
+                   ))}
+                 </div>
               )}
             </div>
 
