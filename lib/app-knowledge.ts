@@ -12,8 +12,8 @@ Core routes:
 
 Primary UI:
 - Main video grid (local camera + screen share tiles).
-- Right sidebar with panels (Agent, Chat, Captions, Translator, Settings).
-- Bottom control bar for mic, camera, screen share, chat, agent, captions, translator, settings, invite, leave.
+- Right sidebar with panels (Agent, Chat, Settings).
+- Bottom control bar for mic, camera, screen share, chat, agent, settings, invite, leave.
 
 Features:
 - End-to-end encryption toggle on join.
@@ -27,7 +27,6 @@ Server API routes:
 - POST /api/room/mute: host mute controls for remote tracks.
 - POST /api/room/mute-all: mute all participants (host control).
 - POST /api/room/remove: remove a participant.
-- POST /api/transcription: live captions via Deepgram.
 - POST /api/agent: AI assistant via Ollama Cloud.
 - GET /api/record/start and /api/record/stop: room recording controls.
 `.trim();

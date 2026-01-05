@@ -69,14 +69,6 @@ const ToolsIcon = () => (
   </svg>
 );
 
-const BroadcastIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="1.5" />
-    <path d="M8.5 8.5a5 5 0 0 1 7 0" />
-    <path d="M6 6a9 9 0 0 1 12 0" />
-  </svg>
-);
-
 const SpeakerIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -98,16 +90,6 @@ const ChevronDownIcon = () => (
   </svg>
 );
 
-const CaptionsIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="5" width="18" height="14" rx="2" />
-    <line x1="7" y1="11" x2="11" y2="11" />
-    <line x1="7" y1="15" x2="12" y2="15" />
-    <line x1="13" y1="11" x2="17" y2="11" />
-    <line x1="13" y1="15" x2="17" y2="15" />
-  </svg>
-);
-
 const ChatIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -123,17 +105,6 @@ const BotIcon = () => (
   </svg>
 );
 
-const TranslatorIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 5h7" />
-    <path d="M7.5 5c0 4-2.5 7-5.5 9" />
-    <path d="M5 10c1.5 2 4 3.5 6 4" />
-    <path d="M12 19h8" />
-    <path d="M15 7h5" />
-    <path d="M17.5 7v10" />
-  </svg>
-);
-
 const SettingsIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="4" y1="6" x2="20" y2="6" />
@@ -142,16 +113,6 @@ const SettingsIcon = () => (
     <circle cx="14" cy="12" r="2" />
     <line x1="4" y1="18" x2="20" y2="18" />
     <circle cx="10" cy="18" r="2" />
-  </svg>
-);
-
-const ListenTranslationIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-    <line x1="12" y1="19" x2="12" y2="22" />
-    <circle cx="18" cy="18" r="3" />
-    <path d="M18 15v3l2 2" />
   </svg>
 );
 
@@ -200,46 +161,28 @@ interface SuccessClassControlBarProps {
   onChatToggle?: () => void;
   onParticipantsToggle?: () => void;
   onAgentToggle?: () => void;
-  onBroadcastToggle?: () => void;
-  onTranslateToggle?: () => void;
   onSettingsToggle?: () => void;
   audioCaptureOptions?: AudioCaptureOptions;
   isChatOpen?: boolean;
   isParticipantsOpen?: boolean;
   isAgentOpen?: boolean;
-  isBroadcastOpen?: boolean;
-  isTranslateOpen?: boolean;
   isSettingsOpen?: boolean;
-  isBroadcasting?: boolean;
-  isBroadcastLocked?: boolean;
-  broadcasterId?: string | null;
   isAppMuted?: boolean;
   onAppMuteToggle?: (muted: boolean | ((prev: boolean) => boolean)) => void;
-  isListening?: boolean;
-  onListenTranslationToggle?: () => void;
 }
 
 export function SuccessClassControlBar({
   onChatToggle,
   onParticipantsToggle,
   onAgentToggle,
-  onBroadcastToggle,
-  onTranslateToggle,
   onSettingsToggle,
   audioCaptureOptions,
   isChatOpen,
   isParticipantsOpen,
   isAgentOpen,
-  isBroadcastOpen,
-  isTranslateOpen,
   isSettingsOpen,
-  isBroadcasting,
-  isBroadcastLocked = false,
-  broadcasterId = null,
   isAppMuted = false,
   onAppMuteToggle,
-  isListening = false,
-  onListenTranslationToggle,
 }: SuccessClassControlBarProps) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
@@ -546,8 +489,6 @@ export function SuccessClassControlBar({
     isChatOpen || 
     isParticipantsOpen || 
     isAgentOpen || 
-    isBroadcastOpen || 
-    isTranslateOpen || 
     isSettingsOpen
   );
 
@@ -721,49 +662,6 @@ export function SuccessClassControlBar({
           <RaiseHandIcon />
         </button>
 
-        {/* Broadcast */}
-        {onBroadcastToggle && (
-          <button
-            className={`${styles.controlButton} ${isBroadcastOpen ? styles.controlButtonActive : ''} ${isBroadcasting ? styles.broadcastActive : ''} ${isBroadcastLocked && !isBroadcasting ? styles.controlButtonMuted : ''}`}
-            onClick={isBroadcastLocked && !isBroadcasting ? undefined : onBroadcastToggle}
-            title={isBroadcastLocked && !isBroadcasting ? `Locked by ${broadcasterId}` : "Broadcast & Captions"}
-            aria-pressed={isBroadcastOpen}
-            disabled={isBroadcastLocked && !isBroadcasting}
-          >
-            {isBroadcastLocked && !isBroadcasting ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            ) : <BroadcastIcon />}
-          </button>
-        )}
-
-        {/* Translate */}
-        {onTranslateToggle && (
-          <button
-            className={`${styles.controlButton} ${isTranslateOpen ? styles.controlButtonActive : ''}`}
-            onClick={onTranslateToggle}
-            title="Translation"
-            aria-pressed={isTranslateOpen}
-          >
-            <TranslatorIcon />
-          </button>
-        )}
-
-        {/* Listen Translation (One-Click) */}
-        {onListenTranslationToggle && (
-          <button
-            className={`${styles.controlButton} ${isListening ? styles.broadcastActive : ''}`}
-            onClick={onListenTranslationToggle}
-            title={isBroadcasting ? 'Disabled while broadcasting' : (isListening ? 'Stop listening to translation' : 'Listen to translation (AI Voice)')}
-            aria-pressed={isListening}
-            disabled={isBroadcasting}
-          >
-            <ListenTranslationIcon />
-          </button>
-        )}
-
         {/* Chat */}
         {onChatToggle && (
           <button
@@ -886,34 +784,6 @@ export function SuccessClassControlBar({
               <div className={styles.mobileGridIcon}><ScreenShareIcon /></div>
               <span className={styles.mobileGridLabel}>{isScreenSharing ? 'Stop Share' : 'Share'}</span>
             </button>
-
-            {onBroadcastToggle && (
-              <button 
-                className={`${styles.mobileGridItem} ${isBroadcasting ? styles.mobileGridItemActive : ''} ${isBroadcastOpen ? styles.mobileGridItemActive : ''} ${isBroadcastLocked && !isBroadcasting ? styles.controlButtonMuted : ''}`}
-                onClick={() => {
-                  if (isBroadcastLocked && !isBroadcasting) return;
-                  onBroadcastToggle();
-                  setIsMobileMenuOpen(false);
-                }}
-                disabled={isBroadcastLocked && !isBroadcasting}
-              >
-                <div className={styles.mobileGridIcon}><BroadcastIcon /></div>
-                <span className={styles.mobileGridLabel}>Broadcast</span>
-              </button>
-            )}
-
-            {onTranslateToggle && (
-              <button 
-                className={`${styles.mobileGridItem} ${isTranslateOpen ? styles.mobileGridItemActive : ''}`}
-                onClick={() => {
-                  onTranslateToggle();
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <div className={styles.mobileGridIcon}><TranslatorIcon /></div>
-                <span className={styles.mobileGridLabel}>Translate</span>
-              </button>
-            )}
 
             {onAgentToggle && (
               <button 
