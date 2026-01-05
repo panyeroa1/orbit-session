@@ -1,6 +1,6 @@
 
 Task ID: T-0034
-Title: Disable Translation and TTS
+Title: Disable Translation and TTS (Maintenance)
 Status: DONE
 Owner: Miles
 
@@ -31,6 +31,37 @@ Tests:
 - Validated git push success.
 Result: PASS
 Status: DONE
+
+
+Task ID: T-0035
+Title: Restore STT Functionality
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-05 21:35
+Plan:
+- Restore Realtime subscription to `transcript_segments` in `OrbitApp.tsx`.
+- Ensure STT state variables (`livePartialText`, `lastFinalText`) are updated correctly.
+- Add visual indicator for "Listening" state.
+- Standardize room locking logic to use `orbitService` RPC calls.
+Risks:
+- None; restoring previous functionality.
+
+END LOG
+
+Timestamp: 2026-01-05 21:38
+Changed:
+- Restored `transcript_segments` real-time channel subscription.
+- Updated `OrbitApp.tsx` imports to include both `orbitService` (RPC locks) and `roomStateService` (state subs).
+- Added "Listening..." UI indicator.
+- Pushed hotfix to `ooo` and `master-buten`.
+Tests:
+- Validated build success.
+Result: PASS
+Status: DONE
+
 
 
 

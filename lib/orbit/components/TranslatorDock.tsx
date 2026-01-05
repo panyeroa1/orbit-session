@@ -1,14 +1,23 @@
-
-import React from 'react';
-import { AppMode, RoomState } from '../types';
-import { ChevronDown, Mic, Hand, X, Lock, Play, Share2, LogOut, ChevronUp } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { AppMode, RoomState, Language, LANGUAGES, AudioSource, EmotionType, EMOTION_COLORS } from '../types';
+import { ChevronDown, Mic, Hand, X, Lock, Play, Share2, LogOut, ChevronUp, Volume2, Loader2, Globe } from 'lucide-react';
 
 interface TranslatorDockProps {
   mode: AppMode;
   roomState: RoomState;
+  selectedLanguage: Language; // Restored
   myUserId: string;
   onSpeakToggle: () => void;
+  onListenToggle: () => void; // Restored
+  onLanguageChange: (lang: Language) => void; // Restored
   onRaiseHand: () => void;
+  audioData?: Uint8Array;
+  audioSource?: AudioSource;
+  onAudioSourceToggle?: () => void;
+  liveStreamText?: string;
+  translatedStreamText?: string;
+  isTtsLoading?: boolean;
+  emotion?: EmotionType;
   onJoin?: (meetingId: string) => void;
   meetingId?: string | null;
   onInvite?: () => void;
@@ -16,7 +25,6 @@ interface TranslatorDockProps {
   onAuthToggle: (meetingId?: string) => void;
   isMinimized: boolean;
   onMinimizeToggle: () => void;
-  liveStreamText?: string;
 }
 
 const AudioVisualizer: React.FC<{ data: Uint8Array; colorClass?: string }> = ({ data, colorClass = 'bg-white' }) => {
