@@ -232,7 +232,7 @@ export async function startTranscriptionSession(
           // Other versions return it in outputTranscription
           if (message.serverContent?.outputTranscription) {
             const text = message.serverContent.outputTranscription.text;
-            onTranscript(text);
+            if (text) onTranscript(text);
           }
         },
         onclose: () => onEnd(),
@@ -247,10 +247,12 @@ export async function startTranscriptionSession(
 
     return {
       sendAudio: (base64Audio: string) => {
-        session.sendRealtimeInput([{
-          mimeType: "audio/pcm;rate=16000",
-          data: base64Audio
-        }]);
+        session.sendRealtimeInput({
+          audio: {
+            mimeType: "audio/pcm;rate=16000",
+            data: base64Audio
+          }
+        });
       },
       stop: () => {
         try {

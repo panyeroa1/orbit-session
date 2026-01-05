@@ -80,6 +80,10 @@ export function OrbitApp() {
   const [livePartialText, setLivePartialText] = useState<string>('');
   
   const [fullTranscript, setFullTranscript] = useState('');
+  const fullTranscriptRef = useRef('');
+  useEffect(() => {
+    fullTranscriptRef.current = fullTranscript;
+  }, [fullTranscript]);
 
   const selectedLanguageRef = useRef<Language>(LANGUAGES[0]);
   useEffect(() => {
@@ -136,7 +140,139 @@ export function OrbitApp() {
     return text.match(/[^.!?]+[.!?]*|[^.!?]+$/g) || [text];
   };
 
+  const shipSegment = useCallback(async (text: string) => {
+    const segment = text.trim();
+    if (!segment) return;
+    try {
+       // Append to full transcript (client-side approximation)
+      const newFull = (fullTranscriptRef.current + " " + segment).trim();
+      setFullTranscript(newFull);
 
+      const { error } = await supabase.from('transcriptions').insert({ 
+        meeting_id: meetingId, 
+        speaker_id: MY_USER_ID, 
+        transcribe_text_segment: segment,
+        full_transcription: newFull,
+        users_all: [] // Placeholder for "all listening users"
+      });
+      if (error) throw error;
+    } catch (err) {
+      reportError("Failed to send transcription", err);
+    }
+  }, [meetingId, reportError]);
+
+  const playNextAudio = useCallback(async () => {
+    if (isPlayingRef.current || audioQueueRef.current.length === 0) return;
+    isPlayingRef.current = true;
+
+    const audioCtx = ensureAudioContext();
+    if (!audioCtx) {
+      isPlayingRef.current = false;
+      return;
+    }
+
+    const nextBuffer = audioQueueRef.current.shift();
+    if (!nextBuffer) {
+      isPlayingRef.current = false;
+      return;
+    }
+
+    try {
+      const audioBuffer = await audioCtx.decodeAudioData(nextBuffer);
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+      
+      // Visualize
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 64;
+      source.connect(analyser);
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      
+      const draw = () => {
+        if (!isPlayingRef.current) return;
+        analyser.getByteFrequencyData(dataArray);
+        setAudioData(new Uint8Array(dataArray));
+        requestAnimationFrame(draw);
+      };
+      draw();
+
+      source.onended = () => {
+        isPlayingRef.current = false;
+        setAudioData(undefined);
+        playNextAudio();
+      };
+      
+      source.start();
+    } catch (e) {
+      console.error("Audio playback error", e);
+      isPlayingRef.current = false;
+      playNextAudio();
+    }
+  }, [ensureAudioContext]);
+
+  const processNextInQueue = useCallback(async () => {
+    if (isProcessingRef.current || processingQueueRef.current.length === 0) return;
+    isProcessingRef.current = true;
+
+    const item = processingQueueRef.current.shift();
+    if (!item) {
+        isProcessingRef.current = false;
+        return;
+    }
+
+    try {
+        console.log(`[Pipeline] 3. Starting processing for: "${item.text}"`);
+        
+        // Strict Gate: Only process if in listening mode
+        if (modeRef.current !== 'listening') {
+             console.log(`[Pipeline] Skipped Translation/TTS (Not in listening mode)`);
+             // We can still update the UI with the raw text if desired, but user asked for "No need to do anything"
+             return; 
+        }
+
+        setIsTtsLoading(true);
+        
+        // 1. Translate
+        console.log(`[Pipeline] 4. Fetching Translation...`);
+        const tRes = await fetch('/api/orbit/translate', {
+            method: 'POST',
+            body: JSON.stringify({
+                text: item.text,
+                targetLang: selectedLanguageRef.current.name
+            })
+        });
+        const tData = await tRes.json();
+        const translated = tData.translation || item.text;
+        console.log(`[Pipeline] 5. Translation received: "${translated}"`);
+        
+        setTranslatedStreamText(translated);
+
+        // 2. TTS
+        if (modeRef.current === 'listening') {
+             console.log(`[Pipeline] 6. Fetching TTS...`);
+             const ttsRes = await fetch('/api/orbit/tts', {
+                method: 'POST',
+                body: JSON.stringify({ text: translated })
+             });
+             const arrayBuffer = await ttsRes.arrayBuffer();
+             console.log(`[Pipeline] 7. TTS Audio received: ${arrayBuffer.byteLength} bytes`);
+
+             if (arrayBuffer.byteLength > 0) {
+                 audioQueueRef.current.push(arrayBuffer);
+                 playNextAudio();
+             }
+        } else {
+             console.log(`[Pipeline] 6. Skipped TTS (Not in listening mode)`);
+        }
+    } catch (e) {
+        console.error("[Pipeline] Error:", e);
+    } finally {
+        setIsTtsLoading(false);
+        isProcessingRef.current = false;
+        processNextInQueue();
+    }
+  }, [playNextAudio]);
 
   // Deepgram Recording Loop
   useEffect(() => {
@@ -197,7 +333,7 @@ export function OrbitApp() {
       const cleanupPromise = startRecording();
       return () => { cleanupPromise.then(cleanup => cleanup && cleanup()); };
     }
-  }, [mode, transcriptionEngine]);
+  }, [mode, transcriptionEngine, shipSegment]);
 
   // Gemini Recording Loop
   useEffect(() => {
@@ -259,7 +395,7 @@ export function OrbitApp() {
       const cleanupPromise = startGeminiSession();
       return () => { cleanupPromise.then(cleanup => cleanup && cleanup()); };
     }
-  }, [mode, transcriptionEngine]);
+  }, [mode, transcriptionEngine, shipSegment]);
 
   const toggleListen = async () => {
     const ctx = ensureAudioContext(); 
@@ -400,122 +536,7 @@ export function OrbitApp() {
 
   const sourceDisplayText = livePartialText || lastFinalText;
 
-  // -- Translation & TTS Logic --
 
-  const playNextAudio = async () => {
-    if (isPlayingRef.current || audioQueueRef.current.length === 0) return;
-    isPlayingRef.current = true;
-
-    const audioCtx = ensureAudioContext();
-    if (!audioCtx) {
-      isPlayingRef.current = false;
-      return;
-    }
-
-    const nextBuffer = audioQueueRef.current.shift();
-    if (!nextBuffer) {
-      isPlayingRef.current = false;
-      return;
-    }
-
-    try {
-      const audioBuffer = await audioCtx.decodeAudioData(nextBuffer);
-      const source = audioCtx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioCtx.destination);
-      
-      // Visualize
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 64;
-      source.connect(analyser);
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      
-      const draw = () => {
-        if (!isPlayingRef.current) return;
-        analyser.getByteFrequencyData(dataArray);
-        setAudioData(new Uint8Array(dataArray));
-        requestAnimationFrame(draw);
-      };
-      draw();
-
-      source.onended = () => {
-        isPlayingRef.current = false;
-        setAudioData(undefined);
-        playNextAudio();
-      };
-      
-      source.start();
-    } catch (e) {
-      console.error("Audio playback error", e);
-      isPlayingRef.current = false;
-      playNextAudio();
-    }
-  };
-
-
-
-  const processNextInQueue = async () => {
-    if (isProcessingRef.current || processingQueueRef.current.length === 0) return;
-    isProcessingRef.current = true;
-
-    const item = processingQueueRef.current.shift();
-    if (!item) {
-        isProcessingRef.current = false;
-        return;
-    }
-
-    try {
-        console.log(`[Pipeline] 3. Starting processing for: "${item.text}"`);
-        
-        // Strict Gate: Only process if in listening mode
-        if (modeRef.current !== 'listening') {
-             console.log(`[Pipeline] Skipped Translation/TTS (Not in listening mode)`);
-             // We can still update the UI with the raw text if desired, but user asked for "No need to do anything"
-             return; 
-        }
-
-        setIsTtsLoading(true);
-        
-        // 1. Translate
-        console.log(`[Pipeline] 4. Fetching Translation...`);
-        const tRes = await fetch('/api/orbit/translate', {
-            method: 'POST',
-            body: JSON.stringify({
-                text: item.text,
-                targetLang: selectedLanguageRef.current.name
-            })
-        });
-        const tData = await tRes.json();
-        const translated = tData.translation || item.text;
-        console.log(`[Pipeline] 5. Translation received: "${translated}"`);
-        
-        setTranslatedStreamText(translated);
-
-        // 2. TTS
-        if (modeRef.current === 'listening') {
-             console.log(`[Pipeline] 6. Fetching TTS...`);
-             const ttsRes = await fetch('/api/orbit/tts', {
-                method: 'POST',
-                body: JSON.stringify({ text: translated })
-             });
-             const arrayBuffer = await ttsRes.arrayBuffer();
-             console.log(`[Pipeline] 7. TTS Audio received: ${arrayBuffer.byteLength} bytes`);
-
-             if (arrayBuffer.byteLength > 0) {
-                 audioQueueRef.current.push(arrayBuffer);
-                 playNextAudio();
-             }
-        } else {
-             console.log(`[Pipeline] 6. Skipped TTS (Not in listening mode)`);
-        }
-    } catch (e) {
-        console.error("[Pipeline] Error:", e);
-    } finally {
-        setIsTtsLoading(false);
-        isProcessingRef.current = false;
-        processNextInQueue();
-    }
-  };
 
 
 
@@ -546,26 +567,7 @@ export function OrbitApp() {
     }
   };
 
-  const shipSegment = async (text: string) => {
-    const segment = text.trim();
-    if (!segment) return;
-    try {
-       // Append to full transcript (client-side approximation)
-      const newFull = (fullTranscript + " " + segment).trim();
-      setFullTranscript(newFull);
 
-      const { error } = await supabase.from('transcriptions').insert({ 
-        meeting_id: meetingId, 
-        speaker_id: MY_USER_ID, 
-        transcribe_text_segment: segment,
-        full_transcription: newFull,
-        users_all: [] // Placeholder for "all listening users"
-      });
-      if (error) throw error;
-    } catch (err) {
-      reportError("Failed to send transcription", err);
-    }
-  };
 
   useEffect(() => {
     if (meetingId) {
@@ -605,7 +607,7 @@ export function OrbitApp() {
          supabase.removeChannel(channel);
        };
     }
-  }, [meetingId]);
+  }, [meetingId, processNextInQueue]);
 
 
 
