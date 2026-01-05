@@ -408,6 +408,17 @@ export function PageClientImpl(props: {
           connectionDetails={connectionDetails}
           userChoices={preJoinChoices}
           options={{ codec: props.codec, hq: props.hq }}
+          onDeviceChange={(kind, deviceId) => {
+            const newChoices = { ...preJoinChoices };
+            if (kind === 'audioinput') {
+              newChoices.audioDeviceId = deviceId;
+              saveAudioInputDeviceId(deviceId);
+            } else if (kind === 'videoinput') {
+              newChoices.videoDeviceId = deviceId;
+              saveVideoInputDeviceId(deviceId);
+            }
+            setPreJoinChoices(newChoices);
+          }}
         />
       )}
     </main>
@@ -421,6 +432,7 @@ function VideoConferenceComponent(props: {
     hq: boolean;
     codec: VideoCodec;
   };
+  onDeviceChange?: (kind: MediaDeviceKind, deviceId: string) => void;
 }) {
   const keyProvider = React.useMemo(() => new ExternalE2EEKeyProvider(), []);
   const { worker, e2eePassphrase } = useSetupE2EE();
@@ -783,13 +795,7 @@ function VideoConferenceComponent(props: {
             audioDevices={audioDevices}
             selectedDeviceId={props.userChoices.audioDeviceId ?? ''}
             onDeviceIdChange={(deviceId) => {
-              props.userChoices.audioDeviceId = deviceId;
-              // Also update persistence if available via props or context, 
-              // but here we might need to rely on the parent's handler if accessible or just prop drill it.
-              // Note: PageClientImpl props.userChoices is read-only from the perspective of this component 
-              // unless we use the usePersistentUserChoices hook again or pass the setter.
-              // However, usePersistentUserChoices is already used at the top level (PageClientImpl).
-              // We need to pass the setter from PageClientImpl -> VideoConferenceComponent.
+              props.onDeviceChange?.('audioinput', deviceId);
             }}
           />
         );

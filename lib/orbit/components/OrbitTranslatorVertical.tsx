@@ -508,7 +508,7 @@ export function OrbitTranslatorVertical({
           </button>
         </div>
 
-        </div>
+
 
         {/* Audio Source */}
         <div className={sharedStyles.agentSection}>
