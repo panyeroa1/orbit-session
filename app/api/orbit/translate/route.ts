@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     // We proceed to fetch even if apiKey is undefined.
 
     const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
-    console.log(`Sending translation request to: ${ollamaUrl}/v1/chat/completions`, { model: 'gemini-2.0-flash-exp', targetLang });
+    console.log(`Sending translation request to: ${ollamaUrl}/v1/chat/completions`, { model: 'gemini-3-flash-preview:latest', targetLang });
 
     const response = await fetch(`${ollamaUrl}/v1/chat/completions`, {
       method: 'POST',
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemini-2.0-flash-exp',
+        model: 'gemini-3-flash-preview:latest',
         messages: [{
           role: 'user',
           content: `Translate the following text to ${targetLang}. Provide ONLY the translated text, no other explanation or commentary.\n\nText:\n${text}`
