@@ -4,6 +4,7 @@ import { supabase } from './services/supabaseClient';
 import { AppMode, Language, LANGUAGES, RoomState, AudioSource, EmotionType, EMOTION_COLORS } from './types';
 import TranslatorDock from './components/TranslatorDock';
 import ErrorBanner from './components/ErrorBanner';
+import * as orbitService from './services/orbitService';
 import * as roomStateService from './services/roomStateService';
 
 
@@ -163,10 +164,11 @@ export function OrbitApp() {
       setLastFinalText('');
       sentenceBufferRef.current = '';
       shippedCharsRef.current = 0;
-      if (meetingId) await roomStateService.releaseSpeaker(meetingId, MY_USER_ID);
+      if (meetingId) await orbitService.releaseSpeakerLock(meetingId, MY_USER_ID);
     } else {
       if (!meetingId) return; 
-      const acquired = await roomStateService.tryAcquireSpeaker(meetingId, MY_USER_ID);
+      // Use orbitService for RPC based lock
+      const acquired = await orbitService.acquireSpeakerLock(meetingId, MY_USER_ID);
       if (acquired) {
         try {
            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -374,10 +376,13 @@ export function OrbitApp() {
       {/* Bottom Transcription Area - 14px font, centered, 75px from bottom */}
       <div className="fixed bottom-[75px] left-1/2 -translate-x-1/2 w-full max-w-4xl px-12 z-40 pointer-events-none">
         <div className="text-center">
-          {sourceDisplayText && (
-            <p className="text-[14px] font-medium tracking-wide text-white/90 drop-shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+           {sourceDisplayText && (
+            <p className="text-[28px] font-bold tracking-tight text-white drop-shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-300 px-6 py-4 rounded-xl bg-black/40 backdrop-blur-md">
               {sourceDisplayText}
             </p>
+          )}
+          {!sourceDisplayText && mode === 'speaking' && (
+             <p className="text-[16px] text-white/50 animate-pulse font-medium">Listening...</p>
           )}
 
         </div>

@@ -28,6 +28,9 @@ export async function acquireSpeakerLock(roomCode: string, userId: string): Prom
   return !!data;
 }
 
+// Alias for roomStateService compatibility if needed
+export const tryAcquireSpeaker = acquireSpeakerLock;
+
 export async function releaseSpeakerLock(roomCode: string, userId: string): Promise<boolean> {
   const { data, error } = await supabase.rpc('release_speaker_lock', {
     p_room_code: roomCode,
@@ -39,6 +42,8 @@ export async function releaseSpeakerLock(roomCode: string, userId: string): Prom
   }
   return !!data;
 }
+
+export const releaseSpeaker = releaseSpeakerLock;
 
 export async function saveUtterance(roomId: string, userId: string, text: string, sourceLang: string = 'auto') {
   const { data, error } = await supabase
