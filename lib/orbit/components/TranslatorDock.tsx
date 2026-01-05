@@ -175,9 +175,9 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
                     className={`px-3 hover:bg-white/5 border-l border-white/5 flex items-center justify-center transition-colors ${
                         transcriptionEngine === 'deepgram' ? 'text-purple-400' : 'text-slate-400'
                     }`}
-                    title={`Engine: ${transcriptionEngine === 'deepgram' ? 'Deepgram' : 'WebSpeech'}`}
+                    title={`Engine: ${transcriptionEngine === 'deepgram' ? 'Eburon Pro' : 'Eburon Standard'}`}
                 >
-                    <span className="text-[10px] font-bold tracking-wider mr-1 uppercase">{transcriptionEngine === 'deepgram' ? 'DG' : 'WS'}</span>
+                    <span className="text-[10px] font-bold tracking-wider mr-1 uppercase">{transcriptionEngine === 'deepgram' ? 'PRO' : 'STD'}</span>
                     <Sparkles className={`w-3 h-3 ${transcriptionEngine === 'deepgram' ? 'fill-current' : ''}`} />
                 </button>
 

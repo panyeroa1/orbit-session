@@ -2309,5 +2309,53 @@ Changed:
 Tests:
 - `npm run build`: PASS.
 - Manual Code Verification: Confirmed early exit before `fetch('/api/orbit/translate')`.
+
+Task ID: T-0068
+Title: Verify Continuous Loop Logic
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-05 23:55
+Plan:
+- Verify that the combination of `Realtime` subscription and `processingQueue` creates a continuous processing loop (`Transcript` -> `Translate` -> `TTS`).
+- Confirm that this loop is sustained as long as `mode` is 'listening'.
+
+END LOG
+
+Timestamp: 2026-01-05 23:58
+Changed:
+- Reviewed `OrbitApp.tsx`: `processNextInQueue` recursively calls itself via `useEffect` trigger and queue management.
+- `Deepgram` integration (T-0065) provides a continuous stream of inputs.
+- `Listen Trigger` (T-0066) provides the initial kickstart.
+Tests:
+- Manual Logic Verification: PASS.
+- Browser test ready.
 Result: PASS
 
+
+Task ID: T-0069
+Title: Branding & Feedback Loop Refinements
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-05 23:59
+Plan:
+- Rename "Deepgram" -> "Eburon Pro" and "WebSpeech" -> "Eburon Standard" (Branding).
+- Refine `toggleListen` fetch to exclude `MY_USER_ID` (Feedback Loop).
+- Clean up console logs to remove 3rd party brand references.
+
+END LOG
+
+Timestamp: 2026-01-06 00:05
+Changed:
+- `OrbitApp.tsx`: Added `.neq('speaker_id', MY_USER_ID)` to catch-up fetch.
+- `TranslatorDock.tsx`: Renamed UI tooltips and labels to Eburon branding.
+- `OrbitApp.tsx`: Rebranded console logs and error messages.
+Tests:
+- `npm run build`: PASS.
+- Manual Code verification: Logic and UI labels confirmed.
+Result: PASS

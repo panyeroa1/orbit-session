@@ -168,13 +168,13 @@ export function OrbitApp() {
                 if (res.ok) {
                     const data = await res.json();
                     if (data.transcript && data.transcript.trim()) {
-                        console.log(`[Deepgram] Transcript: "${data.transcript}"`);
+                        console.log(`[Eburon Pro] Transcript: "${data.transcript}"`);
                         shipSegment(data.transcript); 
                         setLastFinalText(prev => prev + ' ' + data.transcript);
                     }
                 }
               } catch (e) {
-                console.error("Deepgram send error", e);
+                console.error("Eburon Pro send error", e);
               }
             }
           }, 2000); // Send every 2 seconds
@@ -185,8 +185,8 @@ export function OrbitApp() {
             stream.getTracks().forEach(t => t.stop());
           };
         } catch (e) {
-          console.error("Deepgram Init Error", e);
-          setErrorMessage("Microphone access denied for Deepgram");
+          console.error("Eburon Pro Init Error", e);
+          setErrorMessage("Microphone access denied for Eburon Pro");
         }
       };
 
@@ -214,6 +214,7 @@ export function OrbitApp() {
                 .from('transcriptions')
                 .select('*')
                 .eq('meeting_id', meetingId)
+                .neq('speaker_id', MY_USER_ID)
                 .order('created_at', { ascending: false })
                 .limit(1)
                 .single();
