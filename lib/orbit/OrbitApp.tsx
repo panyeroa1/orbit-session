@@ -351,6 +351,11 @@ export function OrbitApp() {
     }
   };
 
+  const modeRef = useRef<AppMode>('idle');
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
   const processNextInQueue = async () => {
     if (isProcessingRef.current || processingQueueRef.current.length === 0) return;
     isProcessingRef.current = true;
@@ -376,7 +381,7 @@ export function OrbitApp() {
         setTranslatedStreamText(translated);
 
         // 2. TTS
-        if (mode === 'listening') {
+        if (modeRef.current === 'listening') {
              const ttsRes = await fetch('/api/orbit/tts', {
                 method: 'POST',
                 body: JSON.stringify({ text: translated })

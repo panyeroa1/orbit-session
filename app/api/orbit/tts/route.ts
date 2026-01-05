@@ -5,22 +5,45 @@ export async function POST(request: Request) {
   try {
     const { text } = await request.json();
     
-    // Mock TTS for now to avoid Cartesia dep errors immediately
-    // In a real restore, we'd add back the Cartesia client code here
-    
-    // Return empty buffer or simple sine wave for mock success
-    // This allows the frontend to "play" something without crashing
-    const sampleRate = 24000;
-    const duration = 1; // 1 second
-    const numSamples = sampleRate * duration;
-    const buffer = new Float32Array(numSamples);
-    for (let i = 0; i < numSamples; i++) {
-      buffer[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.1;
+    const apiKey = process.env.CARTESIA_API_KEY;
+    if (!apiKey) {
+      return new NextResponse('Cartesia API key not configured', { status: 503 });
     }
-    
-    return new NextResponse(buffer.buffer as any, {
+
+    const response = await fetch("https://api.cartesia.ai/tts/bytes", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/octet-stream',
+        "Cartesia-Version": "2025-04-16",
+        "X-API-Key": apiKey,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model_id: "sonic-3",
+        transcript: text,
+        voice: {
+          mode: "id",
+          id: "9c7e6604-52c6-424a-9f9f-2c4ad89f3bb9"
+        },
+        output_format: {
+          container: "wav",
+          encoding: "pcm_f32le",
+          sample_rate: 44100
+        },
+        speed: "normal",
+        generation_config: { speed: 1, volume: 1 }
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("Cartesia TTS Error", err);
+      return new NextResponse(err, { status: 500 });
+    }
+
+    const buffer = await response.arrayBuffer();
+    return new NextResponse(buffer, {
+      headers: {
+        'Content-Type': 'audio/wav',
       },
     });
   } catch (error) {

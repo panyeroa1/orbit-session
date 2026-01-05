@@ -17,17 +17,17 @@ export async function POST(request: Request) {
        return NextResponse.json({ translation: `[${targetLang}] ${text}` });
     }
 
-    const response = await fetch('https://ollama.com/api/chat', {
+    const response = await fetch('https://api.ollama.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemini-3-flash-preview:cloud',
+        model: 'gemini-2.0-flash-exp',
         messages: [{
           role: 'user',
-          content: `Translate to ${targetLang}. Output ONLY the translation.\n\nText:\n${text}`
+          content: `Translate the following text to ${targetLang}. Provide ONLY the translated text, no other explanation or commentary.\n\nText:\n${text}`
         }],
         stream: false
       }),
@@ -40,7 +40,9 @@ export async function POST(request: Request) {
     }
 
     const data = await response.json();
-    const translation = data.message?.content || text;
+    // Ollama OpenAI-compatible API structure: choices[0].message.content
+    // Ollama chat API structure: message.content
+    const translation = data.choices?.[0]?.message?.content || data.message?.content || text;
 
     return NextResponse.json({ translation: translation.trim() });
   } catch (error) {

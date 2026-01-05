@@ -4,9 +4,11 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import * as orbitService from '@/lib/orbit/services/orbitService';
 import { toast } from 'react-hot-toast';
 import styles from './OrbitTranslator.module.css';
+import sharedStyles from '@/styles/Eburon.module.css';
 import { OrbitSubtitleOverlay } from './OrbitSubtitleOverlay';
 import { supabase } from '@/lib/orbit/services/supabaseClient';
 import { LANGUAGES } from '@/lib/orbit/types';
+import { Volume2, Mic, MicOff, StopCircle, ChevronDown, Lock, Trash2 } from 'lucide-react';
 
 // Orbit Planet Icon SVG
 const OrbitIcon = ({ size = 20 }: { size?: number }) => (
@@ -415,250 +417,151 @@ export function OrbitTranslatorVertical({ roomCode, userId, onLiveTextChange }: 
   }, [langQuery]);
 
   return (
-    <div
-      className={[
-        'flex flex-col h-full text-slate-100 border-l border-white/5',
-        'bg-[radial-gradient(1200px_800px_at_15%_-10%,rgba(99,102,241,0.18),transparent_60%),radial-gradient(900px_700px_at_90%_10%,rgba(16,185,129,0.12),transparent_55%),linear-gradient(to_bottom,#0b0f16,#07090d)]',
-      ].join(' ')}
-    >
+    <div className={sharedStyles.sidebarPanel}>
       {/* Header */}
-      <div className="sticky top-0 z-20 px-5 py-4 border-b border-white/10 bg-black/20 backdrop-blur-xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-indigo-500/20 blur-md rounded-full" />
-              <OrbitIcon size={22} />
-            </div>
-            <div className="flex flex-col leading-tight">
-              <span className="font-semibold text-[14px] tracking-wide text-slate-100">Orbit Translator</span>
-              <span className="text-[11px] text-slate-400">
-                Room <span className="text-slate-300 font-medium">{roomCode}</span>
+      <div className={sharedStyles.sidebarHeader}>
+        <div className={sharedStyles.sidebarHeaderText}>
+          <div className="flex items-center gap-2">
+            <OrbitIcon size={18} />
+            <h3 className="uppercase tracking-widest text-[11px] font-bold">Orbit Translator</h3>
+          </div>
+          <div className={sharedStyles.sidebarHeaderMeta}>
+            <div className="flex items-center gap-1.5 mt-1">
+              <div
+                className={`w-1.5 h-1.5 rounded-full shadow-[0_0_8px_currentColor] transition-colors duration-500 ${
+                  mode === 'speaking'
+                    ? 'text-rose-400 bg-rose-400 animate-pulse'
+                    : isLockedByOther
+                    ? 'text-orange-400 bg-orange-400'
+                    : 'text-emerald-400 bg-emerald-400'
+                }`}
+              />
+              <span className="text-[10px] uppercase tracking-wide font-medium">
+                {mode === 'speaking' ? 'Live' : isLockedByOther ? 'Locked' : 'Ready'}
               </span>
             </div>
           </div>
-
-          <div className="flex items-center gap-2">{statusChip}</div>
+        </div>
+        <div className={sharedStyles.sidebarHeaderActions}>
+          <button
+            onClick={() => setMessages([])}
+            className={sharedStyles.sidebarHeaderButton}
+            title="Clear Feed"
+          >
+            <Trash2 size={12} />
+          </button>
         </div>
       </div>
 
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Transcript */}
-        <div className="flex-1 flex flex-col p-4 min-h-0">
-          <div className="flex items-center justify-between mb-3 px-1">
-            <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Activity Feed</h3>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setMessages([])}
-                className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors uppercase tracking-tight"
-              >
-                Clear
-              </button>
-              <span className="text-[10px] text-slate-500">{formatTime()}</span>
-            </div>
-          </div>
-
-          <div className={`flex-1 rounded-2xl border border-white/10 bg-black/20 backdrop-blur-xl p-4 overflow-y-auto shadow-inner space-y-6 ${styles.scrollbar}`}>
-            {messages.length > 0 || liveText ? (
-              <>
-                {messages.map((msg) => (
-                  <div key={msg.id} className={`flex items-start gap-3 ${msg.isMe ? 'flex-row-reverse' : ''}`}>
-                    <div
-                      className={[
-                        'w-8 h-8 rounded-full grid place-items-center text-[10px] font-bold text-white shrink-0',
-                        msg.isMe
-                          ? 'bg-gradient-to-br from-indigo-500 to-cyan-500'
-                          : 'bg-gradient-to-br from-violet-500 to-indigo-600',
-                      ].join(' ')}
-                    >
-                      {msg.isMe ? 'ME' : 'SP'}
-                    </div>
-
-                    <div className={`flex-1 min-w-0 flex flex-col ${msg.isMe ? 'items-end' : 'items-start'}`}>
-                      <div className="flex items-center gap-2 mb-1.5 px-1">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">
-                          {msg.isMe ? 'You' : 'Speaker'}
-                        </span>
-                        <span className="text-[9px] text-slate-600 font-medium">
-                          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-
-                      <div className={[
-                        'max-w-[90%] rounded-2xl px-4 py-3 text-[14px] leading-relaxed shadow-sm',
-                        msg.isMe 
-                          ? 'rounded-tr-sm bg-indigo-500/10 border border-indigo-500/20 text-indigo-50'
-                          : 'rounded-tl-sm bg-white/5 border border-white/10 text-slate-100'
-                      ].join(' ')}>
-                        {msg.text}
-                      </div>
-
-                      {msg.translation && (
-                        <div className={`mt-2 max-w-[85%] rounded-2xl px-4 py-2.5 bg-emerald-500/5 border border-emerald-500/20 ${msg.isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400/80">
-                              Translated
-                            </span>
-                            <div className="h-[1px] flex-1 bg-emerald-500/10" />
-                          </div>
-                          <div className="text-[13px] leading-relaxed text-emerald-100/90 italic">
-                            {msg.translation}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                
-                {liveText && (
-                  <div className="flex items-start gap-3 flex-row-reverse animate-pulse">
-                    <div className="w-8 h-8 rounded-full bg-rose-500/20 border border-rose-500/30 grid place-items-center text-[10px] font-bold text-rose-300 shrink-0">
-                      ME
-                    </div>
-                    <div className="flex-1 min-w-0 flex flex-col items-end">
-                      <div className="flex items-center gap-2 mb-1.5 px-1">
-                        <span className="text-[11px] font-bold text-rose-400 uppercase tracking-wide">Speaking…</span>
-                      </div>
-                      <div className="max-w-[90%] rounded-2xl rounded-tr-sm bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-[14px] text-rose-50 italic">
-                        {liveText}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
+      <div className={sharedStyles.agentPanelBody}>
+        {/* Main Controls */}
+        <div className={sharedStyles.agentControls}>
+          <button
+            onClick={mode === 'speaking' ? stopSpeaking : startSpeaking}
+            disabled={speakDisabled}
+            className={`${sharedStyles.agentControlButton} ${
+              mode === 'speaking' ? sharedStyles.agentControlButtonActiveSpeak : ''
+            } ${speakDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {isLockedByOther ? (
+              <Lock size={18} />
+            ) : mode === 'speaking' ? (
+              <Mic size={18} />
             ) : (
-              <div className="h-full grid place-items-center opacity-40">
-                <div className="text-center">
-                  <div className="mx-auto mb-4 w-14 h-14 rounded-2xl bg-white/5 border border-white/10 grid place-items-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                  </div>
-                  <div className="text-[13px] font-semibold text-slate-300">Quiet in here</div>
-                  <div className="text-[11px] mt-1 text-slate-500">Activity will appear here as you speak.</div>
-                </div>
-              </div>
+              <MicOff size={18} />
             )}
-          </div>
+            <span>{isLockedByOther ? 'Locked' : mode === 'speaking' ? 'Stop' : 'Speak'}</span>
+          </button>
+
+          <button
+            onClick={() => setIsListening((v) => !v)}
+            className={`${sharedStyles.agentControlButton} ${
+              isListening ? sharedStyles.agentControlButtonActiveListen : ''
+            }`}
+          >
+            {isListening ? <StopCircle size={18} /> : <Volume2 size={18} />}
+            <span>Listen</span>
+          </button>
         </div>
 
-        {/* Controls Overlay-ish at bottom */}
-        <div className="p-4 pt-0">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] shadow-2xl backdrop-blur-2xl overflow-hidden p-3 space-y-3">
-            <button
-              onClick={mode === 'speaking' ? stopSpeaking : startSpeaking}
-              disabled={speakDisabled}
-              className={[
-                'w-full group relative overflow-hidden rounded-xl p-4 transition-all duration-300',
-                'border border-white/10',
-                mode === 'speaking'
-                  ? 'bg-rose-500/90'
-                  : speakDisabled
-                  ? 'bg-white/5 opacity-50 cursor-not-allowed'
-                  : 'bg-white/5 hover:bg-white/10',
-              ].join(' ')}
+        {/* Target Language */}
+        <div className={sharedStyles.agentSection}>
+          <label className={sharedStyles.agentSectionLabel}>
+            <span>Target Language</span>
+            <span className={sharedStyles.agentSectionDivider} />
+          </label>
+          <div className={sharedStyles.agentSelectWrap}>
+            <select
+              aria-label="Target language"
+              className={`${sharedStyles.sidebarSelect} ${sharedStyles.agentSelect}`}
+              value={selectedLanguage.code}
+              onChange={(e) => {
+                const lang = LANGUAGES.find((l) => l.code === e.target.value) || LANGUAGES[0];
+                setSelectedLanguage(lang);
+                if (mode === 'speaking' && recognitionRef.current) {
+                  stopWebSpeech();
+                  setTimeout(startWebSpeech, 120);
+                }
+              }}
             >
-              <div className="relative z-10 flex items-center justify-center gap-3">
-                {mode === 'speaking' ? (
-                  <>
-                    <div className="flex items-end gap-1 h-3.5">
-                      <span className={styles.waveBar} />
-                      <span className={styles.waveBar2} />
-                      <span className={styles.waveBar3} />
-                    </div>
-                    <span className="font-bold text-white text-[14px] uppercase tracking-wider">Stop</span>
-                  </>
-                ) : (
-                  <>
-                    <div className={`p-1.5 rounded-full ${speakDisabled ? 'bg-white/10' : 'bg-indigo-500'}`}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                      </svg>
-                    </div>
-                    <span className={`font-bold text-[14px] uppercase tracking-wider ${speakDisabled ? 'text-slate-500' : 'text-slate-100'}`}>
-                      {speakDisabled ? 'Wait…' : 'Push to Talk'}
-                    </span>
-                  </>
-                )}
-              </div>
-            </button>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setIsListening((v) => !v)}
-                className={`flex flex-col gap-1 rounded-xl p-3 border transition-all text-left ${
-                  isListening ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-white/5 border-white/10'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${isListening ? 'text-emerald-400' : 'text-slate-400'}`}>
-                    Live Voice
-                  </span>
-                  <div className={`w-1.5 h-1.5 rounded-full ${isListening ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]' : 'bg-slate-600'}`} />
-                </div>
-                <span className="text-[12px] font-medium text-slate-200">{isListening ? 'Enabled' : 'Disabled'}</span>
-              </button>
-
-              <div className="relative" ref={langMenuRef}>
-                <button
-                  onClick={() => setIsLangOpen((v) => !v)}
-                  className="w-full flex flex-col gap-1 rounded-xl p-3 border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-left"
-                >
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Language</span>
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[14px] shrink-0">{selectedLanguage.flag}</span>
-                    <span className="text-[12px] font-medium text-slate-200 truncate">{selectedLanguage.name}</span>
-                  </div>
-                </button>
-
-                {isLangOpen && (
-                  <div className="absolute right-0 bottom-full mb-3 w-[260px] z-50 rounded-2xl border border-white/10 bg-[#0b0f16] shadow-2xl overflow-hidden backdrop-blur-3xl">
-                    <div className="p-3 border-b border-white/10">
-                      <input
-                        value={langQuery}
-                        onChange={(e) => setLangQuery(e.target.value)}
-                        placeholder="Search…"
-                        className="w-full rounded-lg px-3 py-1.5 text-[12px] bg-white/5 border border-white/10 outline-none focus:border-indigo-500/50"
-                      />
-                    </div>
-                    <div className={`max-h-[200px] overflow-y-auto ${styles.scrollbar}`}>
-                      {filteredLanguages.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            setSelectedLanguage(lang);
-                            setIsLangOpen(false);
-                            setLangQuery('');
-                            if (mode === 'speaking' && recognitionRef.current) {
-                              stopWebSpeech();
-                              setTimeout(startWebSpeech, 120);
-                            }
-                          }}
-                          className={`w-full px-3 py-2 text-left hover:bg-white/5 flex items-center gap-3 ${
-                            selectedLanguage.code === lang.code ? 'bg-indigo-500/10' : ''
-                          }`}
-                        >
-                          <span className="text-[16px]">{lang.flag}</span>
-                          <span className={`text-[12px] ${selectedLanguage.code === lang.code ? 'text-indigo-300 font-bold' : 'text-slate-200'}`}>
-                            {lang.name}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              {LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.flag} {lang.name}
+                </option>
+              ))}
+            </select>
+            <div className={sharedStyles.agentSelectIcon}>
+              <ChevronDown size={14} />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <div className="px-5 py-2 border-t border-white/10 bg-black/20 text-[10px] text-slate-500 flex justify-between items-center backdrop-blur-xl">
-        <span>Orbit • Live Translation</span>
-        <span className="text-slate-600">Build</span>
+        {/* Activity Feed */}
+        <div className={sharedStyles.agentLogs}>
+          {messages.length === 0 && !liveText && (
+            <div className="h-full flex flex-col items-center justify-center text-slate-600 space-y-4 opacity-50">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-white/5 flex items-center justify-center">
+                <Volume2 size={24} className="text-slate-500" strokeWidth={1} />
+              </div>
+              <p className="text-xs font-medium tracking-wide">Waiting for speech...</p>
+            </div>
+          )}
+
+          {messages.map((msg) => (
+            <div key={msg.id} className="animate-in fade-in slide-in-from-bottom-2 duration-500 mb-6">
+              {/* Original */}
+              <div className={`group relative pl-3.5 mb-3 opacity-80 hover:opacity-100 transition-opacity ${msg.isMe ? 'text-right pr-3.5 pl-0' : ''}`}>
+                <div className={`absolute ${msg.isMe ? 'right-0' : 'left-0'} top-1.5 bottom-1.5 w-[2px] bg-slate-800 rounded-full group-hover:bg-indigo-500/50 transition-colors`} />
+                <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1 font-semibold">
+                  {msg.isMe ? 'You' : 'Original'}
+                </p>
+                <p className="text-xs text-slate-300 leading-relaxed font-light">{msg.text}</p>
+              </div>
+
+              {/* Translation (if exists) */}
+              {msg.translation && (
+                <div className="bg-gradient-to-br from-[#151d2b] to-[#0f141f] border border-emerald-500/10 rounded-2xl p-4 shadow-lg relative overflow-hidden group hover:border-emerald-500/20 transition-all">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-500">Translated</span>
+                  </div>
+                  <p className="text-sm text-slate-100 leading-relaxed font-medium italic">{msg.translation}</p>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {liveText && (
+            <div className="animate-pulse">
+              <div className="group relative pl-3.5 mb-3 text-right pr-3.5 pl-0">
+                <div className="absolute right-0 top-1.5 bottom-1.5 w-[2px] bg-rose-500/50 rounded-full" />
+                <p className="text-[10px] uppercase tracking-wide text-rose-500 mb-1 font-semibold">Speaking...</p>
+                <p className="text-xs text-rose-200/80 leading-relaxed font-light italic">{liveText}</p>
+              </div>
+            </div>
+          )}
+          <div className="h-4" />
+        </div>
       </div>
     </div>
   );

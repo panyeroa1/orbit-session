@@ -2045,3 +2045,28 @@ Tests:
 - `npm run build` passed.
 Result: PASS
 Status: DONE
+
+Task ID: T-0037
+Title: Update Orbit TTS Pipeline
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-05 22:30
+Plan:
+- Verify API routes for Translate (Ollama) and TTS (Cartesia).
+- Update `OrbitApp.tsx` to fix closure staleness in sequential processing pipeline.
+- Verify build.
+
+END LOG
+
+Timestamp: 2026-01-05 22:35
+Changed:
+- `api/orbit/translate/route.ts` verified (OpenAI compat).
+- `api/orbit/tts/route.ts` verified (Cartesia).
+- `OrbitApp.tsx`: Introduced `modeRef` to fix stale state access in `processNextInQueue`.
+Tests:
+- `npm run build` passed.
+Result: PASS
+Status: DONE
