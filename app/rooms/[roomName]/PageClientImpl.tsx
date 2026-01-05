@@ -7,7 +7,7 @@ import { KeyboardShortcuts } from '@/lib/KeyboardShortcuts';
 import { RecordingIndicator } from '@/lib/RecordingIndicator';
 import { ConnectionDetails } from '@/lib/types';
 import { EburonControlBar } from '@/lib/EburonControlBar';
-import { OrbitPluginFrame } from '@/lib/OrbitPluginFrame';
+
 
 import { ChatPanel } from '@/lib/ChatPanel';
 import { ParticipantsPanel } from '@/lib/ParticipantsPanel';
@@ -436,7 +436,7 @@ function VideoConferenceComponent(props: {
   const [isAppMuted, setIsAppMuted] = React.useState(false);
 
   const [isTranscriptionEnabled, setIsTranscriptionEnabled] = React.useState(false);
-  const [isOrbitOpen, setIsOrbitOpen] = React.useState(false);
+
 
   const layoutContext = useCreateLayoutContext();
 
@@ -728,7 +728,14 @@ function VideoConferenceComponent(props: {
           />
         );
       case 'agent':
-        return <AgentPanel meetingId={roomName} onSpeakingStateChange={handleAgentSpeakingChange} />;
+        return (
+          <AgentPanel 
+            meetingId={roomName} 
+            onSpeakingStateChange={handleAgentSpeakingChange}
+            isTranscriptionEnabled={isTranscriptionEnabled}
+            onToggleTranscription={() => setIsTranscriptionEnabled(prev => !prev)}
+          />
+        );
       case 'chat':
         return <ChatPanel />;
       case 'settings':
@@ -781,7 +788,7 @@ function VideoConferenceComponent(props: {
           </div>
           
 
-          <OrbitPluginFrame isOpen={isOrbitOpen} />
+
           {isTranscriptionEnabled && (
             <LiveCaptions 
               room={room}
@@ -799,14 +806,14 @@ function VideoConferenceComponent(props: {
             onAgentToggle={() => handleSidebarPanelToggle('agent')}
             onChatToggle={() => handleSidebarPanelToggle('chat')}
             onSettingsToggle={() => handleSidebarPanelToggle('settings')}
-            onOrbitToggle={() => setIsOrbitOpen((prev) => !prev)}
+
 
             onTranscriptionToggle={() => setIsTranscriptionEnabled((prev) => !prev)}
             isParticipantsOpen={!sidebarCollapsed && activeSidebarPanel === 'participants'}
             isAgentOpen={!sidebarCollapsed && activeSidebarPanel === 'agent'}
             isChatOpen={!sidebarCollapsed && activeSidebarPanel === 'chat'}
             isSettingsOpen={!sidebarCollapsed && activeSidebarPanel === 'settings'}
-            isOrbitOpen={isOrbitOpen}
+
 
             isTranscriptionOpen={isTranscriptionEnabled}
             isAppMuted={isAppMuted}
