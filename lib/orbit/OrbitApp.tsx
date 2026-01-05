@@ -104,6 +104,12 @@ export function OrbitApp() {
   const [audioData, setAudioData] = useState<Uint8Array | undefined>(undefined);
   const [emotion, setEmotion] = useState<EmotionType>('neutral');
 
+  // -- Audio Device State --
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
+  const [audioOutputDevices, setAudioOutputDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedOutputDeviceId, setSelectedOutputDeviceId] = useState<string>('');
+
   // Queues for sequential processing
   const processingQueueRef = useRef<any[]>([]);
   const isProcessingRef = useRef(false);
@@ -130,6 +136,25 @@ export function OrbitApp() {
       return null;
     }
   }, [reportError]);
+
+  const updateDevices = useCallback(async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const mics = devices.filter(d => d.kind === 'audioinput');
+      const speakers = devices.filter(d => d.kind === 'audiooutput');
+      setAudioDevices(mics);
+      setAudioOutputDevices(speakers);
+    } catch (err) {
+      console.error("Failed to enumerate devices", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    updateDevices();
+    // Re-run when permissions might have changed
+    navigator.mediaDevices.addEventListener('devicechange', updateDevices);
+    return () => navigator.mediaDevices.removeEventListener('devicechange', updateDevices);
+  }, [updateDevices]);
 
   const splitSentences = (text: string): string[] => {
     if (!text.trim()) return [];
@@ -179,6 +204,16 @@ export function OrbitApp() {
 
     try {
       const audioBuffer = await audioCtx.decodeAudioData(nextBuffer);
+      
+      // -- Output Selection (SinkId) --
+      if (selectedOutputDeviceId && (audioCtx as any).setSinkId) {
+        try {
+          await (audioCtx as any).setSinkId(selectedOutputDeviceId);
+        } catch (err) {
+          console.error("Failed to set sink ID", err);
+        }
+      }
+
       const source = audioCtx.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(audioCtx.destination);
@@ -209,7 +244,7 @@ export function OrbitApp() {
       isPlayingRef.current = false;
       playNextAudio();
     }
-  }, [ensureAudioContext]);
+  }, [ensureAudioContext, selectedOutputDeviceId]);
 
   const processNextInQueue = useCallback(async () => {
     if (isProcessingRef.current || processingQueueRef.current.length === 0) return;
@@ -281,7 +316,9 @@ export function OrbitApp() {
       
       const startRecording = async () => {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: { deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined } 
+          });
           recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
           mediaRecorderRef.current = recorder;
 
@@ -333,7 +370,7 @@ export function OrbitApp() {
       const cleanupPromise = startRecording();
       return () => { cleanupPromise.then(cleanup => cleanup && cleanup()); };
     }
-  }, [mode, transcriptionEngine, shipSegment]);
+  }, [mode, transcriptionEngine, shipSegment, selectedDeviceId]);
 
   // Gemini Recording Loop
   useEffect(() => {
@@ -358,7 +395,9 @@ export function OrbitApp() {
             selectedLanguageRef.current.name || "English"
           );
 
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: { deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined } 
+          });
           audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
           const source = audioContext.createMediaStreamSource(stream);
           processor = audioContext.createScriptProcessor(4096, 1, 1);
@@ -395,7 +434,7 @@ export function OrbitApp() {
       const cleanupPromise = startGeminiSession();
       return () => { cleanupPromise.then(cleanup => cleanup && cleanup()); };
     }
-  }, [mode, transcriptionEngine, shipSegment]);
+  }, [mode, transcriptionEngine, shipSegment, selectedDeviceId]);
 
   const toggleListen = async () => {
     const ctx = ensureAudioContext(); 
@@ -403,8 +442,31 @@ export function OrbitApp() {
     
     if (mode === 'listening') {
       setMode('idle');
+      // Unmute project audio
+      try {
+          (document.querySelectorAll('audio, video') as any).forEach((el: HTMLMediaElement) => {
+              if (el.dataset.orbitAutoMuted === 'true') {
+                  el.muted = false;
+                  delete el.dataset.orbitAutoMuted;
+              }
+          });
+      } catch (e) {
+          console.error("Orbit Unmute Error", e);
+      }
     } else {
       setMode('listening');
+      // Auto-Mute project audio
+      try {
+          (document.querySelectorAll('audio, video') as any).forEach((el: HTMLMediaElement) => {
+              if (!el.muted) {
+                  el.muted = true;
+                  el.dataset.orbitAutoMuted = 'true';
+              }
+          });
+      } catch (e) {
+          console.error("Orbit Auto-Mute Error", e);
+      }
+      
       setLivePartialText('');
       setLastFinalText('');
 
@@ -627,6 +689,14 @@ export function OrbitApp() {
           
           transcriptionEngine={transcriptionEngine}
           onEngineChange={setTranscriptionEngine}
+
+          audioDevices={audioDevices}
+          selectedDeviceId={selectedDeviceId}
+          onDeviceIdChange={setSelectedDeviceId}
+
+          audioOutputDevices={audioOutputDevices}
+          selectedOutputDeviceId={selectedOutputDeviceId}
+          onOutputDeviceIdChange={setSelectedOutputDeviceId}
 
           audioData={audioData}
           translatedStreamText={translatedStreamText}

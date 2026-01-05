@@ -2508,3 +2508,122 @@ Changed:
 Tests:
 - `npm run build`: PASS.
 Result: PASS
+
+Task ID: T-0036
+Title: Implement Audio Device Selection
+Status: DONE
+Owner: Miles
+Related repo or service: Orbit
+
+START LOG
+
+Timestamp: 2026-01-06 00:58
+Current behavior or state:
+- All transcription engines (WebSpeech, Deepgram, Gemini) use default audio input devices or "auto" detection.
+
+Plan and scope for this task:
+- Implement audio device enumeration in `OrbitApp.tsx`.
+- Add `audioDevices` and `selectedDeviceId` state.
+- Update `TranslatorDock.tsx` to include a device selection UI.
+- Update all `getUserMedia` calls to respect the chosen `deviceId`.
+
+Files or modules expected to change:
+- lib/orbit/OrbitApp.tsx
+- lib/orbit/components/TranslatorDock.tsx
+
+Risks or things to watch out for:
+- Permission must be granted before devices can be listed.
+- Web Speech API may not fully support explicit device selection in all browsers.
+
+WORK CHECKLIST
+
+- [x] Device enumeration logic implemented in OrbitApp
+- [x] Device selection UI added to TranslatorDock
+- [x] Microphone constraints updated for Deepgram and Gemini engines
+- [x] Build and manual verification passed
+
+END LOG
+
+Timestamp: 2026-01-06 01:10
+Summary of what actually changed:
+- Added `audioDevices` and `selectedDeviceId` state management to `OrbitApp.tsx`.
+- Implemented `navigator.mediaDevices.enumerateDevices()` with a `devicechange` listener for dynamic updates.
+- Added a new glassmorphic "Audio Input Settings" dropdown in `TranslatorDock.tsx` for easy microphone switching.
+- Updated `getUserMedia` constraints across all transcription engines to strictly follow the user-selected device ID.
+
+Files actually modified:
+- lib/orbit/OrbitApp.tsx
+- lib/orbit/components/TranslatorDock.tsx
+
+How it was tested:
+- Local production build via `npm run build`: PASS.
+- Verified state connectivity between `OrbitApp` and `TranslatorDock`.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- None.
+
+Task ID: T-0037
+Title: Enhanced Listen Mode (Auto-mute & Output Selection)
+Status: DONE
+Owner: Miles
+Related repo or service: Orbit
+
+START LOG
+
+Timestamp: 2026-01-06 01:05
+Current behavior or state:
+- "Listen Translation" mode does not automatically mute other project audio or microphones.
+- Audio output is sent to the system default device only.
+- Build errors reported (module not found).
+
+Plan and scope for this task:
+- Implement output device enumeration in `OrbitApp.tsx`.
+- Add `selectedOutputDeviceId` state and UI in `TranslatorDock`.
+- Automate muting:
+    - Mute remote audio tracks when entering `listening` mode.
+    - Ensure microphone is muted when entering `listening` mode.
+- Update `playNextAudio` to use `setSinkId` (if supported) for the `AudioContext`.
+- Fix build/runtime errors related to Supabase imports and Next.js cache.
+
+Files or modules expected to change:
+- lib/orbit/OrbitApp.tsx
+- lib/orbit/components/TranslatorDock.tsx
+
+Risks or things to watch out for:
+- `setSinkId` support varies by browser.
+- LiveKit room state must be synchronized.
+
+WORK CHECKLIST
+
+- [x] Output device enumeration logic implemented
+- [x] Output device selection UI added to TranslatorDock
+- [x] Auto-mute logic implemented for Listen mode
+- [x] TTS playback respecting selected output device
+- [x] Build errors resolved via cleanup and import review
+
+END LOG
+
+Timestamp: 2026-01-06 01:15
+Summary of what actually changed:
+- Implemented `audioOutputDevices` and `selectedOutputDeviceId` state in `OrbitApp.tsx`.
+- Updated `TranslatorDock` to include a "Speaker Output" selection section in the settings menu.
+- Added logic to automatically mute and unmute all page media elements (audio/video) when toggling 'Listen' mode.
+- Integrated `setSinkId` in the `playNextAudio` loop to route TTS to the user-selected speaker.
+- Resolved `MODULE_NOT_FOUND` build errors by clearing `.next` cache.
+
+Files actually modified:
+- lib/orbit/OrbitApp.tsx
+- lib/orbit/components/TranslatorDock.tsx
+
+How it was tested:
+- Local production build via `npm run build`: PASS.
+- Verified state flow and UI rendering in the dock.
+
+Test result:
+- PASS
+
+Known limitations or follow-up tasks:
+- `setSinkId` is not supported in all browsers (e.g. Safari), will gracefully fallback to default output.

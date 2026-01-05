@@ -27,6 +27,12 @@ interface TranslatorDockProps {
   onMinimizeToggle: () => void;
   transcriptionEngine?: 'webspeech' | 'deepgram' | 'gemini';
   onEngineChange?: (engine: 'webspeech' | 'deepgram' | 'gemini') => void;
+  audioDevices?: MediaDeviceInfo[];
+  selectedDeviceId?: string;
+  onDeviceIdChange?: (deviceId: string) => void;
+  audioOutputDevices?: MediaDeviceInfo[];
+  selectedOutputDeviceId?: string;
+  onOutputDeviceIdChange?: (deviceId: string) => void;
 }
 
 const AudioVisualizer: React.FC<{ data: Uint8Array; colorClass?: string }> = ({ data, colorClass = 'bg-white' }) => {
@@ -84,10 +90,17 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
   isTtsLoading,
   emotion,
   transcriptionEngine = 'webspeech',
-  onEngineChange
+  onEngineChange,
+  audioDevices = [],
+  selectedDeviceId = '',
+  onDeviceIdChange,
+  audioOutputDevices = [],
+  selectedOutputDeviceId = '',
+  onOutputDeviceIdChange
 }) => {
   const [meetingIdInput, setMeetingIdInput] = React.useState(meetingId || '');
   const [isLangOpen, setIsLangOpen] = React.useState(false);
+  const [isDeviceOpen, setIsDeviceOpen] = React.useState(false);
   
   // Update local input if external meetingId changes
   React.useEffect(() => {
@@ -153,6 +166,85 @@ const TranslatorDock: React.FC<TranslatorDockProps> = ({
             {isMeSpeaking ? <X className="w-4 h-4" /> : (isSomeoneElseSpeaking ? <Lock className="w-4 h-4 opacity-40" /> : <Mic className="w-4 h-4" />)}
             <span className="font-bold text-[16px] tracking-tight">Speak Now</span>
           </button>
+
+          {/* Device Selection Toggle */}
+          <button
+            onClick={() => setIsDeviceOpen(!isDeviceOpen)}
+            className={`px-3 hover:bg-white/5 text-slate-400 border-l border-white/5 flex items-center justify-center transition-colors ${isDeviceOpen ? 'bg-white/5' : ''}`}
+            title="Audio Input Settings"
+          >
+            <ChevronDown className={`w-3 h-3 transition-transform ${isDeviceOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Device Dropdown */}
+          {isDeviceOpen && (
+            <div className="absolute top-[65px] left-0 right-0 bg-[#1a2333]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-[100] min-w-[240px]">
+              <div className="p-2 flex flex-col gap-1">
+                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 mb-1 flex items-center justify-between">
+                  <span>Microphone Source</span>
+                  <Sparkles className="w-3 h-3 text-emerald-500/50" />
+                </div>
+                {audioDevices.length === 0 ? (
+                  <div className="px-4 py-3 text-sm text-slate-400 italic">No devices found</div>
+                ) : (
+                  audioDevices.map((device) => (
+                    <button
+                      key={device.deviceId}
+                      onClick={() => {
+                        onDeviceIdChange?.(device.deviceId);
+                        setIsDeviceOpen(false);
+                      }}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                        selectedDeviceId === device.deviceId 
+                        ? 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20' 
+                        : 'hover:bg-white/5 text-slate-300'
+                      }`}
+                    >
+                      <Mic className={`w-3.5 h-3.5 ${selectedDeviceId === device.deviceId ? 'text-emerald-400' : 'text-slate-500'}`} />
+                      <span className="text-xs font-medium truncate flex-1">{device.label || `Microphone ${device.deviceId.slice(0, 5)}...`}</span>
+                      {selectedDeviceId === device.deviceId && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />}
+                    </button>
+                  ))
+                )}
+                
+                {/* Output Device Selection */}
+                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-t border-b border-white/5 my-1 flex items-center justify-between">
+                  <span>Speaker Output</span>
+                  <Volume2 className="w-3 h-3 text-emerald-500/50" />
+                </div>
+                {audioOutputDevices.length === 0 ? (
+                  <div className="px-4 py-3 text-sm text-slate-400 italic">No output devices found</div>
+                ) : (
+                  audioOutputDevices.map((device) => (
+                    <button
+                      key={device.deviceId}
+                      onClick={() => {
+                        onOutputDeviceIdChange?.(device.deviceId);
+                        setIsDeviceOpen(false);
+                      }}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                        selectedOutputDeviceId === device.deviceId 
+                        ? 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20' 
+                        : 'hover:bg-white/5 text-slate-300'
+                      }`}
+                    >
+                      <Volume2 className={`w-3.5 h-3.5 ${selectedOutputDeviceId === device.deviceId ? 'text-emerald-400' : 'text-slate-500'}`} />
+                      <span className="text-xs font-medium truncate flex-1">{device.label || `Speaker ${device.deviceId.slice(0, 5)}...`}</span>
+                      {selectedOutputDeviceId === device.deviceId && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" />}
+                    </button>
+                  ))
+                )}
+
+                {/* Visualizer inside dropdown when speaking */}
+                {isMeSpeaking && audioData && (
+                  <div className="mt-1 px-3 py-2 bg-black/20 rounded-lg flex items-center justify-between">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Input Signal</span>
+                    <AudioVisualizer data={audioData} colorClass="bg-emerald-400" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Listen Translation Button & Language Selector */}
