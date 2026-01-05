@@ -2288,5 +2288,26 @@ Changed:
 Tests:
 - `npm run build`: PASS.
 - Manual Verification: Click "Listen Translation" -> Check console for `[Pipeline] Manual Fetch triggered`.
+
+Task ID: T-0067
+Title: Strict Translation Trigger Logic
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-05 23:50
+Plan:
+- Modify `OrbitApp.tsx`'s `processNextInQueue` to immediately return if `mode` is not 'listening'.
+- Ensure no Translation or TTS costs are incurred unless user explicitly enables "Listen".
+
+END LOG
+
+Timestamp: 2026-01-05 23:52
+Changed:
+- `lib/orbit/OrbitApp.tsx`: Added `if (modeRef.current !== 'listening') return;` guard to `processNextInQueue`.
+Tests:
+- `npm run build`: PASS.
+- Manual Code Verification: Confirmed early exit before `fetch('/api/orbit/translate')`.
 Result: PASS
 

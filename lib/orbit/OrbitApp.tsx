@@ -399,6 +399,14 @@ export function OrbitApp() {
 
     try {
         console.log(`[Pipeline] 3. Starting processing for: "${item.text}"`);
+        
+        // Strict Gate: Only process if in listening mode
+        if (modeRef.current !== 'listening') {
+             console.log(`[Pipeline] Skipped Translation/TTS (Not in listening mode)`);
+             // We can still update the UI with the raw text if desired, but user asked for "No need to do anything"
+             return; 
+        }
+
         setIsTtsLoading(true);
         
         // 1. Translate
