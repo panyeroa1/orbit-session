@@ -245,7 +245,31 @@ export function OrbitApp() {
   useEffect(() => {
     if (meetingId) {
        const unsub = roomStateService.subscribeToRoom(meetingId, setRoomState);
-       return () => unsub();
+
+       // Subscribe to Transcripts
+       const channel = supabase.channel(`room:${meetingId}:transcripts`)
+         .on('postgres_changes', {
+           event: 'INSERT',
+           schema: 'public',
+           table: 'transcript_segments',
+           filter: `meeting_id=eq.${meetingId}`
+         }, (payload: any) => {
+           // If it's not me, show it
+           if (payload.new.speaker_id !== MY_USER_ID) {
+             setLastFinalText(payload.new.source_text);
+             // Clear after 5s
+             if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+             silenceTimerRef.current = setTimeout(() => {
+               setLastFinalText('');
+             }, 5000);
+           }
+         })
+         .subscribe();
+
+       return () => {
+         unsub();
+         supabase.removeChannel(channel);
+       };
     }
   }, [meetingId]);
 
