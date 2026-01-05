@@ -47,13 +47,13 @@ export const releaseSpeaker = releaseSpeakerLock;
 
 export async function saveUtterance(roomId: string, userId: string, text: string, sourceLang: string = 'auto') {
   const { data, error } = await supabase
-    .from('public.utterances')
+    .from('transcript_segments')
     .insert({
-      room_id: roomId,
-      speaker_user_id: userId,
-      text: text,
-      source_language: sourceLang,
-      ended_at: new Date().toISOString()
+      meeting_id: roomId,
+      speaker_id: userId,
+      source_text: text,
+      source_lang: sourceLang,
+      created_at: new Date().toISOString()
     })
     .select()
     .single();

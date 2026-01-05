@@ -17,7 +17,10 @@ export async function POST(request: Request) {
        return NextResponse.json({ translation: `[${targetLang}] ${text}` });
     }
 
-    const response = await fetch('https://api.ollama.com/v1/chat/completions', {
+    const ollamaUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434';
+    console.log(`Sending translation request to: ${ollamaUrl}/v1/chat/completions`, { model: 'gemini-2.0-flash-exp', targetLang });
+
+    const response = await fetch(`${ollamaUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,

@@ -2070,3 +2070,27 @@ Tests:
 - `npm run build` passed.
 Result: PASS
 Status: DONE
+
+Task ID: T-0038
+Title: Fix Transcription and Translation Failures
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-05 22:45
+Plan:
+- Fix DB table mismatch in `orbitService.ts` (write to `transcript_segments`).
+- Fix invalid Ollama URL in `api/orbit/translate/route.ts`.
+- Verify build.
+
+END LOG
+
+Timestamp: 2026-01-05 22:48
+Changed:
+- `orbitService.ts`: Updated `saveUtterance` to use `transcript_segments` table, fixing sync with `OrbitTranslatorVertical`.
+- `api/orbit/translate/route.ts`: Replaced `api.ollama.com` (invalid) with `http://localhost:11434` (standard).
+Tests:
+- `npm run build` passed.
+Result: PASS
+Status: DONE
