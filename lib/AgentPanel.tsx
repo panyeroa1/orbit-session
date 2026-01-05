@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from '@/styles/Eburon.module.css';
 import { supabase } from '@/lib/orbit/services/supabaseClient';
-import { streamTranslation } from '@/lib/orbit/services/geminiService';
+import { streamTranslation, translateWithOllama } from '@/lib/orbit/services/geminiService';
 import { LANGUAGES, Language } from '@/lib/orbit/types';
 import { Volume2, Mic, MicOff, StopCircle, ChevronDown } from 'lucide-react';
 
@@ -77,8 +77,20 @@ export function AgentPanel({ meetingId, onSpeakingStateChange, isTranscriptionEn
 
       let finalTranslation = '';
 
+      try {
+        // Step 1: Translate via Ollama Cloud
+        finalTranslation = await translateWithOllama(segment.source_text, targetLang.name);
+        
+        // Update log with translated text immediately
+        setLogs(prev => prev.map(l => l.id === logId ? { ...l, translation: finalTranslation } : l));
+      } catch (err) {
+        console.error("Ollama translation failed, falling back", err);
+        finalTranslation = segment.source_text;
+      }
+
+      // Step 2: Playback via Gemini (Orbit) or Cartesia (Agent)
       await streamTranslation(
-        segment.source_text,
+        finalTranslation,
         targetLang.name,
         ctx,
         () => {}, // Audio handled by service
@@ -223,8 +235,8 @@ export function AgentPanel({ meetingId, onSpeakingStateChange, isTranscriptionEn
                  value={ttsProvider}
                  onChange={(e) => setTtsProvider(e.target.value as any)}
                >
-                 <option value="gemini">Agent</option>
-                 <option value="cartesia">Orbit</option>
+                 <option value="gemini">Orbit (Gemini)</option>
+                 <option value="cartesia">Agent (Cartesia)</option>
                </select>
                <div className={styles.agentSelectIcon}>
                   <ChevronDown size={14} />

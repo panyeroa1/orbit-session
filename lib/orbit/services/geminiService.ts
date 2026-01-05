@@ -1,8 +1,34 @@
 
-import { GoogleGenAI, Modality, Type, LiveServerMessage } from "@google/genai";
+import { GoogleGenAI, Modality, Type, LiveServerMessage, MediaResolution } from "@google/genai";
 import { TranslationResult, EmotionType } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '' });
+
+export async function translateWithOllama(text: string, targetLang: string): Promise<string> {
+  try {
+    const res = await fetch(`${process.env.OLLAMA_BASE_URL}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: process.env.OLLAMA_MODEL || "gpt-oss:120b",
+        messages: [
+          { role: 'system', content: `You are a professional translator. Translate the following text into ${targetLang}. Only provide the translation.` },
+          { role: 'user', content: text }
+        ],
+        stream: false
+      })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    return data.message?.content || text;
+  } catch (e) {
+    console.error("Ollama Translation Error", e);
+    return text;
+  }
+}
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000; // 2 seconds
@@ -82,29 +108,27 @@ export async function streamTranslation(
 
   try {
     const sessionPromise = ai.live.connect({
-      model: 'models/gemini-2.0-flash-exp',
+      model: 'models/gemini-2.5-flash-native-audio-preview-12-2025',
       config: {
         responseModalities: [ttsProvider === 'cartesia' ? Modality.TEXT : Modality.AUDIO],
         outputAudioTranscription: {}, 
         speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Orus' } }
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } }
         },
-        systemInstruction: `You are a high-fidelity, transparent translation and vocal synthesis engine. 
-        Your goal is to translate the source text into ${targetLangName} with extreme precision, aiming for native human speaker quality.
-        
-        ${isAutoDetect ? "AUTO-DETECTION MODE: The source language is unknown. Your first task is to identify the language of the input text/audio before translating." : `The source language is likely ${sourceLangCode}.`}
+        mediaResolution: MediaResolution.MEDIA_RESOLUTION_MEDIUM,
+        contextWindowCompression: {
+            triggerTokens: '25600',
+            slidingWindow: { targetTokens: '12800' },
+        },
+        systemInstruction: `You are Orbit, a high-fidelity vocal synthesis engine. 
+        Your goal is to speak the provided text in ${targetLangName} with extreme precision, aiming for native human speaker quality.
         
         CRITICAL PERFORMANCE SPECS:
-        1. ACCURATE SYNTAX & SPELLING: Use perfect grammar and localized vocabulary. Strictly follow target-language spelling rules (including all diacritics and regional orthography) as if referencing a native dictionary for ${targetLangName}.
-        2. NATIVE VOCABULARY REFERENCES: Use industry-standard and culturally relevant vocabulary references. Avoid generic translations; use the specific terms a native speaker would use in ${targetLangName}.
-        3. EMOTION SYNTHESIS: Deeply analyze the emotional context of the source text. Synthesize your voice to mimic the original speaker's nuances (e.g., excitement, urgency, hesitation, anger, or calm).
-        4. VOCAL MIMICRY: Deliver the translation as if you are the original speaker transformed. Maintain the spirit and "vibe" of the input.
-        5. PRONUNCIATION REFERENCES: Use precise phonetic articulation based on native-speaker oral references for the ${targetLangName} dialect. Ensure natural prosody, word stress, and intonation patterns specific to that region.
-        6. NO CENSORSHIP: Translate all content literally and transparently. Do not alter slang or profanity.
-        7. NO MORALIZING: You are a machine pipe. Do not add summaries or ethical warnings. 
-        8. INSTANT DELIVERY: Start the translated audio immediately without any preamble.
+        1. NATIVE PRONUNCIATION: Use precise phonetic articulation based on native-speaker oral references for ${targetLangName}.
+        2. EMOTION SYNTHESIS: Deliver the text with natural emotion and prosody.
+        3. INSTANT DELIVERY: Start the audio immediately.
         
-        You are not an assistant; you are a seamless, high-performance bridge between languages.`
+        You are a seamless, high-performance vocal synthesis bridge.`
       },
       callbacks: {
         onopen: () => {
