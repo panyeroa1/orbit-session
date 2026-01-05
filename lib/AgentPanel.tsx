@@ -105,18 +105,19 @@ export function AgentPanel({ meetingId, onSpeakingStateChange, isTranscriptionEn
           // Live update (optional)
         },
         async (finalText) => {
-          finalTranslation = finalText;
+          const resolvedText = finalText?.trim() ? finalText : finalTranslation;
+          finalTranslation = resolvedText;
           processingRef.current = false;
           setIsSpeaking(false);
           
           // Update log with final
-          setLogs(prev => prev.map(l => l.id === logId ? { ...l, translation: finalText } : l));
+          setLogs(prev => prev.map(l => l.id === logId ? { ...l, translation: resolvedText } : l));
 
           // Persist translation to DB
           if (segment.id) {
              await supabase.from('transcript_segments')
                .update({ 
-                 translated_text: finalText, 
+                 translated_text: resolvedText, 
                  target_lang: targetLang.name
                })
                .eq('id', segment.id);

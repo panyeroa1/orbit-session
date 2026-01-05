@@ -795,7 +795,7 @@ function VideoConferenceComponent(props: {
     if (!roomName) return;
     
     try {
-        await supabase.from('transcript_segments').insert({
+        const { error } = await supabase.from('transcript_segments').insert({
             meeting_id: roomName,
             speaker_id: user?.id || room.localParticipant.identity,
             source_text: segment.text,
@@ -803,7 +803,7 @@ function VideoConferenceComponent(props: {
             last_segment_id: crypto.randomUUID(),
             full_transcription: segment.text,
         });
-        
+        if (error) throw error;
     } catch (err) {
         console.error('Failed to save transcript', err);
     }
