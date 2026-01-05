@@ -16,7 +16,7 @@ import { RoomState } from '@/lib/orbit/types';
 
 import { ChatPanel } from '@/lib/ChatPanel';
 import { ParticipantsPanel } from '@/lib/ParticipantsPanel';
-import { AgentPanel } from '@/lib/AgentPanel';
+import { OrbitTranslatorVertical } from '@/lib/orbit/components/OrbitTranslatorVertical';
 import { LiveCaptions } from '@/lib/LiveCaptions';
 import roomStyles from '@/styles/Eburon.module.css';
 import {
@@ -760,14 +760,12 @@ function VideoConferenceComponent(props: {
         );
       case 'agent':
         return (
-          <AgentPanel 
-            meetingId={roomName} 
-            onSpeakingStateChange={handleAgentSpeakingChange}
-            isTranscriptionEnabled={isTranscriptionEnabled}
-            onToggleTranscription={handleTranscriptionToggle}
-            roomState={roomState}
-            userId={user?.id}
-          />
+          <div className="p-4 flex flex-col items-center">
+            <OrbitTranslatorVertical 
+              roomCode={roomName} 
+              userId={user?.id || 'guest-user'} 
+            />
+          </div>
         );
       case 'chat':
         return <ChatPanel />;
