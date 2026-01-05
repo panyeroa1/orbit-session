@@ -48,7 +48,21 @@ export function subscribeToRoom(meetingId: string, callback: (state: RoomState) 
   };
 }
 
+export async function ensureMeetingRow(meetingId: string) {
+  const { data: existing } = await supabase
+    .from('meetings')
+    .select('meeting_id')
+    .eq('meeting_id', meetingId)
+    .maybeSingle();
+
+  if (!existing) {
+    await supabase.from('meetings').insert({ meeting_id: meetingId });
+  }
+}
+
 export async function tryAcquireSpeaker(meetingId: string, userId: string, force: boolean = false): Promise<boolean> {
+  await ensureMeetingRow(meetingId);
+  
   // Optimistic locking: Update if NULL OR if I am already the speaker
   let query = supabase
     .from('meetings')
@@ -65,11 +79,14 @@ export async function tryAcquireSpeaker(meetingId: string, userId: string, force
 }
 
 export async function releaseSpeaker(meetingId: string, userId: string) {
-  await supabase
-    .from('meetings')
-    .update({ active_speaker_id: null })
-    .eq('meeting_id', meetingId)
-    .eq('active_speaker_id', userId);
+  // Silent release for both possible columns
+  try {
+    await supabase
+      .from('meetings')
+      .update({ active_speaker_id: null, is_speaking: false } as any)
+      .eq('meeting_id', meetingId)
+      .eq('active_speaker_id', userId);
+  } catch (e) {}
 }
 
 export function raiseHand(userId: string, userName: string) {
