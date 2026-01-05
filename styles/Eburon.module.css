@@ -2135,3 +2135,66 @@
   background: rgba(255, 255, 255, 0.15);
   margin: 0 2px;
 }
+
+.audioSplitDropdown:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Language Dropdown Styles */
+.langSelectMain {
+  padding: 0 8px;
+  gap: 6px;
+}
+
+.langFlag {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.langMenu {
+  max-height: 300px;
+  overflow-y: auto;
+  width: 280px;
+}
+
+.langOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.langOptionFlag {
+  font-size: 1.2rem;
+}
+
+/* Enhanced Leave Button */
+.leaveButton {
+  background: rgba(220, 38, 38, 0.9) !important; /* Almost solid red */
+  color: white !important;
+  border-radius: 16px !important;
+  height: 48px;
+  padding: 0 20px !important;
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  width: auto !important;
+  aspect-ratio: auto !important;
+}
+
+.leaveButton:hover {
+  background: rgba(239, 68, 68, 1) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.leaveButton svg {
+  width: 20px;
+  height: 20px;
+}

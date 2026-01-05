@@ -333,9 +333,13 @@ export function PageClientImpl(props: {
       saveAudioInputDeviceId(values.audioDeviceId);
       saveVideoInputDeviceId(values.videoDeviceId);
       saveUsername(values.username);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(`lk_autojoin_${props.roomName}`, 'true');
+      }
       setPreJoinChoices(values);
     },
     [
+      props.roomName,
       saveAudioInputEnabled,
       saveAudioInputDeviceId,
       saveVideoInputEnabled,
@@ -347,6 +351,24 @@ export function PageClientImpl(props: {
   const handlePreJoinError = React.useCallback((error: unknown) => {
     console.error('Pre-join error', error);
   }, []);
+
+  // Auto-join persistence
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const shouldAutoJoin = sessionStorage.getItem(`lk_autojoin_${props.roomName}`);
+    if (shouldAutoJoin === 'true' && userChoices.username) {
+       // If we have persistent choices and the flag, skip prejoin
+       // We use the persistent choices loaded from usePersistentUserChoices
+       setPreJoinChoices({
+         username: userChoices.username,
+         videoEnabled: userChoices.videoEnabled ?? true,
+         audioEnabled: userChoices.audioEnabled ?? true,
+         videoDeviceId: userChoices.videoDeviceId ?? 'default',
+         audioDeviceId: userChoices.audioDeviceId ?? 'default',
+       });
+    }
+  }, [props.roomName, userChoices]);
+
 
   React.useEffect(() => {
     if (!preJoinChoices) {

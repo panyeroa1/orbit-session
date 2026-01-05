@@ -519,6 +519,9 @@ export function EburonControlBar({
   };
 
   const handleLeave = () => {
+    if (typeof window !== 'undefined' && room.name) {
+      sessionStorage.removeItem(`lk_autojoin_${room.name}`);
+    }
     room.disconnect();
   };
 
@@ -609,39 +612,32 @@ export function EburonControlBar({
             {/* Language Selector (Center) */}
             <div className={`${styles.audioSplitSection} ${styles.audioSplitCenter}`} ref={langMenuRef}>
               <div 
-                className={styles.audioSplitMain} 
+                className={`${styles.audioSplitMain} ${styles.langSelectMain}`}
                 onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
                 title="Select Language"
-                style={{ padding: '0 8px', gap: '6px' }}
               >
-                <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{selectedLanguage.flag}</span>
+                <span className={styles.langFlag}>{selectedLanguage.flag}</span>
                 <ChevronDownIcon />
               </div>
 
               {isLangMenuOpen && (
                  <div 
-                  className={styles.deviceMenu} 
+                  className={`${styles.deviceMenu} ${styles.langMenu}`}
                   role="listbox" 
                   aria-label="Select Language"
-                  style={{ 
-                    maxHeight: '300px', 
-                    overflowY: 'auto',
-                    width: '280px' 
-                  }}
                  >
                    {LANGUAGES.map((lang) => (
                      <button
                        key={lang.code}
-                       className={`${styles.deviceOption} ${selectedLanguage.code === lang.code ? styles.deviceOptionActive : ''}`}
+                       className={`${styles.deviceOption} ${styles.langOption} ${selectedLanguage.code === lang.code ? styles.deviceOptionActive : ''}`}
                        onClick={() => {
                          setSelectedLanguage(lang);
                          setIsLangMenuOpen(false);
                        }}
                        role="option"
                        aria-selected={selectedLanguage.code === lang.code}
-                       style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                      >
-                       <span style={{ fontSize: '1.2rem' }}>{lang.flag}</span>
+                       <span className={styles.langOptionFlag}>{lang.flag}</span>
                        <span>{lang.name}</span>
                      </button>
                    ))}
@@ -824,11 +820,12 @@ export function EburonControlBar({
           </button>
 
           <button
-            className={`${styles.controlButton} ${styles.leaveButton}`}
+            className={styles.leaveButton}
             onClick={handleLeave}
             title="Leave meeting"
           >
             <LeaveIcon />
+            <span>Leave</span>
           </button>
         </div>
       </div>
