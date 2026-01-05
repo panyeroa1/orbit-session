@@ -1870,3 +1870,20 @@ Test result:
 
 Known limitations or follow-up tasks:
 - None
+
+------------------------------------------------------------
+COMPACT MINI TASK FORMAT
+------------------------------------------------------------
+
+Task ID: T-0054
+Title: Fix Inline Styles in Translator Plugin Page
+
+Start log:
+- Timestamp: 2026-01-05 11:41
+- Plan: Resolve linting warning by moving inline CSS to a module.
+
+End log:
+- Timestamp: 2026-01-05 11:43
+- Changed: Moved inline styles to TranslatorPlugin.module.css and updated page.tsx.
+- Tests: Verified build passes and UI remains consistent.
+- Status: DONE

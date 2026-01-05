@@ -2,6 +2,7 @@
 
 import React from 'react';
 import TranslatorApp from '@/translator-pluginv1/App';
+import styles from './TranslatorPlugin.module.css';
 
 const TAILWIND_CONFIG_ID = 'translator-tailwind-config';
 const TAILWIND_SCRIPT_ID = 'translator-tailwind-script';
@@ -83,17 +84,7 @@ body {
 
   if (!isReady) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#1D0E32',
-          color: '#FDF0E0',
-          fontFamily: 'Inter, sans-serif',
-        }}
-      >
+      <div className={styles.loadingContainer}>
         Loading translator...
       </div>
     );
