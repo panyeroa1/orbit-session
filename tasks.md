@@ -2422,3 +2422,65 @@ Changed:
 Tests:
 - Git push confirmed successful.
 Result: PASS
+
+Task ID: T-0073
+Title: Production Robustness Fixes
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-06 00:35
+Plan:
+- Allow `meetingId` initialization for guests in `OrbitApp.tsx`.
+- Improve translation route logging and warnings for missing environment variables.
+
+END LOG
+
+Timestamp: 2026-01-06 00:38
+Changed:
+- `OrbitApp.tsx`: Removed session requirement for `meetingId`.
+- `app/api/orbit/translate/route.ts`: Added production warnings and detailed error logging.
+Tests:
+- `npm run build`: PASS.
+Result: PASS
+
+Task ID: T-0074
+Title: Sync Robustness Fixes to GitHub Remotes
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-06 00:40
+Plan:
+- Push the latest `buten` branch to `master-buten` and `joe` remotes.
+
+END LOG
+
+Timestamp: 2026-01-06 00:42
+Changed:
+- Pushed robustness fixes to GitHub remotes.
+Result: PASS
+
+Task ID: T-0075
+Title: Fix Translation Target Language Selection
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-06 00:45
+Plan:
+- Update front-end components to send the full language name (e.g., "Spanish (Spain)") instead of the code (e.g., "es-ES") to the translation API.
+- Prevent translation attempts when "Auto Detect" is selected as the target language.
+
+END LOG
+
+Timestamp: 2026-01-06 00:48
+Changed:
+- `OrbitApp.tsx`: Now sends `selectedLanguageRef.current.name` to `/api/orbit/translate`.
+- `OrbitTranslatorVertical.tsx`: Now sends `selectedLanguageRef.current.name` and skips translation if `code === 'auto'`.
+Tests:
+- `npm run build`: PASS.
+Result: PASS

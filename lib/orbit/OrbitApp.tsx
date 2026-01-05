@@ -418,7 +418,7 @@ export function OrbitApp() {
             method: 'POST',
             body: JSON.stringify({
                 text: item.text,
-                targetLang: selectedLanguageRef.current.code
+                targetLang: selectedLanguageRef.current.name
             })
         });
         const tData = await tRes.json();

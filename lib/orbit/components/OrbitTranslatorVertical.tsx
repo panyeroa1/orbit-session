@@ -154,17 +154,20 @@ export function OrbitTranslatorVertical({ roomCode, userId, onLiveTextChange }: 
 
     try {
       // 1) Translate
-      const targetLang = selectedLanguageRef.current.code;
+      const targetLang = selectedLanguageRef.current.name;
+      const targetCode = selectedLanguageRef.current.code;
       let translated = item.text;
       
       try {
-          const tRes = await fetch('/api/orbit/translate', {
-            method: 'POST',
-            body: JSON.stringify({ text: item.text, targetLang }),
-          });
-          if (tRes.ok) {
-             const tData = await tRes.json();
-             translated = tData.translation || item.text;
+          if (targetCode !== 'auto') {
+              const tRes = await fetch('/api/orbit/translate', {
+                method: 'POST',
+                body: JSON.stringify({ text: item.text, targetLang }),
+              });
+              if (tRes.ok) {
+                 const tData = await tRes.json();
+                 translated = tData.translation || item.text;
+              }
           }
       } catch (translateError) {
           console.warn('Translation API failed, using original text', translateError);
