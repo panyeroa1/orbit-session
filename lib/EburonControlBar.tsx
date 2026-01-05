@@ -552,7 +552,10 @@ export function EburonControlBar({
 
   return (
     <>
-      <div className={`${styles.controlBar} ${isSidebarOpen ? styles.controlBarShifted : ''}`}>
+      <div 
+        className={`${styles.controlBar} ${isSidebarOpen ? styles.controlBarShifted : ''} notranslate`}
+        translate="no"
+      >
         {/* Left Group: AV Controls */}
         <div className={styles.controlGroup}>
 
