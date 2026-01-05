@@ -230,7 +230,7 @@ export function EburonControlBar({
   const [isSpeakerMenuOpen, setIsSpeakerMenuOpen] = React.useState(false);
   
   // Language Selector State
-  const [selectedLanguage, setSelectedLanguage] = React.useState<Language>(LANGUAGES[0]);
+  const [selectedLanguage, setSelectedLanguage] = React.useState<Language>(LANGUAGES.find(l => l.code === 'en-US') || LANGUAGES[0]);
   const [isLangMenuOpen, setIsLangMenuOpen] = React.useState(false);
   const langMenuRef = React.useRef<HTMLDivElement | null>(null);
 

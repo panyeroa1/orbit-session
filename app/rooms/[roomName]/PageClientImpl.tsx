@@ -809,18 +809,11 @@ function VideoConferenceComponent(props: {
             admittedIds={admittedIds}
           />
         );
+// Add import at the top (assumed to be done or will be done by TS, but I need to do it here manually if I can't ask it. Wait I can just edit the import section too).
+// Actually, I can use multi_replace for this.
+
       case 'agent':
-        return (
-          <OrbitTranslatorVertical 
-            roomCode={roomName} 
-            userId={user?.id || 'guest-user'} 
-            audioDevices={audioDevices}
-            selectedDeviceId={props.userChoices.audioDeviceId ?? ''}
-            onDeviceIdChange={(deviceId) => {
-              props.onDeviceChange?.('audioinput', deviceId);
-            }}
-          />
-        );
+        return <OrbitIntegrations />;
       case 'chat':
         return <ChatPanel />;
       case 'settings':
