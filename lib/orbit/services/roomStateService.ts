@@ -48,14 +48,18 @@ export function subscribeToRoom(meetingId: string, callback: (state: RoomState) 
   };
 }
 
-export async function tryAcquireSpeaker(meetingId: string, userId: string): Promise<boolean> {
+export async function tryAcquireSpeaker(meetingId: string, userId: string, force: boolean = false): Promise<boolean> {
   // Optimistic locking: Update if NULL OR if I am already the speaker
-  const { error, data } = await supabase
+  let query = supabase
     .from('meetings')
     .update({ active_speaker_id: userId })
-    .eq('meeting_id', meetingId)
-    .or(`active_speaker_id.is.null,active_speaker_id.eq.${userId}`)
-    .select();
+    .eq('meeting_id', meetingId);
+
+  if (!force) {
+    query = query.or(`active_speaker_id.is.null,active_speaker_id.eq.${userId}`);
+  }
+
+  const { error, data } = await query.select();
 
   return !error && data && data.length > 0;
 }

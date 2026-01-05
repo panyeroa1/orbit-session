@@ -452,6 +452,23 @@ function VideoConferenceComponent(props: {
     return unsub;
   }, [roomName]);
 
+  // Auto-release speaker lock on unmount or page leave
+  React.useEffect(() => {
+    const handleUnload = () => {
+      if (isTranscriptionEnabled && roomName && user?.id) {
+        // Use a synchronous-like fetch if possible, or just rely on the fact that 
+        // releaseSpeaker is called. Note: cleanup is async but browser might kill it.
+        releaseSpeaker(roomName, user.id);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleUnload);
+      handleUnload();
+    };
+  }, [isTranscriptionEnabled, roomName, user?.id]);
+
   const layoutContext = useCreateLayoutContext();
 
   // Sync roomName to session storage for OrbitApp integration
@@ -796,8 +813,17 @@ function VideoConferenceComponent(props: {
     if (!roomName || !user?.id) return;
 
     if (!isTranscriptionEnabled) {
+      // Check if current speaker is still in the room
+      const currentSpeakerId = roomState?.activeSpeaker?.userId;
+      const isSpeakerInRoom = currentSpeakerId ? 
+        (Array.from(room.remoteParticipants.values()).some(p => p.identity === currentSpeakerId) || 
+         room.localParticipant.identity === currentSpeakerId) : false;
+
       // Attempt to acquire lock
-      const success = await tryAcquireSpeaker(roomName, user.id);
+      // If there is a speaker but they aren't in the room, force takeover
+      const shouldForce = !!(currentSpeakerId && !isSpeakerInRoom);
+      const success = await tryAcquireSpeaker(roomName, user.id, shouldForce);
+      
       if (success) {
         setIsTranscriptionEnabled(true);
       } else {
@@ -808,7 +834,7 @@ function VideoConferenceComponent(props: {
       await releaseSpeaker(roomName, user.id);
       setIsTranscriptionEnabled(false);
     }
-  }, [isTranscriptionEnabled, roomName, user?.id]);
+  }, [isTranscriptionEnabled, roomName, user?.id, roomState, room]);
 
   return (
     <div
