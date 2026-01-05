@@ -96,7 +96,6 @@ export function OrbitIntegrations() {
              state={undefined} 
              trackRef={localMicTrack}
              barCount={30}
-             options={{ height: 40 }}
              style={{ width: '100%', height: '100%', color: '#22c55e' }}
           />
         </div>
@@ -106,11 +105,11 @@ export function OrbitIntegrations() {
         <div className={styles.integrationGrid}>
           {integrations.map((tool, index) => (
             <div key={index} className={styles.sidebarCard}>
-              <div className={styles.sidebarCardIcon} style={{ fontSize: '1.5rem', marginRight: '12px' }}>
+              <div className={styles.integrationCardIcon}>
                 {tool.icon}
               </div>
               <div className={styles.sidebarCardText}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className={styles.integrationLabelGroup}>
                   <span className={styles.sidebarCardLabel}>{tool.title}</span>
                   {tool.status && (
                     <span 
