@@ -9,7 +9,7 @@ import { supabase } from './orbit/services/supabaseClient';
 const overlayStyles = {
   captionBar: {
     position: 'fixed' as 'fixed',
-    bottom: 80, // Position above the control bar
+    bottom: 80,
     left: '20px',
     right: '20px',
     width: 'auto',
@@ -55,42 +55,38 @@ export function CinemaCaptionOverlay({
     const { localParticipant } = useLocalParticipant();
     const lastMicStateRef = useRef<boolean | null>(null);
     
-    // ====== GEMINI LIVE (for TTS response) ======
-    const handleGeminiTranscription = useCallback((text: string, source: 'user' | 'ai') => {
-        // Display AI responses
-        if (source === 'ai') {
-            setDisplayText(text);
-            if (isFloorHolder) {
-                onTranscriptSegment({ text, language: targetLanguage, isFinal: true });
-            }
-        }
-    }, [isFloorHolder, onTranscriptSegment, targetLanguage]);
-
+    // ====== GEMINI LIVE (for translation/TTS response) ======
     const {
         isRecording: isGeminiActive,
         toggleRecording: toggleGemini,
+        transcription: geminiInputTranscription,
+        outputTranscription: geminiOutputTranscription,
         status: geminiStatus,
-        setTargetLanguage,
-        sendText: sendToGemini
-    } = useGeminiLive({ onTranscription: handleGeminiTranscription });
+    } = useGeminiLive({
+        mode: 'translate_tts',
+        targetLanguage,
+    });
+
+    // Display Gemini output transcription (translated speech)
+    useEffect(() => {
+        if (geminiOutputTranscription && isFloorHolder) {
+            setDisplayText(geminiOutputTranscription);
+            onTranscriptSegment({ text: geminiOutputTranscription, language: targetLanguage, isFinal: true });
+        }
+    }, [geminiOutputTranscription, isFloorHolder, onTranscriptSegment, targetLanguage]);
 
     // ====== DEEPGRAM (for STT) ======
     const handleDeepgramTranscript = useCallback((result: { transcript: string; isFinal: boolean; confidence: number }) => {
         if (!result.transcript) return;
         
-        // Display user speech
+        // Display user speech immediately
         setDisplayText(result.transcript);
         
         // Save to DB (if floor holder)
         if (isFloorHolder && result.isFinal) {
             onTranscriptSegment({ text: result.transcript, language: 'en', isFinal: true });
         }
-        
-        // Send final transcripts to Gemini for translation/response
-        if (result.isFinal && result.transcript.trim() && isFloorHolder) {
-            sendToGemini(result.transcript);
-        }
-    }, [isFloorHolder, onTranscriptSegment, sendToGemini]);
+    }, [isFloorHolder, onTranscriptSegment]);
 
     const {
         isListening: isDeepgramActive,
@@ -109,13 +105,6 @@ export function CinemaCaptionOverlay({
             setDisplayText(interimTranscript);
         }
     }, [interimTranscript, isFloorHolder]);
-
-    // Sync target language prop to Gemini hook
-    useEffect(() => {
-        if (targetLanguage) {
-            setTargetLanguage(targetLanguage);
-        }
-    }, [targetLanguage, setTargetLanguage]);
 
     // Subscribe to realtime transcriptions (FOR LISTENERS)
     useEffect(() => {
