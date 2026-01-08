@@ -19,10 +19,10 @@ import { ParticipantsPanel } from '@/lib/ParticipantsPanel';
 import { OrbitTranslatorVertical } from '@/lib/orbit/components/OrbitTranslatorVertical';
 import { OrbitIntegrations } from '@/lib/orbit/components/OrbitIntegrations';
 import { LiveCaptions } from '@/lib/LiveCaptions';
+import { CustomPreJoin } from '@/lib/CustomPreJoin';
 import roomStyles from '@/styles/Eburon.module.css';
 import {
   LocalUserChoices,
-  PreJoin,
   RoomContext,
   LayoutContextProvider,
   GridLayout,
@@ -424,13 +424,26 @@ export function PageClientImpl(props: {
   return (
     <main data-lk-theme="default" className="lk-room-container">
       {connectionDetails === undefined || preJoinChoices === undefined ? (
-        <div className={roomStyles.preJoinContainer}>
-          <PreJoin
-            defaults={preJoinDefaults}
-            onSubmit={handlePreJoinSubmit}
-            onError={handlePreJoinError}
-          />
-        </div>
+        <CustomPreJoin
+          roomName={props.roomName}
+          defaults={{
+            username: preJoinDefaults.username,
+            videoEnabled: preJoinDefaults.videoEnabled,
+            audioEnabled: preJoinDefaults.audioEnabled,
+            videoDeviceId: preJoinDefaults.videoDeviceId,
+            audioDeviceId: preJoinDefaults.audioDeviceId,
+          }}
+          onSubmit={(choices) => {
+            handlePreJoinSubmit({
+              username: choices.username,
+              videoEnabled: choices.videoEnabled,
+              audioEnabled: choices.audioEnabled,
+              videoDeviceId: choices.videoDeviceId,
+              audioDeviceId: choices.audioDeviceId,
+            });
+          }}
+          onError={handlePreJoinError}
+        />
       ) : (
         <VideoConferenceComponent
           connectionDetails={connectionDetails}
