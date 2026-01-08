@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useGeminiLive } from './useGeminiLive';
 import { useRoomContext, useLocalParticipant } from '@livekit/components-react';
 import { Track } from 'livekit-client';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
+import { supabase } from './orbit/services/supabaseClient';
 
 const overlayStyles = {
   captionBar: {
@@ -35,15 +37,51 @@ const overlayStyles = {
 interface CinemaCaptionOverlayProps {
     onTranscriptSegment: (segment: { text: string; language: string; isFinal: boolean }) => void;
     defaultDeviceId?: string;
+    isFloorHolder?: boolean;
+    onClaimFloor?: () => void;
 }
 
-export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: CinemaCaptionOverlayProps) {
+export function CinemaCaptionOverlay({ 
+    onTranscriptSegment, 
+    defaultDeviceId,
+    isFloorHolder = false,
+    onClaimFloor
+}: CinemaCaptionOverlayProps) {
     const [displayText, setDisplayText] = useState('');
     const [isFading, setIsFading] = useState(false);
     const captionRef = useRef<HTMLDivElement>(null);
+    const room = useRoomContext(); // Access room directly
     const { localParticipant } = useLocalParticipant();
     const lastMicStateRef = useRef<boolean | null>(null);
     
+    // Subscribe to realtime transcriptions (FOR LISTENERS)
+    useEffect(() => {
+        if (!room?.name) return;
+
+        const channel = supabase
+            .channel(`transcriptions:${room.name}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'transcriptions',
+                filter: `meeting_id=eq.${room.name}`
+            }, (payload: RealtimePostgresChangesPayload<any>) => {
+                if (payload.new) {
+                    const newText = payload.new.transcribe_text_segment;
+                    // Only update if we are NOT the floor holder (avoid double update)
+                    if (!isFloorHolder) {
+                        setDisplayText(newText);
+                        onTranscriptSegment({ text: newText, language: 'en', isFinal: true });
+                    }
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [room?.name, isFloorHolder, onTranscriptSegment]);
+
     const {
         isRecording,
         transcription,
@@ -51,7 +89,7 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
         status
     } = useGeminiLive();
 
-    // Auto-start/stop transcription based on mic state
+    // Auto-start/stop transcription based on mic state + FLOOR CONTROL
     useEffect(() => {
         if (!localParticipant) return;
 
@@ -62,26 +100,39 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
         if (lastMicStateRef.current !== isMicEnabled) {
             lastMicStateRef.current = isMicEnabled;
             
-            if (isMicEnabled && !isRecording) {
+            // IF MIC ON + FLOOR HOLDER => START RECORDING
+            if (isMicEnabled && isFloorHolder && !isRecording) {
                 toggleRecording();
-            } else if (!isMicEnabled && isRecording) {
+            } 
+            // IF MIC OFF OR LOST FLOOR => STOP RECORDING
+            else if ((!isMicEnabled || !isFloorHolder) && isRecording) {
                 toggleRecording();
             }
         }
-    }, [localParticipant, isRecording, toggleRecording]);
+    }, [localParticipant, isRecording, toggleRecording, isFloorHolder]);
 
-    // Save transcription segments
+    // Handle Floor Loss (Dynamic Update)
     useEffect(() => {
-        if (transcription) {
+        if (isRecording && !isFloorHolder) {
+             // If we lost the floor while recording, stop immediately
+             toggleRecording();
+        }
+    }, [isFloorHolder, isRecording, toggleRecording]);
+
+    // Save transcription segments (FOR SPEAKER)
+    useEffect(() => {
+        if (transcription && isFloorHolder) { // Only save if we hold the floor
             onTranscriptSegment({ text: transcription, language: 'en', isFinal: true });
         }
-    }, [transcription, onTranscriptSegment]);
+    }, [transcription, onTranscriptSegment, isFloorHolder]);
 
-    // Update display text
+    // Update display text (FOR SPEAKER)
     useEffect(() => {
-        const fullText = transcription || '';
-        setDisplayText(fullText);
-    }, [transcription]);
+        if (isFloorHolder) {
+             const fullText = transcription || '';
+             setDisplayText(fullText);
+        }
+    }, [transcription, isFloorHolder]);
 
     // Auto-clear logic when text overflows
     useEffect(() => {
@@ -109,7 +160,7 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
                     transition: 'opacity 0.3s ease-out'
                 }}
             >
-                {displayText || (isRecording && <span style={{color: '#66ff00', fontSize: '14px', fontWeight: 600}}>🎤 Listening...</span>)}
+                {displayText || (isRecording && isFloorHolder && <span style={{color: '#66ff00', fontSize: '14px', fontWeight: 600}}>🎤 Listening...</span>)}
             </div>
         </div>
     );

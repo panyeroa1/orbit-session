@@ -23,12 +23,12 @@ export function useMeetingFloor(roomName: string, userId: string) {
         .from('meeting_floor')
         .select('*')
         .eq('meeting_id', roomName)
-        .single();
+        .maybeSingle(); // Use maybeSingle to avoid 406 on empty result
       
       if (data) {
         setActiveSpeakerId(data.active_speaker_id);
         setLeasedUntil(data.leased_until);
-      } else if (error && error.code === 'PGRST116') {
+      } else {
         // Row doesn't exist yet, we can try to claim it if we are the first
         claimFloor(); 
       }

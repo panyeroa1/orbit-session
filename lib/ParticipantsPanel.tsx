@@ -109,6 +109,11 @@ const ChatIcon = () => (
   </svg>
 );
 
+// ... imports
+import { useMeetingFloor } from '@/lib/useMeetingFloor';
+
+// ... (icons)
+
 export function ParticipantsPanel({
   alias = 'Trainor',
   onDirectMessage,
@@ -131,6 +136,10 @@ export function ParticipantsPanel({
   const room = React.useContext(RoomContext);
   const layoutContext = useLayoutContext();
   const [showVideoList, setShowVideoList] = React.useState(false);
+  
+  // Floor Control Hook
+  const { isFloorHolder, grantFloor, activeSpeakerId: floorSpeakerId } = useMeetingFloor(room?.name || '', localParticipant?.identity || '');
+
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: false },
@@ -325,6 +334,9 @@ export function ParticipantsPanel({
               : undefined;
             const isPinned = pinTarget?.publication?.trackSid === pinnedTrackSid;
             
+            // Determine if this user holds the floor
+            const participantHoldsFloor = floorSpeakerId === participant.identity;
+
             const handleRemoteMute = async (trackSource: Track.Source, muted: boolean) => {
               if (isLocal) return; // Don't mute self via API (let local controls handle it)
               try {
@@ -358,6 +370,11 @@ export function ParticipantsPanel({
                       {shortName}
                       {isLocal && <span className={styles.youBadge}> (You)</span>}
                     </span>
+                    {participantHoldsFloor && (
+                        <span style={{ fontSize: '10px', background: '#66ff00', color: 'black', padding: '2px 4px', borderRadius: '4px', marginLeft: '6px', fontWeight: 'bold' }}>
+                           ON AIR
+                        </span>
+                    )}
                     {isHandRaised && (
                       <span className={styles.handRaisedBadge} title="Hand raised">
                         <HandRaisedIcon />
@@ -406,6 +423,22 @@ export function ParticipantsPanel({
                     </button>
                   )}
                   
+                  {/* Grant Floor Button (Only visible if YOU hold the floor, and target is NOT you) */}
+                  {isFloorHolder && !isLocal && (
+                      <button
+                        className={styles.participantControl}
+                        onClick={() => grantFloor(participant.identity)}
+                        title="Grant Microphone Floor"
+                        style={{ color: '#66ff00' }}
+                      >
+                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                            <path d="M12 19a7 7 0 0 1-7-7" />
+                            <path d="M19 12a7 7 0 0 1-7 7" />
+                         </svg>
+                      </button>
+                  )}
+
                   {/* Host Controls: Remote Mic Toggle */}
                   <button
                     className={`${styles.participantControl} ${isMicEnabled ? styles.statusOn : styles.statusOff} ${isLocal ? styles.cursorDefault : styles.cursorPointer}`}
