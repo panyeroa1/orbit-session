@@ -1,7 +1,6 @@
-'use client';
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useGeminiLive } from './useGeminiLive';
+import { useDeepgramTranscription } from './useDeepgramTranscription';
 import { useRoomContext, useLocalParticipant } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
@@ -39,21 +38,85 @@ interface CinemaCaptionOverlayProps {
     defaultDeviceId?: string;
     isFloorHolder?: boolean;
     onClaimFloor?: () => void;
+    targetLanguage?: string;
 }
 
 export function CinemaCaptionOverlay({ 
     onTranscriptSegment, 
     defaultDeviceId,
     isFloorHolder = false,
-    onClaimFloor
+    onClaimFloor,
+    targetLanguage = 'English'
 }: CinemaCaptionOverlayProps) {
     const [displayText, setDisplayText] = useState('');
     const [isFading, setIsFading] = useState(false);
     const captionRef = useRef<HTMLDivElement>(null);
-    const room = useRoomContext(); // Access room directly
+    const room = useRoomContext();
     const { localParticipant } = useLocalParticipant();
     const lastMicStateRef = useRef<boolean | null>(null);
     
+    // ====== GEMINI LIVE (for TTS response) ======
+    const handleGeminiTranscription = useCallback((text: string, source: 'user' | 'ai') => {
+        // Display AI responses
+        if (source === 'ai') {
+            setDisplayText(text);
+            if (isFloorHolder) {
+                onTranscriptSegment({ text, language: targetLanguage, isFinal: true });
+            }
+        }
+    }, [isFloorHolder, onTranscriptSegment, targetLanguage]);
+
+    const {
+        isRecording: isGeminiActive,
+        toggleRecording: toggleGemini,
+        status: geminiStatus,
+        setTargetLanguage,
+        sendText: sendToGemini
+    } = useGeminiLive({ onTranscription: handleGeminiTranscription });
+
+    // ====== DEEPGRAM (for STT) ======
+    const handleDeepgramTranscript = useCallback((result: { transcript: string; isFinal: boolean; confidence: number }) => {
+        if (!result.transcript) return;
+        
+        // Display user speech
+        setDisplayText(result.transcript);
+        
+        // Save to DB (if floor holder)
+        if (isFloorHolder && result.isFinal) {
+            onTranscriptSegment({ text: result.transcript, language: 'en', isFinal: true });
+        }
+        
+        // Send final transcripts to Gemini for translation/response
+        if (result.isFinal && result.transcript.trim() && isFloorHolder) {
+            sendToGemini(result.transcript);
+        }
+    }, [isFloorHolder, onTranscriptSegment, sendToGemini]);
+
+    const {
+        isListening: isDeepgramActive,
+        startListening: startDeepgram,
+        stopListening: stopDeepgram,
+        interimTranscript
+    } = useDeepgramTranscription({
+        language: 'multi',
+        model: 'nova-2',
+        onTranscript: handleDeepgramTranscript
+    });
+
+    // Show interim transcript for real-time feedback
+    useEffect(() => {
+        if (interimTranscript && isFloorHolder) {
+            setDisplayText(interimTranscript);
+        }
+    }, [interimTranscript, isFloorHolder]);
+
+    // Sync target language prop to Gemini hook
+    useEffect(() => {
+        if (targetLanguage) {
+            setTargetLanguage(targetLanguage);
+        }
+    }, [targetLanguage, setTargetLanguage]);
+
     // Subscribe to realtime transcriptions (FOR LISTENERS)
     useEffect(() => {
         if (!room?.name) return;
@@ -68,7 +131,6 @@ export function CinemaCaptionOverlay({
             }, (payload: RealtimePostgresChangesPayload<any>) => {
                 if (payload.new) {
                     const newText = payload.new.transcribe_text_segment;
-                    // Only update if we are NOT the floor holder (avoid double update)
                     if (!isFloorHolder) {
                         setDisplayText(newText);
                         onTranscriptSegment({ text: newText, language: 'en', isFinal: true });
@@ -82,57 +144,35 @@ export function CinemaCaptionOverlay({
         };
     }, [room?.name, isFloorHolder, onTranscriptSegment]);
 
-    const {
-        isRecording,
-        transcription,
-        toggleRecording,
-        status
-    } = useGeminiLive();
-
-    // Auto-start/stop transcription based on mic state + FLOOR CONTROL
+    // Auto-start/stop based on mic state + FLOOR CONTROL
     useEffect(() => {
         if (!localParticipant) return;
 
         const micPub = localParticipant.getTrackPublication(Track.Source.Microphone);
         const isMicEnabled = !micPub?.isMuted && micPub?.track !== undefined;
 
-        // Only toggle if mic state actually changed
         if (lastMicStateRef.current !== isMicEnabled) {
             lastMicStateRef.current = isMicEnabled;
             
-            // IF MIC ON + FLOOR HOLDER => START RECORDING
-            if (isMicEnabled && isFloorHolder && !isRecording) {
-                toggleRecording();
-            } 
-            // IF MIC OFF OR LOST FLOOR => STOP RECORDING
-            else if ((!isMicEnabled || !isFloorHolder) && isRecording) {
-                toggleRecording();
+            if (isMicEnabled && isFloorHolder) {
+                // Start both Deepgram (STT) and Gemini (TTS)
+                if (!isDeepgramActive) startDeepgram(defaultDeviceId);
+                if (!isGeminiActive) toggleGemini();
+            } else if (!isMicEnabled || !isFloorHolder) {
+                // Stop both
+                if (isDeepgramActive) stopDeepgram();
+                if (isGeminiActive) toggleGemini();
             }
         }
-    }, [localParticipant, isRecording, toggleRecording, isFloorHolder]);
+    }, [localParticipant, isFloorHolder, isDeepgramActive, isGeminiActive, startDeepgram, stopDeepgram, toggleGemini, defaultDeviceId]);
 
-    // Handle Floor Loss (Dynamic Update)
+    // Handle Floor Loss
     useEffect(() => {
-        if (isRecording && !isFloorHolder) {
-             // If we lost the floor while recording, stop immediately
-             toggleRecording();
+        if (!isFloorHolder) {
+            if (isDeepgramActive) stopDeepgram();
+            if (isGeminiActive) toggleGemini();
         }
-    }, [isFloorHolder, isRecording, toggleRecording]);
-
-    // Save transcription segments (FOR SPEAKER)
-    useEffect(() => {
-        if (transcription && isFloorHolder) { // Only save if we hold the floor
-            onTranscriptSegment({ text: transcription, language: 'en', isFinal: true });
-        }
-    }, [transcription, onTranscriptSegment, isFloorHolder]);
-
-    // Update display text (FOR SPEAKER)
-    useEffect(() => {
-        if (isFloorHolder) {
-             const fullText = transcription || '';
-             setDisplayText(fullText);
-        }
-    }, [transcription, isFloorHolder]);
+    }, [isFloorHolder, isDeepgramActive, isGeminiActive, stopDeepgram, toggleGemini]);
 
     // Auto-clear logic when text overflows
     useEffect(() => {
@@ -150,6 +190,8 @@ export function CinemaCaptionOverlay({
         }
     }, [displayText]);
 
+    const isActive = isDeepgramActive || isGeminiActive;
+
     return (
         <div style={overlayStyles.captionBar}>
             <div 
@@ -160,8 +202,9 @@ export function CinemaCaptionOverlay({
                     transition: 'opacity 0.3s ease-out'
                 }}
             >
-                {displayText || (isRecording && isFloorHolder && <span style={{color: '#66ff00', fontSize: '14px', fontWeight: 600}}>🎤 Listening...</span>)}
+                {displayText || (isActive && isFloorHolder && <span style={{color: '#66ff00', fontSize: '14px', fontWeight: 600}}>🎤 Listening...</span>)}
             </div>
         </div>
     );
 }
+

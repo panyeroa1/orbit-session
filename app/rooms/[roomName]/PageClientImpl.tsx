@@ -507,6 +507,7 @@ function VideoConferenceComponent(props: {
   const { activeSpeakerId: floorSpeakerId, isFloorHolder, claimFloor, grantFloor } = useMeetingFloor(roomName, user?.id || '');
 
   const [isTranscriptionEnabled, setIsTranscriptionEnabled] = React.useState(true);
+  const [targetLanguage, setTargetLanguage] = React.useState('English'); // New State
   const [roomState, setRoomState] = React.useState<RoomState>({ activeSpeaker: null, raiseHandQueue: [], lockVersion: 0 });
   const [audioDevices, setAudioDevices] = React.useState<MediaDeviceInfo[]>([]);
 
@@ -996,6 +997,7 @@ function VideoConferenceComponent(props: {
             <CinemaCaptionOverlay 
                 onTranscriptSegment={handleTranscriptSegment}
                 defaultDeviceId={audioCaptureOptions?.deviceId as string}
+                targetLanguage={targetLanguage}
             />
           )}
 
@@ -1024,6 +1026,7 @@ function VideoConferenceComponent(props: {
             audioCaptureOptions={audioCaptureOptions}
             onCaptionToggle={() => setIsTranscriptionEnabled(!isTranscriptionEnabled)}
             isCaptionOpen={isTranscriptionEnabled}
+            onLanguageChange={setTargetLanguage}
           />
           
           <DebugMode />

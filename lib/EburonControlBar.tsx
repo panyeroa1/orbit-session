@@ -209,6 +209,7 @@ interface EburonControlBarProps {
   userId?: string;
   onCaptionToggle?: () => void;
   isCaptionOpen?: boolean;
+  onLanguageChange?: (language: string) => void; // New Prop
 }
 
 export function EburonControlBar({
@@ -235,6 +236,7 @@ export function EburonControlBar({
   userId,
   onCaptionToggle,
   isCaptionOpen,
+  onLanguageChange,
 }: EburonControlBarProps) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
@@ -743,6 +745,7 @@ export function EburonControlBar({
                        onClick={() => {
                          setSelectedLanguage(lang);
                          setIsLangMenuOpen(false);
+                         onLanguageChange?.(lang.name);
                        }}
                        role="option"
                        aria-selected={selectedLanguage.code === lang.code}
