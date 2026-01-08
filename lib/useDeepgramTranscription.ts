@@ -26,7 +26,7 @@ interface UseDeepgramTranscriptionReturn {
   interimTranscript: string;
   audioLevel: number;
   error: string | null;
-  startListening: (deviceId?: string) => Promise<void>;
+  startListening: (deviceId?: string, customStream?: MediaStream) => Promise<void>;
   stopListening: () => void;
 }
 
@@ -72,7 +72,7 @@ export function useDeepgramTranscription(
     }
   }, []);
 
-  const startListening = useCallback(async (deviceId?: string) => {
+  const startListening = useCallback(async (deviceId?: string, customStream?: MediaStream) => {
     if (isListening || isConnecting) return;
 
     setIsConnecting(true);
@@ -87,14 +87,18 @@ export function useDeepgramTranscription(
         throw new Error('No Deepgram API key available');
       }
 
-      // Get microphone stream
-      const constraints: MediaStreamConstraints = {
-        audio: deviceId
-          ? { deviceId: { exact: deviceId } }
-          : true,
-      };
-      
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      let stream: MediaStream;
+      if (customStream) {
+        stream = customStream;
+      } else {
+        // Get microphone stream
+        const constraints: MediaStreamConstraints = {
+          audio: deviceId
+            ? { deviceId: { exact: deviceId } }
+            : true,
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      }
       streamRef.current = stream;
 
       // Create Deepgram client and connection

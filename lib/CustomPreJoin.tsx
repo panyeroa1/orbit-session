@@ -80,6 +80,11 @@ const CaptionIcon = () => (
 export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomPreJoinProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const [username, setUsername] = useState(defaults?.username || '');
   const [videoEnabled, setVideoEnabled] = useState(defaults?.videoEnabled ?? true);
@@ -138,23 +143,69 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
   const activeInterim = deepgramInterimTranscript; 
   const activeError = deepgramError;
 
+  // Screen/Tab Audio Capture
+  const [tabStream, setTabStream] = useState<MediaStream | null>(null);
+
+  const captureTabAudio = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ 
+        video: true, // Required to get the "share tab audio" checkbox in some browsers
+        audio: { 
+          echoCancellation: true, 
+          noiseSuppression: true,
+          autoGainControl: true 
+        } 
+      });
+
+      // We only need the audio track
+      const audioTrack = stream.getAudioTracks()[0];
+      if (!audioTrack) {
+        console.warn("No audio track found in screen share");
+        // Stop the video track if we only wanted audio, but user might want to see it? 
+        // For now, let's stop the whole stream if no audio
+        stream.getTracks().forEach(t => t.stop());
+        return null;
+      }
+      
+      // Handle stream end (user clicked "Stop Sharing" in browser UI)
+      stream.getVideoTracks()[0].onended = () => {
+        setTabStream(null);
+        // Also stop transcription if it was running with this stream?
+        // Ideally yes, but for now we let manual stop.
+      };
+
+      setTabStream(stream);
+      return stream;
+    } catch (err) {
+      console.error("Error capturing tab audio:", err);
+      return null;
+    }
+  }, []);
+
   const handleToggleListening = useCallback(async () => {
     if (isListening) {
       if (isDeepgramListening) stopDeepgram();
       if (isGeminiListening) toggleGemini();
+      
+      // Also stop tab stream if we were using it? 
+      // Maybe keep it for next time? let's keep it.
     } else {
+      // Determine source: Tab Audio or Microphone
+      let currentStream = tabStream;
+      
+      // If we want to use tab audio but don't have it yet, ask for it?
+      // Or we assume user must click "Share Tab" first.
+      // Let's assume if tabStream exists, use it. Else use mic (default behavior of hooks).
+      
       // Try Deepgram first
       try {
-        await startDeepgram(selectedAudioInput || undefined);
-        // If startDeepgram throws or fails (detected via error state later), we might want to switch.
-        // But for now, we rely on the user to manually switch if needed or we just use Deepgram.
-        // To implement automatic fallback, we'd need to catch the error here.
+        await startDeepgram(selectedAudioInput || undefined, currentStream || undefined);
       } catch (err) {
         console.warn("Deepgram failed to start, falling back to Gemini", err);
-        toggleGemini();
+        toggleGemini(currentStream || undefined);
       }
     }
-  }, [isListening, isDeepgramListening, stopDeepgram, isGeminiListening, toggleGemini, startDeepgram, selectedAudioInput]);
+  }, [isListening, isDeepgramListening, stopDeepgram, isGeminiListening, toggleGemini, startDeepgram, selectedAudioInput, tabStream]);
 
   // Effect to handle Deepgram error and switch to Gemini automatically if desired
   useEffect(() => {
@@ -644,7 +695,25 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
                <CaptionIcon />
                <span>{isSidebarOpen ? 'Hide Captions' : 'Show Captions'}</span>
              </button>
+             
+             <button
+                type="button"
+                className={`${styles.captionToggleBtn} ${tabStream ? styles.captionToggleActive : ''}`}
+                onClick={async () => {
+                  if (tabStream) {
+                    tabStream.getTracks().forEach(t => t.stop());
+                    setTabStream(null);
+                  } else {
+                    await captureTabAudio();
+                  }
+                }}
+                title="Use Tab Audio for Transcription"
+             >
+               <span>{tabStream ? 'Stop Tab Audio' : 'Share Tab Audio'}</span>
+             </button>
+
              {isGeminiListening && <span className={styles.geminiBadge}>Gemini AI Active</span>}
+             {tabStream && <span className={styles.geminiBadge} style={{background: '#10b981'}}>Tab Audio</span>}
           </div>
 
           {/* Live Transcription Display (In-line if sidebar is closed, or just hidden) */}
@@ -684,7 +753,7 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
         <button
           type="submit"
           className={styles.joinButton}
-          disabled={isLoading || !username.trim()}
+          disabled={!mounted || isLoading || !username.trim()}
         >
           {isLoading ? 'Connecting...' : 'Join Room'}
         </button>

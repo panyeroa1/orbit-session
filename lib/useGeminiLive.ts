@@ -24,6 +24,10 @@ export function useGeminiLive() {
     }
 
     // 2. Stop all microphone tracks
+    // 2. Stop all microphone tracks ONLY if we created them (not custom stream)
+    // Actually, for cleanup, it is safer to stop tracks if we own them. 
+    // But if passed from outside, maybe we shouldn't? 
+    // For now, let's assume if we are stopping recording, we stop the stream usage.
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
@@ -55,7 +59,7 @@ export function useGeminiLive() {
     setStatus('idle');
   }, []);
 
-  const startRecording = useCallback(async () => {
+  const startRecording = useCallback(async (customStream?: MediaStream) => {
     // Prevent multiple concurrent recording attempts
     if (status === 'connecting' || isRecording) return;
 
@@ -73,7 +77,12 @@ export function useGeminiLive() {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       audioContextRef.current = audioContext;
       
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      let stream: MediaStream;
+      if (customStream) {
+        stream = customStream;
+      } else {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
       streamRef.current = stream;
 
       const sessionPromise = ai.live.connect({
@@ -145,11 +154,11 @@ export function useGeminiLive() {
     }
   }, [status, isRecording, stopRecording]);
 
-  const toggleRecording = useCallback(() => {
+  const toggleRecording = useCallback((customStream?: MediaStream) => {
     if (isRecording || status === 'connecting') {
       stopRecording();
     } else {
-      startRecording();
+      startRecording(customStream);
     }
   }, [isRecording, status, startRecording, stopRecording]);
 
