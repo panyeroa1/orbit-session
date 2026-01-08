@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useDeepgramTranscription } from './useDeepgramTranscription';
+import { useGeminiLive } from './useGeminiLive';
 import { useRoomContext, useLocalParticipant } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 
@@ -44,20 +44,11 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
     const { localParticipant } = useLocalParticipant();
     
     const {
-        isListening,
-        transcript,
-        interimTranscript,
-        startListening,
-        stopListening
-    } = useDeepgramTranscription({
-        model: 'nova-2',
-        language: 'en',
-        onTranscript: (res) => {
-            if (res.isFinal) {
-                onTranscriptSegment({ text: res.transcript, language: 'en', isFinal: true });
-            }
-        }
-    });
+        isRecording,
+        transcription,
+        toggleRecording,
+        status
+    } = useGeminiLive();
 
     // Auto-start/stop transcription based on mic state
     useEffect(() => {
@@ -66,18 +57,27 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
         const micPub = localParticipant.getTrackPublication(Track.Source.Microphone);
         const isMicEnabled = !micPub?.isMuted && micPub?.track !== undefined;
 
-        if (isMicEnabled && !isListening) {
-            startListening(defaultDeviceId);
-        } else if (!isMicEnabled && isListening) {
-            stopListening();
+        if (isMicEnabled && !isRecording) {
+            toggleRecording();
+        } else if (!isMicEnabled && isRecording) {
+            toggleRecording();
         }
-    }, [localParticipant, defaultDeviceId, isListening, startListening, stopListening]);
+    }, [localParticipant, isRecording, toggleRecording]);
 
     // Update display text
     useEffect(() => {
-        const fullText = `${transcript} ${interimTranscript}`.trim();
+    // Save transcription segments
+    useEffect(() => {
+        if (transcription) {
+            onTranscriptSegment({ text: transcription, language: 'en', isFinal: true });
+        }
+    }, [transcription, onTranscriptSegment]);
+
+    // Update display text
+    useEffect(() => {
+        const fullText = transcription || '';
         setDisplayText(fullText);
-    }, [transcript, interimTranscript]);
+    }, [transcription]);
 
     // Auto-clear logic when text overflows
     useEffect(() => {
@@ -85,7 +85,7 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
             const element = captionRef.current;
             const isOverflowing = element.scrollWidth > element.clientWidth;
             
-            if (isOverflowing && transcript) {
+            if (isOverflowing) {
                 setIsFading(true);
                 setTimeout(() => {
                     setDisplayText('');
@@ -93,7 +93,7 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
                 }, 300);
             }
         }
-    }, [displayText, transcript]);
+    }, [displayText]);
 
     return (
         <div style={overlayStyles.captionBar}>
@@ -105,7 +105,7 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
                     transition: 'opacity 0.3s ease-out'
                 }}
             >
-                {displayText || (isListening && <span style={{color: '#66ff00', fontSize: '14px', fontWeight: 600}}>🎤 Listening...</span>)}
+                {displayText || (isRecording && <span style={{color: '#66ff00', fontSize: '14px', fontWeight: 600}}>🎤 Listening...</span>)}
             </div>
         </div>
     );
