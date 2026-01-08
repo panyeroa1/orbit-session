@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/orbit/services/supabaseClient';
+import { useDeepgramTranscription } from '@/lib/useDeepgramTranscription';
 import styles from '@/styles/PreJoin.module.css';
 
 interface DeviceInfo {
@@ -92,6 +93,20 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
 
   // Room data from database
   const [roomData, setRoomData] = useState<{ id: string; room_code: string; name: string | null } | null>(null);
+
+  // Deepgram transcription
+  const {
+    isListening,
+    isConnecting,
+    transcript,
+    interimTranscript,
+    error: transcriptionError,
+    startListening,
+    stopListening,
+  } = useDeepgramTranscription({
+    language: 'multi',
+    model: 'nova-2',
+  });
 
   // Check permissions on mount
   const checkPermissions = useCallback(async () => {
@@ -494,6 +509,42 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
               ))}
             </select>
           </div>
+
+          {/* Test Microphone with Transcription */}
+          <div className={styles.deviceRow}>
+            <label className={styles.deviceLabel}>🎙️ Test Microphone</label>
+            <button
+              type="button"
+              className={`${styles.testMicButton} ${isListening ? styles.testMicButtonActive : ''}`}
+              onClick={() => {
+                if (isListening) {
+                  stopListening();
+                } else {
+                  startListening(selectedAudioInput || undefined);
+                }
+              }}
+              disabled={micPermission !== 'granted' || isConnecting}
+            >
+              {isConnecting ? 'Connecting...' : isListening ? '⏹️ Stop Test' : '▶️ Start Test'}
+            </button>
+          </div>
+
+          {/* Live Transcription Display */}
+          {(transcript || interimTranscript || transcriptionError) && (
+            <div className={styles.transcriptionBox}>
+              {transcriptionError && (
+                <p className={styles.transcriptionError}>{transcriptionError}</p>
+              )}
+              {(transcript || interimTranscript) && (
+                <p className={styles.transcriptionText}>
+                  {transcript}
+                  {interimTranscript && (
+                    <span className={styles.interimText}> {interimTranscript}</span>
+                  )}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Username Input */}

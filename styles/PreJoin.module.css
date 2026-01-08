@@ -278,6 +278,68 @@
   background: rgba(212, 175, 55, 0.25);
 }
 
+.testMicButton {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.testMicButton:hover:not(:disabled) {
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, 0.1);
+}
+
+.testMicButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.testMicButtonActive {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
+.testMicButtonActive:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.transcriptionBox {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 1rem;
+  min-height: 60px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.transcriptionText {
+  margin: 0;
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.interimText {
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+}
+
+.transcriptionError {
+  margin: 0;
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
 .deviceGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
