@@ -877,17 +877,28 @@ function VideoConferenceComponent(props: {
     
     try {
         const speakerId = user?.id || crypto.randomUUID();
-        const { error } = await supabase.from('transcriptions').insert({
+        const insertData = {
             meeting_id: roomName,
             speaker_id: speakerId,
             user_id: user?.id || null,
             transcribe_text_segment: segment.text,
             full_transcription: segment.text,
-        });
+        };
+        
+        console.log('Inserting transcription:', insertData);
+        const { data, error } = await supabase.from('transcriptions').insert(insertData);
+        
         if (error) {
-            console.error('Supabase error details:', error);
+            console.error('Supabase error:', {
+                message: error.message,
+                details: error.details,
+                hint: error.hint,
+                code: error.code,
+                full: JSON.stringify(error)
+            });
             throw error;
         }
+        console.log('Transcription saved successfully:', data);
     } catch (err) {
         console.error('Failed to save transcript', err);
     }
