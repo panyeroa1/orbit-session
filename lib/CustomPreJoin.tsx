@@ -120,6 +120,7 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
     audioLevel,
     error: deepgramError,
     startListening: startDeepgram,
+    startStreamListening: startDeepgramStream,
     stopListening: stopDeepgram,
   } = useDeepgramTranscription({
     language: 'multi',
@@ -145,6 +146,8 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
 
   // Screen/Tab Audio Capture
   const [tabStream, setTabStream] = useState<MediaStream | null>(null);
+  // Radio Stream state
+  const [isRadioStreaming, setIsRadioStreaming] = useState(false);
 
   const captureTabAudio = useCallback(async () => {
     try {
@@ -186,16 +189,10 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
     if (isListening) {
       if (isDeepgramListening) stopDeepgram();
       if (isGeminiListening) toggleGemini();
-      
-      // Also stop tab stream if we were using it? 
-      // Maybe keep it for next time? let's keep it.
+      if (isRadioStreaming) setIsRadioStreaming(false); // Stop triggered by stopDeepgram mainly, but flag needs reset
     } else {
       // Determine source: Tab Audio or Microphone
       let currentStream = tabStream;
-      
-      // If we want to use tab audio but don't have it yet, ask for it?
-      // Or we assume user must click "Share Tab" first.
-      // Let's assume if tabStream exists, use it. Else use mic (default behavior of hooks).
       
       // Try Deepgram first
       try {
@@ -205,7 +202,24 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
         toggleGemini(currentStream || undefined);
       }
     }
-  }, [isListening, isDeepgramListening, stopDeepgram, isGeminiListening, toggleGemini, startDeepgram, selectedAudioInput, tabStream]);
+  }, [isListening, isDeepgramListening, stopDeepgram, isGeminiListening, toggleGemini, startDeepgram, selectedAudioInput, tabStream, isRadioStreaming]);
+
+  const handleToggleRadioStream = useCallback(async () => {
+      if (isListening) {
+          // Stop whatever is running
+          if (isDeepgramListening) stopDeepgram();
+          setIsRadioStreaming(false);
+      } else {
+          // Start Radio Stream
+          try {
+              setIsRadioStreaming(true);
+              await startDeepgramStream('https://playerservices.streamtheworld.com/api/livestream-redirect/CSPANRADIOAAC.aac');
+          } catch (err) {
+              console.error("Failed to start radio stream", err);
+              setIsRadioStreaming(false);
+          }
+      }
+  }, [isListening, isDeepgramListening, stopDeepgram, startDeepgramStream]);
 
   // Effect to handle Deepgram error and switch to Gemini automatically if desired
   useEffect(() => {
@@ -712,8 +726,18 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
                <span>{tabStream ? 'Stop Tab Audio' : 'Share Tab Audio'}</span>
              </button>
 
+             <button
+                type="button"
+                className={`${styles.captionToggleBtn} ${isRadioStreaming ? styles.captionToggleActive : ''}`}
+                onClick={handleToggleRadioStream}
+                title="Test with Live Radio Stream (C-SPAN)"
+             >
+               <span>{isRadioStreaming ? 'Stop Radio' : 'Test Radio'}</span>
+             </button>
+
              {isGeminiListening && <span className={styles.geminiBadge}>Gemini AI Active</span>}
              {tabStream && <span className={styles.geminiBadge} style={{background: '#10b981'}}>Tab Audio</span>}
+             {isRadioStreaming && <span className={styles.geminiBadge} style={{background: '#f59e0b'}}>Radio Stream</span>}
           </div>
 
           {/* Live Transcription Display (In-line if sidebar is closed, or just hidden) */}

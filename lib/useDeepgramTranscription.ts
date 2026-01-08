@@ -27,6 +27,7 @@ interface UseDeepgramTranscriptionReturn {
   audioLevel: number;
   error: string | null;
   startListening: (deviceId?: string, customStream?: MediaStream) => Promise<void>;
+  startStreamListening: (url: string) => Promise<void>;
   stopListening: () => void;
 }
 
@@ -55,6 +56,7 @@ export function useDeepgramTranscription(
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyzerRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const streamReaderRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 
   // Fetch Deepgram token from server
   const fetchDeepgramToken = useCallback(async (): Promise<string | null> => {
@@ -213,6 +215,105 @@ export function useDeepgramTranscription(
     }
   }, [isListening, isConnecting, fetchDeepgramToken, model, language, onTranscript, onSpeechStart, onSpeechEnd, onError]);
 
+  const startStreamListening = useCallback(async (url: string) => {
+    if (isListening || isConnecting) return;
+
+    setIsConnecting(true);
+    setError(null);
+    setTranscript('');
+    setInterimTranscript('');
+
+    try {
+      const apiKey = await fetchDeepgramToken();
+      if (!apiKey) throw new Error('No Deepgram API key available');
+
+      const deepgram = createClient(apiKey);
+      const connection = deepgram.listen.live({
+        model,
+        language,
+        interim_results: true,
+        utterance_end_ms: 1000,
+        endpointing: 500,
+        punctuate: true,
+        smart_format: true,
+      });
+
+      connectionRef.current = connection;
+
+      connection.on(LiveTranscriptionEvents.Open, async () => {
+        console.log('[Deepgram] Connection opened for stream');
+        setIsConnecting(false);
+        setIsListening(true);
+        
+        try {
+          const response = await fetch(url);
+          if (!response.body) throw new Error('No response body');
+          
+          const reader = response.body.getReader();
+          streamReaderRef.current = reader;
+
+          const pump = async () => {
+             // Check if we should stop
+             if (!connectionRef.current) return;
+             
+             try {
+               const { done, value } = await reader.read();
+               if (done) return;
+               
+               if (connection.getReadyState() === 1) {
+                 connection.send(value.buffer);
+               }
+               pump();
+             } catch (e) {
+               console.error('Error reading stream:', e);
+             }
+          };
+          pump();
+        } catch (err) {
+           console.error('Error fetching stream:', err);
+           setError('Failed to fetch audio stream');
+           stopListening();
+        }
+      });
+
+      connection.on(LiveTranscriptionEvents.Transcript, (data) => {
+         const alt = data.channel?.alternatives?.[0];
+         if (alt && alt.transcript) {
+            const result: TranscriptionResult = {
+              transcript: alt.transcript,
+              isFinal: data.is_final ?? false,
+              confidence: alt.confidence ?? 0,
+            };
+            
+            if (data.is_final) {
+               setTranscript((prev) => (prev ? `${prev} ${alt.transcript}` : alt.transcript));
+               setInterimTranscript('');
+            } else {
+               setInterimTranscript(alt.transcript);
+            }
+            onTranscript?.(result);
+         }
+      });
+
+      connection.on(LiveTranscriptionEvents.Error, (err) => {
+        console.error('[Deepgram] Error:', err);
+        setError('Transcription error occurred');
+        onError?.(err as Error);
+        stopListening();
+      });
+
+      connection.on(LiveTranscriptionEvents.Close, () => {
+         setIsListening(false);
+         setIsConnecting(false);
+      });
+
+    } catch (err) {
+      console.error('Error starting stream transcription:', err);
+      setError('Failed to start stream');
+      setIsConnecting(false);
+    }
+  }, [isListening, isConnecting, fetchDeepgramToken, model, language, onTranscript, onError]);
+
   const stopListening = useCallback(() => {
     // Stop animation frame
     if (animationFrameRef.current) {
@@ -265,6 +366,7 @@ export function useDeepgramTranscription(
     audioLevel,
     error,
     startListening,
+    startStreamListening,
     stopListening,
   };
 }
