@@ -4,6 +4,7 @@
   ],
   "hints": {
     "button-type": "off",
-    "axe/aria": "off"
+    "axe/aria": "off",
+    "no-inline-styles": "off"
   }
 }

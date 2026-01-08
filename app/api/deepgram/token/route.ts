@@ -1,19 +1,12 @@
-import { createClient } from "@deepgram/sdk";
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  if (!process.env.DEEPGRAM_API_KEY) return NextResponse.json({ error: 'No Key' }, { status: 500 });
-  try {
-    const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
-    const { result } = await deepgram.manage.getProjects();
-    const pid = result?.projects?.[0]?.project_id;
-    if (!pid) return NextResponse.json({ error: 'No Project' }, { status: 500 });
-    const { result: k } = await deepgram.manage.createProjectKey(pid, { comment: 'client', scopes: ['usage:write'], time_to_live_in_seconds: 60 });
-    if (!k) return NextResponse.json({ error: 'No Key Created' }, { status: 500 });
-    return NextResponse.json({ key: k.key });
-  } catch (e) {
-    return NextResponse.json({ error: 'Error' }, { status: 500 });
+  const apiKey = process.env.DEEPGRAM_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: 'No Key' }, { status: 500 });
   }
+  // Return the API key directly for client-side use
+  return NextResponse.json({ key: apiKey });
 }

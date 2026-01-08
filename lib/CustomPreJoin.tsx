@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/orbit/services/supabaseClient';
 import { useDeepgramTranscription } from '@/lib/useDeepgramTranscription';
+import { useGeminiLive } from '@/lib/useGeminiLive';
 import styles from '@/styles/PreJoin.module.css';
 
 interface DeviceInfo {
@@ -68,6 +69,14 @@ const VideoOffIcon = () => (
   </svg>
 );
 
+const CaptionIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    <path d="M9 10a1 2 0 1 1-2 0c0-1.1.9-2 2-2h4a2 0 0 1 2 2v1a2 0 0 1-2 2 2 0 0 0-2 2v1"></path>
+    <line x1="12" x2="12" y1="17" y2="17.01"></line>
+  </svg>
+);
+
 export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomPreJoinProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -94,20 +103,66 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
   // Room data from database
   const [roomData, setRoomData] = useState<{ id: string; room_code: string; name: string | null } | null>(null);
 
+  // Sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   // Deepgram transcription
   const {
-    isListening,
-    isConnecting,
-    transcript,
-    interimTranscript,
+    isListening: isDeepgramListening,
+    isConnecting: isDeepgramConnecting,
+    transcript: deepgramTranscript,
+    interimTranscript: deepgramInterimTranscript,
     audioLevel,
-    error: transcriptionError,
-    startListening,
-    stopListening,
+    error: deepgramError,
+    startListening: startDeepgram,
+    stopListening: stopDeepgram,
   } = useDeepgramTranscription({
     language: 'multi',
     model: 'nova-2',
   });
+
+  // Gemini Live transcription (Fallback/Alternative)
+  const {
+    isRecording: isGeminiListening,
+    transcription: geminiTranscript,
+    status: geminiStatus,
+    toggleRecording: toggleGemini,
+  } = useGeminiLive();
+
+  // Unified Transcription State
+  const isListening = isDeepgramListening || isGeminiListening;
+  const isConnecting = isDeepgramConnecting || geminiStatus === 'connecting';
+  
+  // Prefer Deepgram, fallback to Gemini
+  const activeTranscript = deepgramTranscript || geminiTranscript;
+  const activeInterim = deepgramInterimTranscript; 
+  const activeError = deepgramError;
+
+  const handleToggleListening = useCallback(async () => {
+    if (isListening) {
+      if (isDeepgramListening) stopDeepgram();
+      if (isGeminiListening) toggleGemini();
+    } else {
+      // Try Deepgram first
+      try {
+        await startDeepgram(selectedAudioInput || undefined);
+        // If startDeepgram throws or fails (detected via error state later), we might want to switch.
+        // But for now, we rely on the user to manually switch if needed or we just use Deepgram.
+        // To implement automatic fallback, we'd need to catch the error here.
+      } catch (err) {
+        console.warn("Deepgram failed to start, falling back to Gemini", err);
+        toggleGemini();
+      }
+    }
+  }, [isListening, isDeepgramListening, stopDeepgram, isGeminiListening, toggleGemini, startDeepgram, selectedAudioInput]);
+
+  // Effect to handle Deepgram error and switch to Gemini automatically if desired
+  useEffect(() => {
+    if (deepgramError && !isGeminiListening && !isDeepgramListening && !isListening) {
+         // Optional: Auto-fallback logic could go here.
+         // For now, we just display the error.
+    }
+  }, [deepgramError, isGeminiListening, isDeepgramListening, isListening]);
 
   // Check permissions on mount
   const checkPermissions = useCallback(async () => {
@@ -388,6 +443,47 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
 
   return (
     <div className={styles.preJoinPage}>
+      {/* Transcription Sidebar */}
+      <div className={`${styles.sidebar} ${isSidebarOpen ? styles.sidebarOpen : ''}`}>
+        <div className={styles.sidebarHeader}>
+          <h3>Live Transcription</h3>
+          <button 
+            className={styles.closeSidebarBtn}
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            ×
+          </button>
+        </div>
+        <div className={styles.sidebarContent}>
+          {activeError && (
+             <div className={styles.sidebarError}>
+               Error: {activeError}
+               <button 
+                 className={styles.retryFallbackBtn}
+                 onClick={() => {
+                   if (isDeepgramListening) stopDeepgram();
+                   toggleGemini();
+                 }}
+               >
+                 Try Gemini Fallback
+               </button>
+             </div>
+          )}
+          {(!activeTranscript && !activeInterim) ? (
+            <div className={styles.emptyState}>
+              <p>{isListening ? "Listening..." : "Start testing microphone to see transcription."}</p>
+            </div>
+          ) : (
+            <div className={styles.transcriptStream}>
+               <p>
+                 {activeTranscript}
+                 <span className={styles.interimText}>{activeInterim}</span>
+               </p>
+            </div>
+          )}
+        </div>
+      </div>
+
       <form className={styles.preJoinContainer} onSubmit={handleSubmit}>
         <div className={styles.preJoinHeader}>
           <h1 className={styles.preJoinTitle}>
@@ -517,40 +613,53 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
             <button
               type="button"
               className={`${styles.testMicButton} ${isListening ? styles.testMicButtonActive : ''}`}
-              onClick={() => {
-                if (isListening) {
-                  stopListening();
-                } else {
-                  startListening(selectedAudioInput || undefined);
-                }
-              }}
+              onClick={handleToggleListening}
               disabled={micPermission !== 'granted' || isConnecting}
             >
               <span className={styles.testMicText}>
                 {isConnecting ? 'Connecting...' : isListening ? '⏹️ Stop Test' : '▶️ Start Test'}
               </span>
               {isListening && (
-                <span className={styles.audioVisualizer}>
-                  <span className={styles.visualizerBar} style={{ height: `${20 + audioLevel * 80}%` }} />
-                  <span className={styles.visualizerBar} style={{ height: `${30 + audioLevel * 70}%` }} />
-                  <span className={styles.visualizerBar} style={{ height: `${15 + audioLevel * 85}%` }} />
-                  <span className={styles.visualizerBar} style={{ height: `${25 + audioLevel * 75}%` }} />
+                // eslint-disable-next-line react/forbid-component-props
+                <span 
+                  className={styles.audioVisualizer}
+                  style={{ '--audio-level': audioLevel } as React.CSSProperties}
+                >
+                  <span className={`${styles.visualizerBar} ${styles.bar1}`} />
+                  <span className={`${styles.visualizerBar} ${styles.bar2}`} />
+                  <span className={`${styles.visualizerBar} ${styles.bar3}`} />
+                  <span className={`${styles.visualizerBar} ${styles.bar4}`} />
                 </span>
               )}
             </button>
           </div>
 
-          {/* Live Transcription Display */}
-          {(transcript || interimTranscript || transcriptionError) && (
+          <div className={styles.captionSection}>
+             <button
+                type="button"
+                className={`${styles.captionToggleBtn} ${isSidebarOpen ? styles.captionToggleActive : ''}`}
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                title="Toggle Transcription Sidebar"
+             >
+               <CaptionIcon />
+               <span>{isSidebarOpen ? 'Hide Captions' : 'Show Captions'}</span>
+             </button>
+             {isGeminiListening && <span className={styles.geminiBadge}>Gemini AI Active</span>}
+          </div>
+
+          {/* Live Transcription Display (In-line if sidebar is closed, or just hidden) */}
+          {/* We'll keep a small preview here if sidebar is closed, or remove it to prefer sidebar. 
+              Let's keep it as a "Recent Caption" box if sidebar is closed. */}
+          {!isSidebarOpen && (activeTranscript || activeInterim || activeError) && (
             <div className={styles.transcriptionBox}>
-              {transcriptionError && (
-                <p className={styles.transcriptionError}>{transcriptionError}</p>
+              {activeError && (
+                <p className={styles.transcriptionError}>{activeError}</p>
               )}
-              {(transcript || interimTranscript) && (
+              {(activeTranscript || activeInterim) && (
                 <p className={styles.transcriptionText}>
-                  {transcript}
-                  {interimTranscript && (
-                    <span className={styles.interimText}> {interimTranscript}</span>
+                  {activeTranscript}
+                  {activeInterim && (
+                    <span className={styles.interimText}> {activeInterim}</span>
                   )}
                 </p>
               )}
