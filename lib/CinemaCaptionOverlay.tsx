@@ -64,8 +64,6 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
         }
     }, [localParticipant, isRecording, toggleRecording]);
 
-    // Update display text
-    useEffect(() => {
     // Save transcription segments
     useEffect(() => {
         if (transcription) {
