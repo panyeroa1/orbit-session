@@ -260,6 +260,12 @@ export function EburonControlBar({
   const screenShareMenuRef = React.useRef<HTMLDivElement | null>(null);
   const micMenuRef = React.useRef<HTMLDivElement | null>(null);
   const speakerMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const modelMenuRef = React.useRef<HTMLDivElement | null>(null);
+
+  // STT Model Selector State
+  type ModelCode = 'ORBT' | 'SONQ' | 'DELX' | 'PLTO';
+  const [selectedModel, setSelectedModel] = React.useState<ModelCode>('ORBT');
+  const [isModelMenuOpen, setIsModelMenuOpen] = React.useState(false);
 
   // Sync state with actual track status
   React.useEffect(() => {
@@ -665,6 +671,48 @@ export function EburonControlBar({
                      </button>
                    ))}
                  </div>
+              )}
+            </div>
+
+            <div className={styles.audioSplitDivider} />
+
+            {/* STT Model Selector */}
+            <div className={`${styles.audioSplitSection} ${styles.audioSplitModelSelector}`} ref={modelMenuRef}>
+              <div className={styles.audioSplitMain} style={{cursor: 'default', padding: '0 8px'}}>
+                <span className={styles.audioSplitLabel} style={{fontSize: '11px', fontWeight: 600}}>{selectedModel}</span>
+              </div>
+              <button
+                className={styles.audioSplitDropdown}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsModelMenuOpen((prev) => !prev);
+                  setIsMicMenuOpen(false);
+                  setIsLangMenuOpen(false);
+                }}
+                title="Select STT Model"
+                aria-expanded={isModelMenuOpen}
+                aria-haspopup="listbox"
+              >
+                <ChevronDownIcon />
+              </button>
+              {isModelMenuOpen && (
+                <div className={styles.deviceMenu} style={{minWidth: '100px'}} role="listbox" aria-label="Select STT Model">
+                  {(['ORBT', 'SONQ', 'DELX', 'PLTO'] as ModelCode[]).map((code) => (
+                    <button
+                      key={code}
+                      className={`${styles.deviceOption} ${selectedModel === code ? styles.deviceOptionActive : ''}`}
+                      onClick={() => {
+                        setSelectedModel(code);
+                        setIsModelMenuOpen(false);
+                      }}
+                      role="option"
+                      aria-selected={selectedModel === code}
+                      style={{fontSize: '13px', fontWeight: 600}}
+                    >
+                      {code}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
