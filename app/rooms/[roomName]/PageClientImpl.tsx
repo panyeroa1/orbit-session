@@ -873,7 +873,15 @@ function VideoConferenceComponent(props: {
   };
 
   const handleTranscriptSegment = React.useCallback(async (segment: any) => {
-    if (!roomName) return;
+    console.log('🎤 handleTranscriptSegment called with:', segment);
+    
+    if (!roomName) {
+      console.log('❌ No roomName, exiting');
+      return;
+    }
+    
+    console.log('✅ roomName:', roomName);
+    console.log('👤 user:', user);
     
     try {
         const speakerId = user?.id || crypto.randomUUID();
@@ -885,22 +893,34 @@ function VideoConferenceComponent(props: {
             full_transcription: segment.text,
         };
         
-        console.log('Inserting transcription:', insertData);
-        const { data, error } = await supabase.from('transcriptions').insert(insertData);
+        console.log('📝 Attempting insert with data:', JSON.stringify(insertData, null, 2));
+        console.log('🔌 Supabase client exists:', !!supabase);
+        
+        const result = await supabase.from('transcriptions').insert(insertData);
+        console.log('📊 Supabase result:', JSON.stringify(result, null, 2));
+        
+        const { data, error } = result;
         
         if (error) {
-            console.error('Supabase error:', {
-                message: error.message,
-                details: error.details,
-                hint: error.hint,
-                code: error.code,
-                full: JSON.stringify(error)
-            });
+            console.error('❌ Supabase returned error');
+            console.error('Error type:', typeof error);
+            console.error('Error constructor:', error?.constructor?.name);
+            console.error('Error keys:', Object.keys(error));
+            console.error('Error message:', error?.message);
+            console.error('Error details:', error?.details);
+            console.error('Error hint:', error?.hint);
+            console.error('Error code:', error?.code);
+            console.error('Full error:', error);
             throw error;
         }
-        console.log('Transcription saved successfully:', data);
-    } catch (err) {
-        console.error('Failed to save transcript', err);
+        console.log('✅ Transcription saved successfully!', data);
+    } catch (err: any) {
+        console.error('🔥 Caught error in try/catch');
+        console.error('Error type:', typeof err);
+        console.error('Error constructor:', err?.constructor?.name);
+        console.error('Error keys:', err ? Object.keys(err) : 'null');
+        console.error('Error string:', String(err));
+        console.error('Failed to save transcript:', err);
     }
   }, [roomName, user?.id]);
 
