@@ -675,7 +675,7 @@ export function EburonControlBar({
                         style={{
                           width: '3px',
                           height: `${Math.max(20, audioLevel * (0.6 + i * 0.15))}%`,
-                          backgroundColor: '#4caf50',
+                          backgroundColor: '#2e7d32',
                           borderRadius: '2px',
                           transition: 'height 0.1s ease-out'
                         }}

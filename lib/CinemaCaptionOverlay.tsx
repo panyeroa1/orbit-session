@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useDeepgramTranscription } from './useDeepgramTranscription';
+import { useRoomContext, useLocalParticipant } from '@livekit/components-react';
+import { Track } from 'livekit-client';
 
 const overlayStyles = {
   captionBar: {
@@ -38,11 +40,14 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
     const [displayText, setDisplayText] = useState('');
     const [isFading, setIsFading] = useState(false);
     const captionRef = useRef<HTMLDivElement>(null);
+    const { localParticipant } = useLocalParticipant();
     
     const {
         isListening,
         transcript,
         interimTranscript,
+        startListening,
+        stopListening
     } = useDeepgramTranscription({
         model: 'nova-2',
         language: 'en',
@@ -52,6 +57,20 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
             }
         }
     });
+
+    // Auto-start/stop transcription based on mic state
+    useEffect(() => {
+        if (!localParticipant) return;
+
+        const micPub = localParticipant.getTrackPublication(Track.Source.Microphone);
+        const isMicEnabled = !micPub?.isMuted && micPub?.track !== undefined;
+
+        if (isMicEnabled && !isListening) {
+            startListening(defaultDeviceId);
+        } else if (!isMicEnabled && isListening) {
+            stopListening();
+        }
+    }, [localParticipant, defaultDeviceId, isListening, startListening, stopListening]);
 
     // Auto-clear logic when text overflows
     useEffect(() => {
