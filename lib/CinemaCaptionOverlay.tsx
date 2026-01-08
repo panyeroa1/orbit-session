@@ -20,14 +20,14 @@ const overlayStyles = {
   },
   transcriptText: {
     fontSize: '14px',
-    color: '#ffffff',
-    fontWeight: 500,
-    textAlign: 'center' as 'center',
+    color: '#66ff00',
+    fontWeight: 600,
+    textAlign: 'left' as 'left',
     whiteSpace: 'nowrap' as 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    overflow: 'visible',
     width: '100%',
-    textShadow: '0px 1px 2px rgba(0,0,0,0.8)',
+    textShadow: '0px 2px 4px rgba(0,0,0,0.9)',
+    animation: 'slideIn 0.3s ease-out',
   },
 };
 
@@ -95,17 +95,31 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
     }, [transcript, interimTranscript, isFading]);
 
     return (
-        <div style={overlayStyles.captionBar}>
-            <div 
-                ref={captionRef}
-                style={{
-                    ...overlayStyles.transcriptText,
-                    opacity: isFading ? 0 : 1,
-                    transition: 'opacity 0.3s ease-out'
-                }}
-            >
-                {displayText || (isListening && <span style={{color: '#666', fontSize: '14px'}}>Listening...</span>)}
+        <>
+            <style jsx>{`
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(-20px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+            `}</style>
+            <div style={overlayStyles.captionBar}>
+                <div 
+                    ref={captionRef}
+                    style={{
+                        ...overlayStyles.transcriptText,
+                        opacity: isFading ? 0 : 1,
+                        transition: 'opacity 0.3s ease-out'
+                    }}
+                >
+                    {displayText || (isListening && <span style={{color: '#66ff00', fontSize: '14px', fontWeight: 600}}>🎤 Listening...</span>)}
+                </div>
             </div>
-        </div>
+        </>
     );
 }
