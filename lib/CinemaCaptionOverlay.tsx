@@ -90,6 +90,9 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
     const dragOffset = useRef({ x: 0, y: 0 });
     const [selectedModel, setSelectedModel] = useState<ModelCode>('ORBT');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [displayText, setDisplayText] = useState('');
+    const [isFading, setIsFading] = useState(false);
+    const captionRef = useRef<HTMLDivElement>(null);
     
     // All transcription hooks
     const deepgram = useDeepgramTranscription({
@@ -130,6 +133,29 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
     }
 
     const { isListening, transcript, interimTranscript, startListening, stopListening } = activeHook;
+
+    // Auto-clear logic when text overflows
+    useEffect(() => {
+        const fullText = `${transcript} ${interimTranscript}`.trim();
+        
+        if (captionRef.current && fullText) {
+            const element = captionRef.current;
+            const isOverflowing = element.scrollWidth > element.clientWidth;
+            
+            if (isOverflowing && transcript) {
+                // Trigger fade out
+                setIsFading(true);
+                setTimeout(() => {
+                    setDisplayText('');
+                    setIsFading(false);
+                }, 300); // Match fade duration
+            } else if (!isFading) {
+                setDisplayText(fullText);
+            }
+        } else if (!fullText && !isFading) {
+            setDisplayText('');
+        }
+    }, [transcript, interimTranscript, isFading]);
 
     // Draggable Logic
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -185,6 +211,7 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
         }
         setSelectedModel(model);
         setIsMenuOpen(false);
+        setDisplayText('');
     };
 
     return (
@@ -253,13 +280,18 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
 
             {/* Bottom Caption Bar */}
             <div style={overlayStyles.captionBar}>
-                <div style={overlayStyles.transcriptText}>
-                    {transcript} <span style={overlayStyles.interim}>{interimTranscript}</span>
-                    {!transcript && !interimTranscript && isListening && (
-                        <span style={{color: '#666', fontSize: '18px'}}>Listening...</span>
-                    )}
+                <div 
+                    ref={captionRef}
+                    style={{
+                        ...overlayStyles.transcriptText,
+                        opacity: isFading ? 0 : 1,
+                        transition: 'opacity 0.3s ease-out'
+                    }}
+                >
+                    {displayText || (isListening && <span style={{color: '#666', fontSize: '18px'}}>Listening...</span>)}
                 </div>
             </div>
         </>
     );
 }
+
