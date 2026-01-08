@@ -50,7 +50,7 @@ export function TranscriptionSidebar({
   if (!isOpen) return null;
 
   return (
-    <div className={styles.transcriptionSidebar} style={{zIndex: 50, right: 80, top: 20, height: 'calc(100% - 100px)', position: 'absolute'}}>
+    <div className={styles.transcriptionSidebar}>
       <div className={styles.sidebarHeader}>
         <h3>Live Transcription</h3>
         <button className={styles.closeSidebarBtn} onClick={onClose}>×</button>
