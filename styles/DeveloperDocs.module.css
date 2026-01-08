@@ -166,6 +166,7 @@
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: var(--glass);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   transition: all 0.3s ease;
 }

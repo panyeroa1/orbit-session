@@ -267,9 +267,9 @@
 }
 
 .deviceOptionActive {
-  background: rgba(34, 197, 94, 0.2);
-  border-color: rgba(34, 197, 94, 0.4);
-  color: #22c55e;
+  background: rgba(212, 175, 55, 0.2);
+  border-color: rgba(212, 175, 55, 0.4);
+  color: var(--gold);
 }
 
 .screenShareOption {
@@ -343,8 +343,8 @@
 }
 
 .screenShareToggleInput:checked + .screenShareToggleTrack {
-  background: rgba(34, 197, 94, 0.5);
-  border-color: rgba(34, 197, 94, 0.6);
+  background: rgba(212, 175, 55, 0.5);
+  border-color: rgba(212, 175, 55, 0.6);
 }
 
 .screenShareToggleInput:checked + .screenShareToggleTrack .screenShareToggleThumb {
@@ -556,8 +556,8 @@
 }
 
 .statusActive {
-  background: rgba(34, 197, 94, 0.2);
-  color: #4ade80;
+  background: rgba(212, 175, 55, 0.2);
+  color: var(--gold);
 }
 
 .statusBeta {
@@ -608,8 +608,8 @@
 }
 
 .sidebarToggle:hover {
-  background: rgba(34, 197, 94, 0.2);
-  color: #22c55e;
+  background: rgba(212, 175, 55, 0.2);
+  color: var(--gold);
 }
 
 @media (max-width: 768px) {
@@ -692,12 +692,12 @@
 }
 
 .sidebarHeaderButtonActive {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(22, 163, 74, 0.6));
-  border-color: rgba(34, 197, 94, 0.45);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.4), rgba(180, 140, 40, 0.6));
+  border-color: rgba(212, 175, 55, 0.45);
 }
 
 .sidebarHeaderButtonActive:hover {
-  background: linear-gradient(135deg, rgba(22, 163, 74, 0.55), rgba(21, 128, 61, 0.75));
+  background: linear-gradient(135deg, rgba(180, 140, 40, 0.55), rgba(160, 120, 30, 0.75));
 }
 
 .sidebarHeaderButton:disabled {
@@ -891,7 +891,7 @@
 }
 
 .statusOn {
-  color: #22c55e;
+  color: var(--gold);
 }
 
 .statusOff {
@@ -1079,9 +1079,9 @@
 
 .agentMessageUser {
   align-self: flex-end;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  background: linear-gradient(135deg, var(--gold) 0%, #b8922e 100%);
   border: none;
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
   border-bottom-right-radius: 4px;
 }
 
@@ -1142,7 +1142,7 @@
 
 .agentInput:focus {
   outline: none;
-  border-color: #22c55e;
+  border-color: var(--gold);
   background: rgba(255, 255, 255, 0.14);
 }
 
@@ -1154,15 +1154,15 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fff;
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #000;
+  background: var(--gold);
   cursor: pointer;
   transition: all 0.15s ease;
   min-height: 44px;
 }
 
 .agentSendButton:hover {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background: #f1c40f;
   transform: translateY(-1px);
 }
 
@@ -1308,7 +1308,7 @@
 
 .sidebarSelect:focus {
   outline: none;
-  border-color: #22c55e;
+  border-color: var(--gold);
 }
 
 .sidebarInput {
@@ -1322,7 +1322,7 @@
 
 .sidebarInput:focus {
   outline: none;
-  border-color: #22c55e;
+  border-color: var(--gold);
 }
 
 .sidebarCardButton {
@@ -1432,7 +1432,7 @@
 }
 
 .sidebarSwitch input:checked + .sidebarSwitchTrack {
-  background: rgba(34, 197, 94, 0.5);
+  background: rgba(212, 175, 55, 0.5);
 }
 
 .sidebarSwitch input:checked + .sidebarSwitchTrack .sidebarSwitchThumb {
@@ -1538,15 +1538,15 @@
 
 .chatWrapper :global(.lk-chat-entry[data-lk-message-origin='local']) {
   align-self: flex-end;
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.22), rgba(16, 163, 74, 0.35));
-  border-color: rgba(34, 197, 94, 0.4);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.22), rgba(180, 140, 40, 0.35));
+  border-color: rgba(212, 175, 55, 0.4);
   border-radius: 16px 16px 6px 16px;
 }
 
 .chatWrapper :global(.lk-chat-entry-name) {
   font-size: 0.65rem;
   font-weight: 700;
-  color: #22c55e;
+  color: var(--gold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.125rem;
@@ -1602,16 +1602,16 @@
 
 .chatWrapper :global(.lk-chat-form-input):focus {
   outline: none;
-  border-color: #22c55e;
+  border-color: var(--gold);
   background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
 }
 
 .chatWrapper :global(.lk-chat-form-button) {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  background: var(--gold);
   border: none;
   border-radius: 12px;
-  color: #fff;
+  color: #000;
   padding: 0 1.25rem;
   font-weight: 600;
   font-size: 0.875rem;
@@ -1624,9 +1624,9 @@
 }
 
 .chatWrapper :global(.lk-chat-form-button):hover {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  background: #f1c40f;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }
 
 .chatWrapper :global(.lk-chat-form-button):disabled {
