@@ -9,13 +9,14 @@ const overlayStyles = {
   captionBar: {
     position: 'fixed' as 'fixed',
     bottom: 80, // Position above the control bar
-    left: 0,
-    width: '100%',
+    left: '20px',
+    right: '20px',
+    width: 'auto',
     height: '50px',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: '0 40px',
+    justifyContent: 'flex-start',
+    padding: '0 20px',
     zIndex: 999,
   },
   transcriptText: {
