@@ -267,6 +267,12 @@ export function EburonControlBar({
   const [selectedModel, setSelectedModel] = React.useState<ModelCode>('ORBT');
   const [isModelMenuOpen, setIsModelMenuOpen] = React.useState(false);
 
+  // Audio Visualizer State
+  const [audioLevel, setAudioLevel] = React.useState(0);
+  const audioContextRef = React.useRef<AudioContext | null>(null);
+  const analyserRef = React.useRef<AnalyserNode | null>(null);
+  const animationFrameRef = React.useRef<number | null>(null);
+
   // Sync state with actual track status
   React.useEffect(() => {
     if (localParticipant) {
@@ -325,6 +331,58 @@ export function EburonControlBar({
     navigator.mediaDevices.addEventListener('devicechange', getDevices);
     return () => navigator.mediaDevices.removeEventListener('devicechange', getDevices);
   }, [selectedAudioDevice, selectedSpeakerDevice]);
+
+  // Audio Level Monitoring
+  React.useEffect(() => {
+    if (!isMicEnabled || !localParticipant) {
+      setAudioLevel(0);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      return;
+    }
+
+    const micTrack = localParticipant.getTrackPublication(Track.Source.Microphone)?.track;
+    if (!micTrack || !(micTrack.mediaStreamTrack instanceof MediaStreamTrack)) {
+      return;
+    }
+
+    try {
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      const source = audioContext.createMediaStreamSource(
+        new MediaStream([micTrack.mediaStreamTrack])
+      );
+      source.connect(analyser);
+
+      audioContextRef.current = audioContext;
+      analyserRef.current = analyser;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+      const updateLevel = () => {
+        if (!analyserRef.current) return;
+        analyserRef.current.getByteFrequencyData(dataArray);
+        const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+        setAudioLevel(Math.min(100, (average / 255) * 200));
+        animationFrameRef.current = requestAnimationFrame(updateLevel);
+      };
+
+      updateLevel();
+
+      return () => {
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+        }
+        source.disconnect();
+        analyser.disconnect();
+        audioContext.close();
+      };
+    } catch (error) {
+      console.error('Failed to setup audio visualizer:', error);
+    }
+  }, [isMicEnabled, localParticipant]);
 
   const ensureMicPermissionForLabels = React.useCallback(async () => {
     try {
@@ -602,6 +660,29 @@ export function EburonControlBar({
                 <div className={`${styles.audioSplitIcon} ${isMicEnabled ? styles.iconActive : styles.iconMuted}`}>
                   {isMicEnabled ? <MicIcon /> : <MicOffIcon />}
                 </div>
+                {/* Audio Visualizer */}
+                {isMicEnabled && (
+                  <div style={{
+                    display: 'flex',
+                    gap: '2px',
+                    alignItems: 'center',
+                    height: '16px',
+                    marginLeft: '8px'
+                  }}>
+                    {[0, 1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        style={{
+                          width: '3px',
+                          height: `${Math.max(20, audioLevel * (0.6 + i * 0.15))}%`,
+                          backgroundColor: '#4caf50',
+                          borderRadius: '2px',
+                          transition: 'height 0.1s ease-out'
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
               <button
                 className={styles.audioSplitDropdown}
