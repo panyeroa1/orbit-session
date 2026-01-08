@@ -42,8 +42,6 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
     const [isFading, setIsFading] = useState(false);
     const captionRef = useRef<HTMLDivElement>(null);
     const { localParticipant } = useLocalParticipant();
-    const [visibleWords, setVisibleWords] = useState<string[]>([]);
-    const [currentText, setCurrentText] = useState('');
     
     const {
         isListening,
@@ -75,78 +73,40 @@ export function CinemaCaptionOverlay({ onTranscriptSegment, defaultDeviceId }: C
         }
     }, [localParticipant, defaultDeviceId, isListening, startListening, stopListening]);
 
-    // Word-by-word streaming effect
+    // Update display text
     useEffect(() => {
         const fullText = `${transcript} ${interimTranscript}`.trim();
-        
-        if (fullText !== currentText) {
-            setCurrentText(fullText);
-            const words = fullText.split(' ').filter(w => w.length > 0);
-            
-            // Reset and stream words
-            setVisibleWords([]);
-            words.forEach((word, index) => {
-                setTimeout(() => {
-                    setVisibleWords(prev => [...prev, word]);
-                }, index * 150); // 150ms delay between words
-            });
-        }
-    }, [transcript, interimTranscript, currentText]);
+        setDisplayText(fullText);
+    }, [transcript, interimTranscript]);
 
     // Auto-clear logic when text overflows
     useEffect(() => {
-        if (captionRef.current && visibleWords.length > 0) {
+        if (captionRef.current && displayText) {
             const element = captionRef.current;
             const isOverflowing = element.scrollWidth > element.clientWidth;
             
             if (isOverflowing && transcript) {
                 setIsFading(true);
                 setTimeout(() => {
-                    setVisibleWords([]);
-                    setCurrentText('');
+                    setDisplayText('');
                     setIsFading(false);
                 }, 300);
             }
         }
-    }, [visibleWords, transcript]);
+    }, [displayText, transcript]);
 
     return (
-        <>
-            <style jsx>{`
-                @keyframes wordFadeIn {
-                    from {
-                        opacity: 0;
-                        transform: translateX(-10px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateX(0);
-                    }
-                }
-                .word {
-                    display: inline-block;
-                    margin-right: 0.3em;
-                    animation: wordFadeIn 0.2s ease-out;
-                }
-            `}</style>
-            <div style={overlayStyles.captionBar}>
-                <div 
-                    ref={captionRef}
-                    style={{
-                        ...overlayStyles.transcriptText,
-                        opacity: isFading ? 0 : 1,
-                        transition: 'opacity 0.3s ease-out'
-                    }}
-                >
-                    {visibleWords.length > 0 ? (
-                        visibleWords.map((word, index) => (
-                            <span key={`${word}-${index}`} className="word">{word}</span>
-                        ))
-                    ) : (
-                        isListening && <span style={{color: '#66ff00', fontSize: '14px', fontWeight: 600}}>🎤 Listening...</span>
-                    )}
-                </div>
+        <div style={overlayStyles.captionBar}>
+            <div 
+                ref={captionRef}
+                style={{
+                    ...overlayStyles.transcriptText,
+                    opacity: isFading ? 0 : 1,
+                    transition: 'opacity 0.3s ease-out'
+                }}
+            >
+                {displayText || (isListening && <span style={{color: '#66ff00', fontSize: '14px', fontWeight: 600}}>🎤 Listening...</span>)}
             </div>
-        </>
+        </div>
     );
 }
