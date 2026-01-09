@@ -24,6 +24,10 @@ const CaptionsIcon = () => (
   </svg>
 );
 
+import { useOrbitMic } from '@/lib/orbit/hooks/useOrbitMic';
+import { OrbitMicVisualizer } from '@/lib/orbit/components/OrbitMicVisualizer';
+import { OrbitFloatingText } from '@/lib/orbit/components/OrbitFloatingText';
+
 const MicOffIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="2" y1="2" x2="22" y2="22" />
@@ -268,6 +272,9 @@ export function EburonControlBar({
   type ModelCode = 'ORBT' | 'SONQ' | 'DELX' | 'PLTO';
   const [selectedModel, setSelectedModel] = React.useState<ModelCode>('ORBT');
   const [isModelMenuOpen, setIsModelMenuOpen] = React.useState(false);
+
+  // Orbit Mic Hook
+  const { isRecording: isOrbitMicRecording, transcript: orbitTranscript, isFinal: isOrbitFinal, toggle: toggleOrbitMic, analyser: orbitAnalyser } = useOrbitMic();
 
   // Audio Visualizer State
   const [audioLevel, setAudioLevel] = React.useState(0);
@@ -648,6 +655,7 @@ export function EburonControlBar({
         className={`${styles.controlBar} ${isSidebarOpen ? styles.controlBarShifted : ''} notranslate`}
         translate="no"
       >
+        <OrbitFloatingText transcript={orbitTranscript} isFinal={isOrbitFinal} isVisible={isOrbitMicRecording || !!orbitTranscript} />
         {/* Left Group: AV Controls */}
         <div className={styles.controlGroup}>
 
@@ -657,11 +665,21 @@ export function EburonControlBar({
           <div className={styles.audioSplitControl}>
             {/* Speak (Mic) Section */}
             <div className={`${styles.audioSplitSection} ${styles.audioSplitLeft}`} ref={micMenuRef}>
-              <div className={styles.audioSplitMain} onClick={toggleMicrophone} title={isMicEnabled ? 'Mute microphone' : 'Unmute microphone'}>
+              <div 
+                className={styles.audioSplitMain} 
+                onClick={() => {
+                   toggleMicrophone();
+                   toggleOrbitMic();
+                }}
+                title={isMicEnabled ? 'Mute microphone' : 'Unmute microphone'}
+                style={{ position: 'relative' }} // ensure relative for visualizer
+              >
                 <span className={styles.audioSplitLabel}>Speak</span>
                 <div className={`${styles.audioSplitIcon} ${isMicEnabled ? styles.iconActive : styles.iconMuted}`}>
                   {isMicEnabled ? <MicIcon /> : <MicOffIcon />}
                 </div>
+                {/* Custom Orbit Visualizer Overlay */}
+                <OrbitMicVisualizer analyser={orbitAnalyser} isRecording={isOrbitMicRecording} />
                 {/* Audio Visualizer */}
                 {isMicEnabled && (
                   <div style={{

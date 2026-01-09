@@ -1,0 +1,37 @@
+.orbitMicVisualizer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10; /* Above button bg but below icon if handled by z-index */
+}
+
+.orbitFloatingText {
+  position: absolute;
+  bottom: calc(100% + 15px);
+  left: 24px; /* Align with left mic button usually */
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 100; /* Roboto Thin equivalent */
+  color: #0f172a;
+  background: none;
+  padding: 8px 0;
+  text-shadow: 
+    0 0 5px rgba(255, 255, 255, 0.8),
+    1px 1px 2px rgba(255, 255, 255, 1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  max-width: 650px;
+  pointer-events: none;
+  z-index: 10001;
+}
+
+.orbitFloatingTextVisible {
+  opacity: 1;
+}
+
+.orbitFloatingTextInterim {
+  opacity: 0.6;
+  font-style: italic;
+}
