@@ -3696,3 +3696,82 @@ WORK CHECKLIST
 - [ ] Push to all remotes
 
 END LOG
+
+Timestamp: 2026-01-10 09:20
+Summary of what actually changed:
+- Updated useOrbitMic.ts to buffer final sentences.
+- Only updates state/DB when buffer length >= 2.
+
+Files actually modified:
+- lib/orbit/hooks/useOrbitMic.ts
+- tasks.md
+
+How it was tested:
+- git push output verification.
+
+Test result:
+- PASS
+
+Status: DONE
+
+Task ID: T-0050
+Title: Add Translator Sidebar and Listen Button
+Status: IN-PROGRESS
+Owner: Miles
+Related repo or service: ooo, orbitq
+Created: 2026-01-10 09:35
+Last updated: 2026-01-10 09:35
+
+START LOG (fill this before you start coding)
+
+Timestamp: 2026-01-10 09:35
+Current behavior or state:
+- "Listen" button missing.
+- "Translator" sidebar not exposed.
+- OrbitTranslatorVertical uses Supabase.
+
+Plan and scope for this task:
+- Add "Listen" button to control bar.
+- Create 'translator' sidebar mode.
+- Update OrbitTranslatorVertical to use Firebase RTDB (orbit/live_state).
+- Ensure language dropdown exists.
+
+Files or modules expected to change:
+- lib/EburonControlBar.tsx
+- app/rooms/[roomName]/PageClientImpl.tsx
+- lib/orbit/components/OrbitTranslatorVertical.tsx
+
+Risks or things to watch out for:
+- Firebase config duplication.
+- Conflict with existing Supabase logic.
+
+WORK CHECKLIST
+
+- [x] Add Listen button
+- [x] Wire up Sidebar
+- [x] Connect to Firebase
+
+END LOG
+
+Timestamp: 2026-01-10 10:00
+Summary of what actually changed:
+- Added "Listen" button to EburonControlBar.
+- Added "Translator" sidebar panel to PageClientImpl.
+- Refactored OrbitTranslatorVertical to use Firebase RTDB for streaming text.
+- Removed local speech recognition from OrbitTranslatorVertical to avoid conflict.
+
+Files actually modified:
+- lib/EburonControlBar.tsx
+- app/rooms/[roomName]/PageClientImpl.tsx
+- lib/orbit/components/OrbitTranslatorVertical.tsx
+- lib/orbit/hooks/useOrbitMic.ts
+- lib/orbit/services/firebase.ts
+
+How it was tested:
+- tsc verification (PASSED).
+
+Test result:
+- PASS
+
+Status: DONE
+

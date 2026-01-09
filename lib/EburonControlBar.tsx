@@ -213,7 +213,9 @@ interface EburonControlBarProps {
   userId?: string;
   onCaptionToggle?: () => void;
   isCaptionOpen?: boolean;
-  onLanguageChange?: (language: string) => void; // New Prop
+  onLanguageChange?: (language: string) => void;
+  onTranslatorToggle?: () => void; // New Prop
+  isTranslatorOpen?: boolean; // New Prop
 }
 
 export function EburonControlBar({
@@ -241,6 +243,8 @@ export function EburonControlBar({
   onCaptionToggle,
   isCaptionOpen,
   onLanguageChange,
+  onTranslatorToggle,
+  isTranslatorOpen,
 }: EburonControlBarProps) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
@@ -733,6 +737,24 @@ export function EburonControlBar({
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Listen Button (Translator) */}
+            <div className={styles.audioSplitSection} style={{ marginLeft: '8px' }}>
+              <div 
+                className={`${styles.audioSplitMain} ${isTranslatorOpen ? styles.iconActive : ''}`} 
+                onClick={onTranslatorToggle}
+                title="Open Translator"
+              >
+                  <span className={styles.audioSplitLabel}>Listen</span>
+                  <div className={styles.audioSplitIcon}>
+                    {/* Headphone icon */}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                    </svg>
+                  </div>
+              </div>
             </div>
 
 

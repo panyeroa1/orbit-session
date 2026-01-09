@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import * as orbitService from '@/lib/orbit/services/orbitService';
 import { toast } from 'react-hot-toast';
 import styles from './OrbitTranslator.module.css';
 import sharedStyles from '@/styles/Eburon.module.css';
-import { OrbitSubtitleOverlay } from './OrbitSubtitleOverlay';
-import { supabase } from '@/lib/orbit/services/supabaseClient';
 import { LANGUAGES } from '@/lib/orbit/types';
-import { Volume2, Mic, MicOff, StopCircle, ChevronDown, Lock, Trash2 } from 'lucide-react';
+import { Volume2, ChevronDown, Trash2, Mic } from 'lucide-react';
+import { ref, onValue } from 'firebase/database';
+import { rtdb } from '@/lib/orbit/services/firebase';
 
 // Orbit Planet Icon SVG
 const OrbitIcon = ({ size = 20 }: { size?: number }) => (
@@ -64,7 +63,6 @@ export function OrbitTranslatorVertical({
   onDeviceIdChange
 }: OrbitTranslatorVerticalProps) {
   // --- Core state (kept) ---
-  const [mode, setMode] = useState<'idle' | 'speaking'>('idle');
   const [messages, setMessages] = useState<Array<{
     id: string;
     text: string;
@@ -74,11 +72,10 @@ export function OrbitTranslatorVertical({
     timestamp: Date;
   }>>([]);
   const [liveText, setLiveText] = useState('');
-  const [isLockedByOther, setIsLockedByOther] = useState(false);
-  // We use roomCode as our unique identifier for now, assuming it is the meeting ID
   const roomUuid = roomCode;
 
-  const recognitionRef = useRef<any>(null);
+  // Track the last processed transcript to avoid duplicates
+  const lastTranscriptRef = useRef<string>('');
 
   // --- Translation & TTS ---
   const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
@@ -216,165 +213,38 @@ export function OrbitTranslatorVertical({
     }
   }, [playNextAudio]);
 
-  // Subscribe: lock state + transcript inserts
+  // Subscribe to Firebase Live State
   useEffect(() => {
-    if (!roomUuid) return;
-
-    const channel = supabase
-      .channel(`room:${roomUuid}:transcripts_modern`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'transcriptions',
-          filter: `meeting_id=eq.${roomUuid}`,
-        },
-        (payload: any) => {
-          const isMe = payload.new.speaker_id === userId;
-          
-          if (!isMe) {
-            if (isListeningRef.current) {
-              processingQueueRef.current.push({ 
-                text: payload.new.transcribe_text_segment || '',
-                id: payload.new.id,
-                speakerId: payload.new.speaker_id
-              });
-              processNextInQueue();
-            } else {
-              setMessages(prev => [...prev, {
-                id: payload.new.id || Math.random().toString(),
-                text: payload.new.transcribe_text_segment || '',
-                speakerId: payload.new.speaker_id,
-                isMe: false,
-                timestamp: new Date()
-              }]);
-            }
-          }
+    const liveRef = ref(rtdb, 'orbit/live_state');
+    const unsubscribe = onValue(liveRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // If final, send to processing queue (Translator/TTS)
+        if (data.is_final) {
+           // Simple dedup based on text content (optional but good)
+           if (data.transcript && data.transcript !== lastTranscriptRef.current) {
+               lastTranscriptRef.current = data.transcript;
+               setLiveText('');
+               
+               // Push to queue for translation
+               processingQueueRef.current.push({
+                   text: data.transcript,
+                   id: Math.random().toString(), // or timestamp
+                   speakerId: 'orbit-mic' // We assume it's the active speaker
+               });
+               processNextInQueue();
+           }
+        } else {
+           // Interim
+           setLiveText(data.transcript);
         }
-      )
-      .subscribe();
-
-    const sub = orbitService.subscribeToRoomState(roomUuid, (state) => {
-      const activeSpeaker = state.active_speaker_user_id;
-      setIsLockedByOther(!!activeSpeaker && activeSpeaker !== userId);
+      }
     });
 
-    return () => {
-      sub.unsubscribe();
-      supabase.removeChannel(channel);
-    };
-  }, [roomUuid, userId, processNextInQueue]);
+    return () => unsubscribe();
+  }, [processNextInQueue]);
 
-  // Start WebSpeech
-  const startWebSpeech = useCallback(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      toast.error('WebSpeech not supported in this browser.');
-      return;
-    }
 
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    const lang = selectedLanguageRef.current.code === 'auto' ? 'en-US' : selectedLanguageRef.current.code;
-    recognition.lang = lang;
-
-    recognition.onresult = async (event: any) => {
-      let interim = '';
-      let final = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) final += t;
-        else interim += t;
-      }
-
-      const display = interim || final;
-      setLiveText(display);
-      onLiveTextChange?.(display);
-
-      if (final.trim() && roomUuid) {
-        const msgId = Math.random().toString();
-        setMessages(prev => [...prev, {
-          id: msgId,
-          text: final,
-          speakerId: userId,
-          isMe: true,
-          timestamp: new Date()
-        }]);
-        setLiveText('');
-
-        const sentences = final
-          .split(/(?<=[.!?])\s+/)
-          .map((s) => s.trim())
-          .filter((s) => s.length > 0);
-
-        for (const sentence of sentences) {
-          orbitService
-            .saveUtterance(roomUuid, userId, sentence, selectedLanguageRef.current.code)
-            .catch((e) => console.warn(e));
-        }
-      }
-    };
-
-    recognition.onerror = (e: any) => {
-      console.error('Speech recognition error:', e.error);
-    };
-
-    recognition.onend = () => {
-      if (mode === 'speaking' && recognitionRef.current) {
-        try {
-          recognition.start();
-        } catch {}
-      }
-    };
-
-    try {
-      recognition.start();
-      recognitionRef.current = recognition;
-    } catch (e) {
-      console.error(e);
-      toast.error('Unable to start microphone.');
-    }
-  }, [roomUuid, userId, mode, onLiveTextChange]);
-
-  const stopWebSpeech = useCallback(() => {
-    if (recognitionRef.current) {
-      recognitionRef.current.onend = null;
-      try {
-        recognitionRef.current.stop();
-      } catch {}
-      recognitionRef.current = null;
-    }
-    setLiveText('');
-    onLiveTextChange?.('');
-  }, [onLiveTextChange]);
-
-  const startSpeaking = useCallback(async () => {
-    if (!roomUuid) {
-      toast.error('Connecting to room...');
-      return;
-    }
-
-    const acquired = await orbitService.acquireSpeakerLock(roomCode, userId);
-    if (!acquired) {
-      toast.error('Someone else is speaking');
-      return;
-    }
-
-    setMode('speaking');
-    startWebSpeech();
-  }, [roomUuid, roomCode, userId, startWebSpeech]);
-
-  const stopSpeaking = useCallback(async () => {
-    stopWebSpeech();
-    await orbitService.releaseSpeakerLock(roomCode, userId);
-    setMode('idle');
-  }, [roomCode, userId, stopWebSpeech]);
-
-  const speakDisabled = isLockedByOther || !roomUuid;
 
   // Language dropdown click-outside
   const langMenuRef = useRef<HTMLDivElement>(null);
@@ -388,51 +258,7 @@ export function OrbitTranslatorVertical({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const formatTime = () =>
-    new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
 
-  const status = useMemo(() => {
-    if (!roomUuid) return { label: 'Connecting', tone: 'amber' as const };
-    if (mode === 'speaking') return { label: 'Live', tone: 'rose' as const };
-    if (isLockedByOther) return { label: 'Locked', tone: 'orange' as const };
-    return { label: 'Ready', tone: 'emerald' as const };
-  }, [roomUuid, mode, isLockedByOther]);
-
-  const statusChip = useMemo(() => {
-    const base =
-      'flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 shadow-sm backdrop-blur';
-    const dotBase = 'w-1.5 h-1.5 rounded-full';
-    if (status.tone === 'amber')
-      return (
-        <div className={`${base} text-amber-300`}>
-          <div className={`${dotBase} bg-amber-400 ${styles.pulseSoft}`} />
-          <span className="text-[11px] font-semibold uppercase tracking-wider">Connecting</span>
-        </div>
-      );
-    if (status.tone === 'rose')
-      return (
-        <div className={`${base} text-rose-200`}>
-          <div className={`${dotBase} bg-rose-400 ${styles.pingSoft}`} />
-          <span className="text-[11px] font-semibold uppercase tracking-wider">Live</span>
-        </div>
-      );
-    if (status.tone === 'orange')
-      return (
-        <div className={`${base} text-orange-200`}>
-          <div className={`${dotBase} bg-orange-400`} />
-          <span className="text-[11px] font-semibold uppercase tracking-wider">Locked</span>
-        </div>
-      );
-    return (
-      <div className={`${base} text-emerald-200`}>
-        <div className={`${dotBase} bg-emerald-400`} />
-        <span className="text-[11px] font-semibold uppercase tracking-wider">Ready</span>
-      </div>
-    );
-  }, [status.tone]);
 
   const filteredLanguages = useMemo(() => {
     const q = langQuery.trim().toLowerCase();
@@ -451,17 +277,8 @@ export function OrbitTranslatorVertical({
           </div>
           <div className={sharedStyles.sidebarHeaderMeta}>
             <div className="flex items-center gap-1.5 mt-1">
-              <div
-                className={`w-1.5 h-1.5 rounded-full shadow-[0_0_8px_currentColor] transition-colors duration-500 ${
-                  mode === 'speaking'
-                    ? 'text-rose-400 bg-rose-400 animate-pulse'
-                    : isLockedByOther
-                    ? 'text-orange-400 bg-orange-400'
-                    : 'text-emerald-400 bg-emerald-400'
-                }`}
-              />
-              <span className="text-[10px] uppercase tracking-wide font-medium">
-                {mode === 'speaking' ? 'Live' : isLockedByOther ? 'Locked' : 'Ready'}
+              <span className="text-[10px] uppercase tracking-wide font-medium text-emerald-400">
+                Ready
               </span>
             </div>
           </div>
@@ -481,30 +298,16 @@ export function OrbitTranslatorVertical({
         {/* Main Controls */}
         <div className={sharedStyles.agentControls}>
           <button
-            onClick={mode === 'speaking' ? stopSpeaking : startSpeaking}
-            disabled={speakDisabled}
-            className={`${sharedStyles.agentControlButton} ${
-              mode === 'speaking' ? sharedStyles.agentControlButtonActiveSpeak : ''
-            } ${speakDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {isLockedByOther ? (
-              <Lock size={18} />
-            ) : mode === 'speaking' ? (
-              <Mic size={18} />
-            ) : (
-              <MicOff size={18} />
-            )}
-            <span>{isLockedByOther ? 'Locked' : mode === 'speaking' ? 'Stop' : 'Speak'}</span>
-          </button>
-
-          <button
             onClick={() => setIsListening((v) => !v)}
             className={`${sharedStyles.agentControlButton} ${
               isListening ? sharedStyles.agentControlButtonActiveListen : ''
             }`}
           >
-            {isListening ? <StopCircle size={18} /> : <Volume2 size={18} />}
-            <span>Listen</span>
+            {isListening ? (
+               // Stop icon or similar
+               <div className="w-4 h-4 rounded-sm bg-current" />
+            ) : <Volume2 size={18} />}
+            <span>{isListening ? 'Mute Audio' : 'Play Audio'}</span>
           </button>
         </div>
 
@@ -553,10 +356,6 @@ export function OrbitTranslatorVertical({
               onChange={(e) => {
                 const lang = LANGUAGES.find((l) => l.code === e.target.value) || LANGUAGES[0];
                 setSelectedLanguage(lang);
-                if (mode === 'speaking' && recognitionRef.current) {
-                  stopWebSpeech();
-                  setTimeout(startWebSpeech, 120);
-                }
               }}
             >
               {LANGUAGES.map((lang) => (

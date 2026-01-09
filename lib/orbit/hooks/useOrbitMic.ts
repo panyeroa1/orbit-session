@@ -1,20 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, update, serverTimestamp } from 'firebase/database';
-
-// Firebase Config (from user request)
-const firebaseConfig = {
-  apiKey: "AIzaSyCZvhDqxmU74KHZxy-_cHCmTuf0PSYL85o",
-  authDomain: "apartment-rental-free-p-lh81y5.firebaseapp.com",
-  databaseURL: "https://apartment-rental-free-p-lh81y5-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "apartment-rental-free-p-lh81y5",
-  storageBucket: "apartment-rental-free-p-lh81y5.firebasestorage.app",
-  messagingSenderId: "994188454347",
-  appId: "1:994188454347:web:3f9706fb5c787e66d86e4e"
-};
-
-const app = initializeApp(firebaseConfig);
-const rtdb = getDatabase(app);
+import { ref, update, serverTimestamp } from 'firebase/database';
+import { rtdb } from '@/lib/orbit/services/firebase';
 
 const DEEPGRAM_API_KEY = 'acb247d15fdeeb3f132bc7491bf35afab2965130';
 

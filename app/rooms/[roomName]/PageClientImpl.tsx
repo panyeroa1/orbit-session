@@ -82,7 +82,7 @@ const ChevronLeftIcon = () => (
   </svg>
 );
 
-type SidebarPanel = 'participants' | 'agent' | 'chat' | 'settings';
+type SidebarPanel = 'participants' | 'agent' | 'chat' | 'settings' | 'translator';
 
 function VideoGrid({ allowedParticipantIds, isGridView }: { allowedParticipantIds: Set<string>, isGridView: boolean }) {
   const layoutContext = useLayoutContext();
@@ -872,6 +872,14 @@ function VideoConferenceComponent(props: {
             onAutoGainChange={setAutoGainEnabled}
           />
         );
+      case 'translator':
+        return (
+          <OrbitTranslatorVertical 
+            roomCode={roomName}
+            userId={user?.id || 'guest'}
+            audioDevices={audioDevices}
+          />
+        );
       default:
         return null;
     }
@@ -1007,6 +1015,7 @@ function VideoConferenceComponent(props: {
             onAgentToggle={() => handleSidebarPanelToggle('agent')}
             onChatToggle={() => handleSidebarPanelToggle('chat')}
             onSettingsToggle={() => handleSidebarPanelToggle('settings')}
+            onTranslatorToggle={() => handleSidebarPanelToggle('translator')}
 
             onGridToggle={() => setIsGridView(!isGridView)}
             isGridView={isGridView}
