@@ -1,5 +1,28 @@
 # Orbit Conference Task Log
 
+Task ID: T-0036
+Title: Update Next.js Env Types
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 08:30
+Plan:
+- Commit `next-env.d.ts` which has been modified by the dev server.
+- Ensure workspace is clean.
+
+END LOG
+
+Timestamp: 2026-01-10 08:30
+Changed:
+- Updated `next-env.d.ts` to reflect current environment types.
+Tests:
+- `npm run build` (implied by dev server running)
+Result: PASS
+Status: DONE
+
+
 Task ID: T-0034
 Title: Disable Translation and TTS (Maintenance)
 Status: DONE
