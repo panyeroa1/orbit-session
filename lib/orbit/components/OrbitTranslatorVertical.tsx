@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 import styles from './OrbitTranslator.module.css';
 import sharedStyles from '@/styles/Eburon.module.css';
 import { LANGUAGES } from '@/lib/orbit/types';
-import { Volume2, ChevronDown, Trash2, Mic } from 'lucide-react';
+import { Volume2, ChevronDown, Trash2, Mic, Send } from 'lucide-react';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '@/lib/orbit/services/firebase';
 
@@ -84,6 +84,7 @@ export function OrbitTranslatorVertical({
   const [isListening, setIsListening] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [langQuery, setLangQuery] = useState('');
+  const [manualText, setManualText] = useState(''); // New state for manual input
 
   // UI: show last translated text (visual only)
   const [translatedPreview, setTranslatedPreview] = useState('');
@@ -268,6 +269,21 @@ export function OrbitTranslatorVertical({
     return LANGUAGES.filter((l) => `${l.name} ${l.code}`.toLowerCase().includes(q));
   }, [langQuery]);
 
+  const handleManualSubmit = useCallback(() => {
+    if (!manualText.trim()) return;
+
+    // Push to processing queue just like recognized speech
+    processingQueueRef.current.push({
+      text: manualText,
+      id: Math.random().toString(),
+      speakerId: 'manual', 
+      isMe: true, // Treat as local user
+    });
+
+    processNextInQueue();
+    setManualText('');
+  }, [manualText, processNextInQueue]);
+
   return (
     <div className={sharedStyles.sidebarPanel}>
       {/* Header */}
@@ -373,6 +389,35 @@ export function OrbitTranslatorVertical({
             <div className={sharedStyles.agentSelectIcon}>
               <ChevronDown size={14} />
             </div>
+          </div>
+        </div>
+
+        {/* Manual Input (Test) */}
+        <div className={sharedStyles.agentSection}>
+          <label className={sharedStyles.agentSectionLabel}>
+            <span>Test Input</span>
+            <span className={sharedStyles.agentSectionDivider} />
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className={`${sharedStyles.sidebarSelect} flex-1 min-w-0`}
+              style={{ paddingRight: '8px' }}
+              placeholder="Type to speak..."
+              value={manualText}
+              onChange={(e) => setManualText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleManualSubmit();
+              }}
+            />
+            <button
+              onClick={handleManualSubmit}
+              className="h-9 w-9 flex items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 hover:scale-105 transition-all active:scale-95 border border-emerald-500/20"
+              title="Speak"
+              disabled={!manualText.trim()}
+            >
+              <Send size={14} />
+            </button>
           </div>
         </div>
 

@@ -86,8 +86,9 @@ export function CustomPreJoin({ roomName, onSubmit, onError, defaults }: CustomP
   useEffect(() => {
     setIsMounted(true);
     setVideoEnabled(defaults?.videoEnabled ?? true);
-  }, [defaults?.videoEnabled]);
-  const [audioEnabled, setAudioEnabled] = useState(defaults?.audioEnabled ?? true);
+    setAudioEnabled(defaults?.audioEnabled ?? true);
+  }, [defaults?.videoEnabled, defaults?.audioEnabled]);
+  const [audioEnabled, setAudioEnabled] = useState(true);
 
   const [audioInputDevices, setAudioInputDevices] = useState<DeviceInfo[]>([]);
   const [audioOutputDevices, setAudioOutputDevices] = useState<DeviceInfo[]>([]);

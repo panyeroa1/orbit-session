@@ -108,7 +108,8 @@ export function useDeepgramTranscription(
       
       const connection = deepgram.listen.live({
         model,
-        language,
+        language: language === 'auto' || language === 'multi' ? undefined : language,
+        detect_language: language === 'auto' || language === 'multi' ? true : undefined,
         interim_results: true,
         utterance_end_ms: 1000,
         endpointing: 500,
@@ -230,7 +231,8 @@ export function useDeepgramTranscription(
       const deepgram = createClient(apiKey);
       const connection = deepgram.listen.live({
         model,
-        language,
+        language: language === 'auto' || language === 'multi' ? undefined : language,
+        detect_language: language === 'auto' || language === 'multi' ? true : undefined,
         interim_results: true,
         utterance_end_ms: 1000,
         endpointing: 500,

@@ -26,6 +26,7 @@ type LiveCaptionsProps = {
 export function LiveCaptions({
   room,
   enabled,
+  language,
   onTranscriptSegment,
 }: LiveCaptionsProps) {
   const [caption, setCaption] = useState('');
@@ -55,7 +56,8 @@ export function LiveCaptions({
         const deepgram = createClient(key);
         const connection = deepgram.listen.live({
           model: 'nova-2',
-          language: 'en',
+          language: language === 'auto' || language === 'multi' ? undefined : language,
+          detect_language: language === 'auto' || language === 'multi' ? true : undefined,
           interim_results: true,
           smart_format: true,
         });
@@ -117,7 +119,7 @@ export function LiveCaptions({
         mediaRecorderRef.current = null;
       }
     };
-  }, [enabled, onTranscriptSegment]);
+  }, [enabled, onTranscriptSegment, language]);
 
   if (!enabled || !caption) return null;
 

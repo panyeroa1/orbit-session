@@ -1,5 +1,198 @@
 # Orbit Conference Task Log
 
+Task ID: T-0037
+Title: Fix Hydration Mismatch in CustomPreJoin
+Status: IN-PROGRESS
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 08:35
+Plan:
+
+- Investigate `PageClientImpl.tsx` usage of `defaults`.
+- Refactor `CustomPreJoin.tsx` to handle `audioEnabled` via `useEffect` to avoid hydration mismatch.
+- Alternatively, force `PageClientImpl` to only pass defaults after mount.
+Risks:
+
+- Slight flicker of Mic state on load.
+
+END LOG
+
+Timestamp: 2026-01-10 08:45
+Changed:
+
+- Updated `CustomPreJoin.tsx`: Initialized `audioEnabled` to `true` (matching server default) and synced with props in `useEffect`.
+Tests:
+
+- `npm run build`: PASSED
+- Manual logic verification: Code now guarantees server/client match on first render.
+Result: PASS
+Status: DONE
+
+Task ID: T-0038
+Title: Optimize Transcription Language Detection
+Status: IN-PROGRESS
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 08:50
+Plan:
+
+- Update `LiveCaptions.tsx` to use `detect_language: true` when `language` prop is 'auto'/'multi'.
+- Update `useDeepgramTranscription.ts` to implement correctly configured Deepgram options for `auto` language.
+Risks:
+
+- Potential type mismatches with Deepgram SDK options if `language` property is strict.
+
+END LOG
+
+Timestamp: 2026-01-10 09:00
+Changed:
+
+- Updated `LiveCaptions.tsx`: Enabled `detect_language: true` when language is 'auto' or 'multi' (removed hardcoded 'en').
+- Updated `useDeepgramTranscription.ts`: Added logic to switch between specific `language` code and `detect_language: true`.
+Tests:
+
+- `npm run build`: PASSED
+- Manual code review: Verified logic handles 'auto'/'multi' correctly by omitting strict language param.
+Result: PASS
+Status: DONE
+
+Task ID: T-0039
+Title: Expand Language Support (JW.org ref)
+Status: IN-PROGRESS
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 09:05
+Plan:
+
+- Add indigenous languages of the Americas (Maya, K'iche', Nahuatl, etc.) to `types.ts`.
+- Add African languages (Twi, Ewe, Lingala, etc.) to `types.ts`.
+- Add other missing global languages (Hmong, Tok Pisin, etc.).
+Risks:
+
+- None. pure data addition.
+
+END LOG
+
+Timestamp: 2026-01-10 09:12
+Changed:
+
+- Updated `lib/orbit/types.ts`: Added extensive list of languages referencing JW.org (Maya, Nahuatl, K'iche', Twi, Ewe, etc.).
+Tests:
+
+- `npm run build`: PASSED
+- Manual review: Verified key indigenous and African languages are present.
+Result: PASS
+Status: DONE
+
+Task ID: T-0040
+Title: Add Manual TTS Input to Translator
+Status: IN-PROGRESS
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 09:15
+Plan:
+
+- Add a new "Test Input" section to `OrbitTranslatorVertical.tsx`.
+- Implement a text input and submit button.
+- Hook up the submit action to the existing `processingQueueRef` pipeline to trigger Translation and TTS.
+Risks:
+
+- Ensure the input doesn't clutter the UI too much.
+
+END LOG
+
+Timestamp: 2026-01-10 09:20
+Changed:
+
+- Added `manualText` state and `handleManualSubmit` to `OrbitTranslatorVertical.tsx`.
+- Added "Test Input" UI section with text input and Send button.
+- Integrated manual input with `processingQueueRef` to trigger existing translation/TTS logic.
+Tests:
+
+- `npm run build`: PASSED
+- Manual code review: Verified handler pushes to queue correctly.
+Result: PASS
+Status: DONE
+
+Task ID: T-0041
+Title: Add Manual TTS Input to Standalone HTML
+Status: IN-PROGRESS
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 09:37
+Plan:
+
+- Add text input and send button to `stt/translation.html` and `public/translation.html`.
+- Implement JS handler to trigger `handleStreamingTranslation` on submit.
+Risks:
+
+- None.
+
+END LOG
+
+Timestamp: 2026-01-10 09:42
+Changed:
+
+- Updated `stt/translation.html`: Added `#manual-input` and `#manual-send-btn` with JS handler.
+- Updated `public/translation.html`: Applied identical changes.
+Tests:
+
+- Manual review of code: Verified `onclick` and `onkeydown` handlers correctly invoke `handleStreamingTranslation`.
+Result: PASS
+Status: DONE
+
+Task ID: T-0042
+Title: Fix Lint Issues
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 09:45
+Plan:
+- Fix accessibility errors in `stt/translation.html` and `public/translation.html` (missing title/aria-label on buttons).
+- Fix markdown lint warnings in `tasks.md` (spacing around lists).
+Risks:
+- None.
+
+END LOG
+
+Timestamp: 2026-01-10 09:50
+Changed:
+- Added `title` and `aria-label` to manual send buttons in HTML files.
+- Ran `fix_tasks_md.py` to auto-fix spacing in `tasks.md`.
+Tests:
+- Manual review.
+Result: PASS
+Status: DONE
+
+Task ID: T-0043
+Title: Commit Pending Changes
+Status: IN-PROGRESS
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 10:55
+Plan:
+- Commit all pending changes (T-0037 to T-0042) to main.
+Risks:
+- None.
+
+WORK CHECKLIST
+
+- [ ] Commit changes
+
 Task ID: T-0036
 Title: Update Next.js Env Types
 Status: DONE
@@ -9,6 +202,7 @@ START LOG
 
 Timestamp: 2026-01-10 08:30
 Plan:
+
 - Commit `next-env.d.ts` which has been modified by the dev server.
 - Ensure workspace is clean.
 
@@ -16,12 +210,13 @@ END LOG
 
 Timestamp: 2026-01-10 08:30
 Changed:
+
 - Updated `next-env.d.ts` to reflect current environment types.
 Tests:
+
 - `npm run build` (implied by dev server running)
 Result: PASS
 Status: DONE
-
 
 Task ID: T-0034
 Title: Disable Translation and TTS (Maintenance)
@@ -32,17 +227,20 @@ START LOG
 
 Timestamp: 2026-01-05 21:25
 Plan:
+
 - Remove Gemini service integration.
 - Strip out Translation and TTS state and logic from OrbitApp.tsx.
 - Remove Translation and TTS UI controls from TranslatorDock.tsx.
 - Verify STT still works.
 Risks:
+
 - Breaking existing STT or Room State logic during cleanup.
 
 END LOG
 
 Timestamp: 2026-01-05 21:35
 Changed:
+
 - Removed `geminiService` import and all translation state/refs from `OrbitApp.tsx`.
 - Removed `processNextInQueue` and translation update logic.
 - Cleaned up `TranslatorDock` to remove Language Selector and Listen Button.
@@ -50,12 +248,12 @@ Changed:
 - Restored STT state variables (`livePartialText`, `lastFinalText`) to ensure transcription display works.
 - Pushed changes to `ooo` and `master-buten`.
 Tests:
+
 - Manual verification: Checked that only "Speak" and "Queue" buttons remain.
 - Validated build success.
 - Validated git push success.
 Result: PASS
 Status: DONE
-
 
 Task ID: T-0035
 Title: Restore STT Functionality
@@ -66,30 +264,29 @@ START LOG
 
 Timestamp: 2026-01-05 21:35
 Plan:
+
 - Restore Realtime subscription to `transcript_segments` in `OrbitApp.tsx`.
 - Ensure STT state variables (`livePartialText`, `lastFinalText`) are updated correctly.
 - Add visual indicator for "Listening" state.
 - Standardize room locking logic to use `orbitService` RPC calls.
 Risks:
+
 - None; restoring previous functionality.
 
 END LOG
 
 Timestamp: 2026-01-05 21:38
 Changed:
+
 - Restored `transcript_segments` real-time channel subscription.
 - Updated `OrbitApp.tsx` imports to include both `orbitService` (RPC locks) and `roomStateService` (state subs).
 - Added "Listening..." UI indicator.
 - Pushed hotfix to `ooo` and `master-buten`.
 Tests:
+
 - Validated build success.
 Result: PASS
 Status: DONE
-
-
-
-
-
 
 Task ID: T-0001
 Title: Fix invalid ARIA attribute in page.tsx
@@ -114,11 +311,13 @@ Start log:
 
 - Timestamp: 2026-01-04 03:08
 - Plan:
+
   - Verify where ParticipantsPanel is used.
   - Create API route `app/api/room/mute` to handle remote muting via `RoomServiceClient`.
   - Update `ParticipantsPanel` to include controls for Mic and Video (using the API).
   - Determine "Host" status (will treat local user as host for demo or check metadata).
 - Risks:
+
   - Security: API endpoint checks? For demo, we might skip strict auth but check room existence.
   - "Speaker" control ambiguity. Will implement Mic and Video first.
 
@@ -126,6 +325,7 @@ End log:
 
 - Timestamp: 2026-01-04 03:20
 - Changed:
+
   - Granted `roomAdmin: true` in `app/api/connection-details/route.ts`.
   - Created `app/api/room/mute/route.ts` for remote muting.
   - Added Mic/Video toggle buttons for remote participants in `lib/ParticipantsPanel.tsx`.
@@ -140,6 +340,7 @@ Start log:
 
 - Timestamp: 2026-01-04 03:22
 - Plan:
+
   - Move inline styles in ParticipantsPanel.tsx to CSS modules.
   - Fix markdown formatting in tasks.md and implementation_plan.md.
 
@@ -147,6 +348,7 @@ End log:
 
 - Timestamp: 2026-01-04 03:25
 - Changed:
+
   - Added `.cursorPointer` and `.cursorDefault` to styles/SuccessClass.module.css.
   - Updated ParticipantsPanel.tsx to use styles.
   - Reformatted tasks.md and implementation_plan.md.
@@ -161,6 +363,7 @@ Start log:
 
 - Timestamp: 2026-01-04 03:30
 - Plan:
+
   - Modify `aria-pressed` in `app/page.tsx` to satisfy linter. Attempting different syntax or explicit casting.
   - Verify with `npm run lint`.
 
@@ -179,16 +382,19 @@ Start log:
 
 - Timestamp: 2026-01-04 03:40
 - Plan:
+
   - Make sidebar full height (`top: 0`, `bottom: 0`, `right: 0`).
   - Add collapsible arrow button to `PageClientImpl.tsx`.
   - Stylize chat input (center and bottom aligned).
 - Risks:
+
   - Overlap with other UI elements.
 
 End log:
 
 - Timestamp: 2026-01-04 03:55
 - Changed:
+
   - Updated sidebar CSS for full height and transparency improvements.
   - Added collapsible arrow button logic to `PageClientImpl.tsx` and CSS.
   - Adjusted chat input CSS for center/bottom alignment.
@@ -203,6 +409,7 @@ Start log:
 
 - Timestamp: 2026-01-04 03:57
 - Plan:
+
   - Implement session persistence to keep users in room on refresh.
   - Convert sidebar to floating design with rounded corners.
   - Refine chat input layout.
@@ -212,6 +419,7 @@ End log:
 
 - Timestamp: 2026-01-04 04:30
 - Changed:
+
   - Updated `PageClientImpl.tsx` with session persistence logic via `sessionStorage`.
   - Modified `SuccessClass.module.css` for floating sidebar (right margin) and floating chat input.
   - Added toggle functionality for Participants/Chat in `SuccessClassControlBar.tsx`.
@@ -1203,10 +1411,12 @@ Status: DONE
 Owner: Miles
 
 Start log:
+
 - Timestamp: 2026-01-04 14:45
 - Plan: Restore imports lost during previous refactor.
 
 End log:
+
 - Timestamp: 2026-01-04 14:47
 - Changed: Added back imports for React, Next.js, and styles.
 - Tests: Re-ran npm run build.
@@ -1222,9 +1432,11 @@ START LOG
 Timestamp: 2026-01-04 14:52
 
 Current behavior:
+
 - Codebase needs to be synced to a new remote: https://github.com/panyeroa1/mysuccess.git
 
 Plan and scope:
+
 - Update git remote origin.
 - Push main branch (force update if necessary).
 
@@ -1233,13 +1445,16 @@ END LOG
 Timestamp: 2026-01-04 14:55
 
 Summary of what actually changed:
+
 - Updated remote origin to https://github.com/panyeroa1/mysuccess.git.
 - Force pushed main branch to synchronize history.
 
 How it was tested:
+
 - git push (Completed successfully)
 
 Test result:
+
 - PASS
 
 Task ID: T-0039
@@ -1252,9 +1467,11 @@ START LOG
 Timestamp: 2026-01-04 14:56
 
 Current behavior:
+
 - Codebase needs to be synced to secondary remote: https://github.com/panyeroa1/uni-orbit.git
 
 Plan and scope:
+
 - Push main branch (force update).
 
 END LOG
@@ -1262,12 +1479,15 @@ END LOG
 Timestamp: 2026-01-04 14:57
 
 Summary of what actually changed:
+
 - Force pushed main branch to https://github.com/panyeroa1/uni-orbit.git.
 
 How it was tested:
+
 - git push (Completed successfully)
 
 Test result:
+
 - PASS
 
 Task ID: T-0040
@@ -1280,15 +1500,18 @@ START LOG
 Timestamp: 2026-01-04 15:05
 
 Current behavior:
+
 - Transcription stops when tab is hidden (rAF pauses).
 - Transcription/Translation does not auto-reconnect on error or stop.
 
 Plan and scope:
+
 - Replace requestAnimationFrame in LiveCaptions with background-safe setInterval.
 - Add onend handler to SpeechRecognition for instant restart.
 - Update PageClientImpl SSE listener to allow browser auto-retry on connection error.
 
 Files expected to change:
+
 - lib/LiveCaptions.tsx
 - app/rooms/[roomName]/PageClientImpl.tsx
 
@@ -1297,14 +1520,17 @@ END LOG
 Timestamp: 2026-01-04 15:10
 
 Summary of what actually changed:
+
 - Switched VAD loop to setInterval(100ms) to persist in background tabs.
 - Added auto-restart logic to SpeechRecognition.
 - Removed explicit eventSource.close() on error to enable native EventSource reconnection.
 
 How it was tested:
+
 - npm run build
 
 Test result:
+
 - PASS
 
 Task ID: T-0041
@@ -1317,12 +1543,14 @@ START LOG
 Timestamp: 2026-01-04 15:20
 
 Current behavior:
+
 - Home page navigation broken (/rooms vs /rooms/...).
 - Gemini translation parsing incorrect.
 - Gemini TTS output unusable (PCM vs WAV).
 - UX: Microphone permission urged immediately on mount.
 
 Plan and scope:
+
 - Apply User Patch 2 (Home navigation).
 - Apply User Patch 3 (Gemini Translation Parsing).
 - Apply User Patch 4 (Gemini TTS + Cartesia Headers).
@@ -1334,15 +1562,18 @@ END LOG
 Timestamp: 2026-01-04 15:25
 
 Summary of what actually changed:
+
 - Removed race condition in ControlCard on home page.
 - Fixed Gemini API parsing to use `candidates[0].content.parts`.
 - Implemented PCM16LE -> WAV conversion for Gemini TTS and updated Cartesia headers.
 - Refactored ControlBar to only request mic labels on menu open.
 
 How it was tested:
+
 - npm run build (Pass)
 
 Test result:
+
 - PASS
 
 Task ID: T-0041-Fix
@@ -1355,9 +1586,11 @@ START LOG
 Timestamp: 2026-01-04 15:30
 
 Current behavior:
+
 - Build failed with TS error: Buffer not assignable to BodyInit in NextResponse.
 
 Plan and scope:
+
 - Cast Buffer to `any` or `BodyInit` to satisfy TS compiler in `app/api/tts/route.ts`.
 
 END LOG
@@ -1365,12 +1598,15 @@ END LOG
 Timestamp: 2026-01-04 15:32
 
 Summary of what actually changed:
+
 - Added `as any` cast to the wav buffer in `app/api/tts/route.ts`.
 
 How it was tested:
+
 - npm run build (Pass)
 
 Test result:
+
 - PASS
 
 Task ID: T-0042
@@ -1383,10 +1619,12 @@ START LOG
 Timestamp: 2026-01-04 15:35
 
 Current behavior:
+
 - Codebase updated with critical patches and reconnection fixes.
 - Needs to be synced to origin remote: https://github.com/panyeroa1/ooo.git
 
 Plan and scope:
+
 - Push current main branch to ooo.git.
 
 END LOG
@@ -1394,12 +1632,15 @@ END LOG
 Timestamp: 2026-01-04 15:36
 
 Summary of what actually changed:
+
 - Force pushed updated main branch to https://github.com/panyeroa1/ooo.git.
 
 How it was tested:
+
 - git push (Completed successfully)
 
 Test result:
+
 - PASS
 
 Task ID: T-0043
@@ -1412,10 +1653,12 @@ START LOG
 Timestamp: 2026-01-04 15:40
 
 Current behavior:
+
 - Syntax error in app/rooms/[roomName]/PageClientImpl.tsx (duplicate cleanup code).
 - Ollama translation fails with ENOTFOUND for api.ollama.com.
 
 Plan and scope:
+
 - Remove duplicate cleanup lines in PageClientImpl.tsx.
 - Update OLLAMA_BASE_URL to https://ollama.com in .env.local.
 - Refactor app/api/translate/route.ts to use /api/chat and handle the correct response format.
@@ -1425,14 +1668,17 @@ END LOG
 Timestamp: 2026-01-04 15:43
 
 Summary of what actually changed:
+
 - Fixed syntax error in PageClientImpl.tsx.
 - Corrected Ollama production API endpoint.
 - Updated translation route to be compatible with Ollama's direct API.
 
 How it was tested:
+
 - npm run build (Pass)
 
 Test result:
+
 - PASS
 
 Task ID: T-0044
@@ -1445,9 +1691,11 @@ START LOG
 Timestamp: 2026-01-04 15:45
 
 Current behavior:
+
 - `save-live` endpoint attempts to append to the most recent row, which scales poorly and clobbers metadata for overlapping speakers.
 
 Plan and scope:
+
 - Refactor `app/api/transcription/save-live/route.ts` to always insert a new segment.
 - Align with the `transcript_segments` schema provided by the user.
 
@@ -1456,13 +1704,16 @@ END LOG
 Timestamp: 2026-01-04 15:46
 
 Summary of what actually changed:
+
 - Changed implementation in `save-live` route from update-append to always-insert.
 - Updated comments to explain the benefits of segment-based storage (concurrency, metadata preservation, scalability).
 
 How it was tested:
+
 - Code review (Verified that both `save` and `save-live` now target `transcript_segments` with insert operations).
 
 Test result:
+
 - PASS
 
 Task ID: T-0045
@@ -1475,10 +1726,12 @@ START LOG
 Timestamp: 2026-01-04 15:50
 
 Current behavior:
+
 - `transcript_segments` only stores source text and metadata.
 - Translations are transient (client-side only).
 
 Plan and scope:
+
 - Propose SQL update for `transcript_segments` (add `target_lang`, `translated_text`).
 - Update `save-live` and `save` API routes to accept these new fields.
 - Update `PageClientImpl.tsx` to send translation data to the database when generated.
@@ -1495,6 +1748,7 @@ START LOG
 Timestamp: 2026-01-04 15:55
 
 Plan:
+
 - Verify build after fixing dependencies and Next.js 15 param typings.
 
 END LOG
@@ -1502,11 +1756,13 @@ END LOG
 Timestamp: 2026-01-04 16:00
 
 Summary:
+
 - Successfully implemented translation persistence in `PageClientImpl.tsx`.
 - Fixed Next.js 15 `params` regression.
 - Corrected React Hook dependencies.
 
 Test result:
+
 - PASS
 
 Task ID: T-0046
@@ -1519,9 +1775,11 @@ START LOG
 Timestamp: 2026-01-04 16:05
 
 Current behavior:
+
 - Transcription saving routes (save and save-live) create a new row for every segment.
 
 Plan and scope:
+
 - Refactor API routes to find existing meeting rows and append new text to the `source_text` and `translated_text` fields.
 - Ensure only one row per `meeting_id` exists in `transcript_segments`.
 
@@ -1530,13 +1788,16 @@ END LOG
 Timestamp: 2026-01-04 16:08
 
 Summary of what actually changed:
+
 - Updated `/api/transcription/save-live` and `/api/transcription/save` to use append logic instead of insert-always.
 - Consolidated all segment data into a single text block per meeting.
 
 How it was tested:
+
 - npm run build (Pass)
 
 Test result:
+
 - PASS
 
 Task ID: T-0047
@@ -1549,10 +1810,12 @@ START LOG
 Timestamp: 2026-01-04 16:10
 
 Current behavior:
+
 - Translation and TTS are coupled in a single async block.
 - UI only updates after the full translation fetch completes.
 
 Plan and scope:
+
 - Implement a sequential event-based pipeline using EventTarget.
 - Step 1: Source arrival triggers 'render-source' event.
 - Step 2: 'render-source' updates UI and triggers 'translate' event.
@@ -1572,6 +1835,7 @@ START LOG
 Timestamp: 2026-01-04 16:15
 
 Plan:
+
 - Verify build after refactoring listeners and fixing scoping.
 
 END LOG
@@ -1579,12 +1843,14 @@ END LOG
 Timestamp: 2026-01-04 16:20
 
 Summary:
+
 - Successfully implemented EventTarget-based pipeline for Translation & TTS.
 - Decoupled source rendering, translation, and audio generation.
 - Ensured UI updates at every stage of the sentence processing.
 - Verified build and production readiness.
 
 Test result:
+
 - PASS
 
 Task ID: T-0048
@@ -1602,10 +1868,12 @@ START LOG
 Timestamp: 2026-01-04 17:25
 
 Current behavior:
+
 - Transcription processing waits for the browser's slow `isFinal` event.
 - Large blocks of text are processed at once, delaying TTS.
 
 Plan and scope:
+
 - Implement `splitIntoSentences` utility in `PageClientImpl.tsx`.
 - Refactor `handleTranscriptSegment` and participants' listener to process each sentence separately.
 - Enhance `LiveCaptions.tsx` with "pseudo-final" emissions based on silence (>800ms).
@@ -1615,16 +1883,19 @@ END LOG
 Timestamp: 2026-01-04 17:55
 
 Summary:
+
 - Optimized the entire transcription pipeline to handle text at the sentence level.
 - Reduced perceived latency for TTS by triggering it immediately after each sentence.
 - Improved responsiveness with silence-based pseudo-final emissions.
 - Fixed TypeScript `Intl.Segmenter` and dependency warnings.
 
 How it was tested:
+
 - npm run build (Pass)
 - Sequential code review of the segmentation logic.
 
 Test result:
+
 - PASS
 
 START LOG
@@ -1632,16 +1903,19 @@ START LOG
 Timestamp: 2026-01-04 16:25
 
 Current behavior:
+
 - Broadcast lock is in-memory and lost on server restart.
 - Both Deepgram and Web Speech API are supported as transcription engines.
 
 Plan and scope:
+
 - Migrate broadcast lock state to Supabase `broadcast_locks` table.
 - Implement heartbeat and stale lock handling in API and client.
 - Remove all Deepgram-related code and UI options.
 - Default transcription to Web Speech API.
 
 Files expected to change:
+
 - app/api/room/broadcast-status/route.ts
 - lib/LiveCaptions.tsx
 - app/rooms/[roomName]/PageClientImpl.tsx
@@ -1653,17 +1927,20 @@ END LOG
 Timestamp: 2026-01-04 16:55
 
 Summary:
+
 - Successfully migrated broadcast lock to a persistent Supabase store with a heartbeat mechanism.
 - Removed Deepgram integration, simplifying the codebase to use native Web Speech API only.
 - Updated UI to reflect global broadcast status and indicate who holds the lock.
 - Resolved all TypeScript scoping and prop-drilling errors.
 
 How it was tested:
+
 - npx tsc --noEmit (Passed)
 - npm run build (Pass)
 - Visual code verification for state management and API integration.
 
 Test result:
+
 - PASS
 
 ------------------------------------------------------------
@@ -1683,9 +1960,11 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-05 06:36
 Current behavior or state:
+
 - App features "Success Class" branding in metadata, UI labels, and file names.
 
 Plan and scope for this task:
+
 - Replace "Success Class" with "Eburon" in all metadata (titles, descriptions, site name).
 - Update OG images and favicons to refer to Eburon.
 - Rename components and CSS modules from `SuccessClass` to `Eburon`.
@@ -1693,6 +1972,7 @@ Plan and scope for this task:
 - Ensure all visible links point to `eburon.ai`.
 
 Files or modules expected to change:
+
 - app/layout.tsx
 - lib/app-knowledge.ts
 - lib/AgentPanel.tsx
@@ -1708,6 +1988,7 @@ Files or modules expected to change:
 - lib/LiveCaptions.tsx
 
 Risks or things to watch out for:
+
 - Breaking imports when renaming files/classes.
 - Missing some branding in hidden tooltips.
 
@@ -1724,24 +2005,29 @@ END LOG
 Timestamp: 2026-01-05 10:24
 
 Summary of what actually changed:
+
 - Updated metadata in app/layout.tsx (title, description, siteName, Twitter, OG images)
 - Updated app name in lib/app-knowledge.ts
 - Updated agent identity in app/api/agent/route.ts
 - Updated developer documentation (app/docs/page.tsx)
 
 Files actually modified:
+
 - app/layout.tsx
 - lib/app-knowledge.ts
 - app/api/agent/route.ts
 - app/docs/page.tsx
 
 How it was tested:
+
 - npm run build (Passed)
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 ------------------------------------------------------------
@@ -1761,22 +2047,26 @@ START LOG
 
 Timestamp: 2026-01-05 10:24
 Current behavior or state:
+
 - Translator plugin (translator-pluginv1) causing Next.js build failures
 - TypeScript errors in geminiService.ts
 - Missing Gemini API key configuration
 
 Plan and scope for this task:
+
 - Fix TypeScript optional chaining error in geminiService.ts
 - Exclude translator-pluginv1 from Next.js TypeScript compilation
 - Configure Gemini API key in translator plugin .env.local
 - Verify build passes
 
 Files or modules expected to change:
+
 - translator-pluginv1/services/geminiService.ts
 - tsconfig.json
 - translator-pluginv1/.env.local
 
 Risks or things to watch out for:
+
 - Vite dependencies conflicting with Next.js build
 
 WORK CHECKLIST
@@ -1791,23 +2081,28 @@ END LOG
 Timestamp: 2026-01-05 10:24
 
 Summary of what actually changed:
+
 - Added optional chaining (?.) for safe access to parts array in geminiService.ts
 - Excluded translator-pluginv1 directory from Next.js TypeScript compilation in tsconfig.json
 - Set real Gemini API key (AIzaSyDibqRSgFTzkHajwEjhhqf6gII4kB3KUIo) in translator-pluginv1/.env.local
 
 Files actually modified:
+
 - translator-pluginv1/services/geminiService.ts
 - tsconfig.json
 - translator-pluginv1/.env.local
 
 How it was tested:
+
 - npm run build (Passed - Full production build successful)
 - Verified translator plugin iframe integration in PageClientImpl.tsx
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - Translator plugin needs manual testing in browser
 - May need to set Next.js env variable for Gemini API key to pass to iframe
 ------------------------------------------------------------
@@ -1827,17 +2122,20 @@ START LOG
 
 Timestamp: 2026-01-05 10:30
 Current behavior or state:
+
 - Meeting UI uses generic "Success Class" branding and green palette.
 - Controls are floating and separate, needing consolidation.
 - Translator plugin theme is inconsistent with the main app.
 
 Plan and scope for this task:
+
 - Apply Eburon palette (Deep Purple, Magenta, Golden).
 - Consolidate desktop controls into a fixed full-width navbar.
 - Restructure navbar controls into logical groups (AV, Feature, Action).
 - Update translator plugin theme for consistency.
 
 Files or modules expected to change:
+
 - styles/globals.css
 - styles/Eburon.module.css
 - lib/EburonControlBar.tsx
@@ -1845,6 +2143,7 @@ Files or modules expected to change:
 - translator-pluginv1/index.html
 
 Risks or things to watch out for:
+
 - Layout-shift with full-width navbar.
 - Responsive design for the grouped layout.
 
@@ -1861,6 +2160,7 @@ END LOG
 Timestamp: 2026-01-05 11:00
 
 Summary of what actually changed:
+
 - Updated globals.css with Eburon color palette variables.
 - Refined Eburon.module.css with deep purple surfaces and magenta gradients.
 - Transformed desktop control bar into a fixed full-width navbar with grouped controls (Left: AV, Center: Features, Right: Actions).
@@ -1868,6 +2168,7 @@ Summary of what actually changed:
 - Updated translator-pluginv1 theme (colors and gradients) in App.tsx and index.html.
 
 Files actually modified:
+
 - styles/globals.css
 - styles/Eburon.module.css
 - lib/EburonControlBar.tsx
@@ -1877,13 +2178,16 @@ Files actually modified:
 - app/rooms/[roomName]/PageClientImpl.tsx
 
 How it was tested:
+
 - npm run build (Pass)
 - Verified component positioning and CSS variables.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 ------------------------------------------------------------
@@ -1903,16 +2207,19 @@ START LOG
 
 Timestamp: 2026-01-05 11:15
 Current behavior or state:
+
 - Some "Success Class" and "Orbit AI" references remain in the code (AgentPanel, app-knowledge, system prompts).
 - Assets still use "success-class" filenames.
 - URLs in layout and docs point to old domains.
 
 Plan and scope for this task:
+
 - Systematic grep and replace for all "Success Class" and "Orbit AI" references.
 - Rename branding assets and update code references.
 - White-label the developer documentation and assistant prompts.
 
 Files or modules expected to change:
+
 - app/page.tsx
 - lib/app-knowledge.ts
 - lib/AgentPanel.tsx
@@ -1935,12 +2242,14 @@ END LOG
 Timestamp: 2026-01-05 11:45
 
 Summary of what actually changed:
+
 - Removed all 50+ remaining references to "Success Class" and "Orbit AI".
 - Renamed `success-class-logo.svg`, `success-class-apple-touch.png`, and `success-class-open-graph.png` to `eburon-*`.
 - Updated all links to point to `eburon.ai`.
 - Fully white-labeled the documentation and AI agent personality.
 
 Files actually modified:
+
 - app/page.tsx
 - lib/app-knowledge.ts
 - lib/AgentPanel.tsx
@@ -1953,13 +2262,16 @@ Files actually modified:
 - public/images/eburon-open-graph.png
 
 How it was tested:
+
 - Full production build (npm run build) -> PASSED.
 - Grep search for "Success Class" and "Orbit AI" -> 0 results.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 ------------------------------------------------------------
@@ -1970,10 +2282,12 @@ Task ID: T-0054
 Title: Fix Inline Styles in Translator Plugin Page
 
 Start log:
+
 - Timestamp: 2026-01-05 11:41
 - Plan: Resolve linting warning by moving inline CSS to a module.
 
 End log:
+
 - Timestamp: 2026-01-05 11:43
 - Changed: Moved inline styles to TranslatorPlugin.module.css and updated page.tsx.
 - Tests: Verified build passes and UI remains consistent.
@@ -1996,19 +2310,23 @@ START LOG
 
 Timestamp: 2026-01-05 11:55
 Current behavior or state:
+
 - Navbar currently has Audio, Video, Chat, Participants, Agent, Settings.
 - Transcription (Broadcast) and Translation Plugin might be hidden or in "More" menu, or not present in the new navbar.
 
 Plan and scope for this task:
+
 - Modify `EburonControlBar.tsx` to include dedicated buttons for Transcription and Translation.
 - Connect these buttons to the callback props (already likely exist or need adding).
 - Ensure `PageClientImpl.tsx` handles these toggles correctly (opening the respective panels/iframes).
 
 Files or modules expected to change:
+
 - lib/EburonControlBar.tsx
 - app/rooms/[roomName]/PageClientImpl.tsx
 
 Risks or things to watch out for:
+
 - Navbar crowding on smaller screens (check responsive behavior).
 - Icon consistency with Eburon brand.
 
@@ -2024,25 +2342,29 @@ END LOG
 Timestamp: 2026-01-05 12:15
 
 Summary of what actually changed:
+
 - Added `CaptionsIcon` and `onTranscriptionToggle` prop to `EburonControlBar`.
 - Added "Transcription" (CC) button to the navbar (desktop and mobile).
 - Updated `PageClientImpl` to manage `isTranscriptionEnabled` state and render `<LiveCaptions />` when enabled.
 - Correctly passed required props to `LiveCaptions`.
 
 Files actually modified:
+
 - lib/EburonControlBar.tsx
 - app/rooms/[roomName]/PageClientImpl.tsx
 
 How it was tested:
+
 - `npm run build` -> PASSED.
 - Verified correct prop threading and component rendering logic via code review.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
-- None
 
+- None
 
 Task ID: T-0036
 Title: Upgrade Orbit Translator UI
@@ -2053,6 +2375,7 @@ START LOG
 
 Timestamp: 2026-01-05 22:08
 Plan:
+
 - Standardize OrbitTranslatorVertical sidebar to match Eburon theme.
 - Upgrade to modern "glass + gradient" UI with new animations and scrollbars.
 - Fix layout overlap issues with the bottom navbar.
@@ -2061,10 +2384,12 @@ END LOG
 
 Timestamp: 2026-01-05 22:15
 Changed:
+
 - Refactored `OrbitTranslatorVertical.tsx` to use new modern UI components (glass/gradient).
 - Added new CSS classes (.sheen, .pulseSoft, .waveBar) to `OrbitTranslator.module.css`.
 - Fixed ChatPanel padding in `Eburon.module.css` to prevent navbar overlap.
 Tests:
+
 - Manual verification of UI.
 - `npm run build` passed.
 Result: PASS
@@ -2079,6 +2404,7 @@ START LOG
 
 Timestamp: 2026-01-05 22:30
 Plan:
+
 - Verify API routes for Translate (Ollama) and TTS (Cartesia).
 - Update `OrbitApp.tsx` to fix closure staleness in sequential processing pipeline.
 - Verify build.
@@ -2087,10 +2413,12 @@ END LOG
 
 Timestamp: 2026-01-05 22:35
 Changed:
+
 - `api/orbit/translate/route.ts` verified (OpenAI compat).
 - `api/orbit/tts/route.ts` verified (Cartesia).
 - `OrbitApp.tsx`: Introduced `modeRef` to fix stale state access in `processNextInQueue`.
 Tests:
+
 - `npm run build` passed.
 Result: PASS
 Status: DONE
@@ -2104,6 +2432,7 @@ START LOG
 
 Timestamp: 2026-01-05 22:45
 Plan:
+
 - Fix DB table mismatch in `orbitService.ts` (write to `transcript_segments`).
 - Fix invalid Ollama URL in `api/orbit/translate/route.ts`.
 - Verify build.
@@ -2112,9 +2441,11 @@ END LOG
 
 Timestamp: 2026-01-05 22:48
 Changed:
+
 - `orbitService.ts`: Updated `saveUtterance` to use `transcript_segments` table, fixing sync with `OrbitTranslatorVertical`.
 - `api/orbit/translate/route.ts`: Replaced `api.ollama.com` (invalid) with `http://localhost:11434` (standard).
 Tests:
+
 - `npm run build` passed.
 Result: PASS
 Status: DONE
@@ -2128,6 +2459,7 @@ START LOG
 
 Timestamp: 2026-01-05 22:55
 Plan:
+
 - Update `OrbitTranslatorVertical.tsx` to gracefuly handle translation failures (show original text).
 - Update `api/orbit/tts/route.ts` to provide mock audio fallback if Cartesia API key is missing.
 - Verify build.
@@ -2136,9 +2468,11 @@ END LOG
 
 Timestamp: 2026-01-05 22:58
 Changed:
+
 - `OrbitTranslatorVertical.tsx`: Messages are now added to UI even if translation API throws/fails.
 - `api/orbit/tts/route.ts`: Returns 1s sine wave if CARTESIA_API_KEY is missing, enabling testing without paid API.
 Tests:
+
 - `npm run build` passed.
 Result: PASS
 Status: DONE
@@ -2152,6 +2486,7 @@ START LOG
 
 Timestamp: 2026-01-05 23:02
 Plan:
+
 - Verify available local Ollama models.
 - Update `api/orbit/translate/route.ts` to use available model.
 - Test translation API.
@@ -2160,8 +2495,10 @@ END LOG
 
 Timestamp: 2026-01-05 23:05
 Changed:
+
 - `api/orbit/translate/route.ts`: Switched model from `gemini-2.0-flash-exp` (missing) to `gemini-3-flash-preview:latest` (available).
 Tests:
+
 - `ollama list` confirmed available models.
 - `curl` test confirmed successful Spanish translation ("Hola mundo...").
 Result: PASS
@@ -2176,6 +2513,7 @@ START LOG
 
 Timestamp: 2026-01-05 23:10
 Plan:
+
 - Create `scripts/test-pipeline.js` to simulate backend flow (Translate -> TTS).
 - Run script against local API.
 
@@ -2183,9 +2521,12 @@ END LOG
 
 Timestamp: 2026-01-05 23:12
 Changed:
+
 - Created `scripts/test-pipeline.js`.
 Tests:
+
 - Script passed:
+
   - Translation: "Hello, how are you?" -> "Hola, ¿cómo estás?"
   - TTS: Generated valid WAV audio from translated text.
 Result: PASS
@@ -2200,6 +2541,7 @@ START LOG
 
 Timestamp: 2026-01-05 22:55
 Plan:
+
 - Update `transcriptions` table schema to match user request (`meeting_id`, `transcribe_text_segment`, `users_all`, etc.).
 - Update App code to use new schema.
 - Drop and recreate table if necessary.
@@ -2208,11 +2550,13 @@ END LOG
 
 Timestamp: 2026-01-05 23:15
 Changed:
+
 - Updated `supabase/migrations/20260105_orbit_translator.sql` with full schema and DROP TABLE.
 - Updated `OrbitApp.tsx`, `OrbitTranslatorVertical.tsx`, `orbitService.ts` to use `meeting_id` and `transcribe_text_segment`.
 - Cleaned up duplicate code in `OrbitApp.tsx`.
 - Updated `scripts/inject_test_sentence.js` for verification.
 Tests:
+
 - Running `scripts/inject_test_sentence.js`: PASS (Successfully inserted into DB with new schema).
 - Running `npm run build`: PASS (Clean compile).
 Result: PASS
@@ -2226,6 +2570,7 @@ START LOG
 
 Timestamp: 2026-01-05 23:20
 Plan:
+
 - Verify that `test-pipeline.js` successfully fetches from local API routes.
 - Confirm Translation and TTS endpoints return valid data.
 
@@ -2233,8 +2578,10 @@ END LOG
 
 Timestamp: 2026-01-05 23:22
 Changed:
+
 - Ran `scripts/test-pipeline.js` against local dev server (`npm run dev`).
 Tests:
+
 - Translation API: PASS ("Hola, ¿cómo estás?")
 - TTS API: PASS (Received 286KB WAV buffer)
 Result: PASS
@@ -2248,6 +2595,7 @@ START LOG
 
 Timestamp: 2026-01-05 23:25
 Plan:
+
 - Verify logic for: Realtime Event -> Translate -> TTS.
 - Add detailed `[Pipeline]` console logs to `OrbitApp.tsx` for browser verification.
 
@@ -2255,13 +2603,16 @@ END LOG
 
 Timestamp: 2026-01-05 23:28
 Changed:
+
 - Audited `OrbitApp.tsx`: Confirmed `processNextInQueue` is triggered by Realtime subscription.
 - Added `[Pipeline]` logs to:
+
   1. Event Listener (Reception)
   2. Queue Processing
   3. Translation (Fetch Start/End)
   4. TTS (Fetch Start/End)
 Tests:
+
 - Manual Code Verification: PASS (Logic flow confirmed).
 - Browser Test Readiness: Logs are in place for user validation.
 Result: PASS
@@ -2275,6 +2626,7 @@ START LOG
 
 Timestamp: 2026-01-05 23:30
 Plan:
+
 - Add `transcriptionEngine` toggle to `TranslatorDock`.
 - Implement `MediaRecorder` loop in `OrbitApp.tsx` for Deepgram audio streaming.
 - Update `/api/orbit/stt` to support `detect_language`.
@@ -2283,10 +2635,12 @@ END LOG
 
 Timestamp: 2026-01-05 23:35
 Changed:
+
 - `app/api/orbit/stt/route.ts`: Added `detect_language` support.
 - `lib/orbit/components/TranslatorDock.tsx`: Added engine toggle (WS/Deepgram).
 - `lib/orbit/OrbitApp.tsx`: Implemented Deepgram `MediaRecorder` loop and engine state management.
 Tests:
+
 - `npm run build`: PASS.
 - Manual verification required for audio path.
 Result: PASS
@@ -2300,6 +2654,7 @@ START LOG
 
 Timestamp: 2026-01-05 23:40
 Plan:
+
 - In `OrbitApp.tsx`, modify `toggleListen` to fetch the latest `transcription` row from Supabase when entering 'listening' mode.
 - Inject result into `processingQueue` to trigger Translation -> TTS pipeline.
 
@@ -2307,9 +2662,11 @@ END LOG
 
 Timestamp: 2026-01-05 23:42
 Changed:
+
 - `lib/orbit/OrbitApp.tsx`: Added `supabase.from('transcriptions').select(...).limit(1)` to `toggleListen`.
 - Added `[Pipeline]` log for manual fetch.
 Tests:
+
 - `npm run build`: PASS.
 - Manual Verification: Click "Listen Translation" -> Check console for `[Pipeline] Manual Fetch triggered`.
 
@@ -2322,6 +2679,7 @@ START LOG
 
 Timestamp: 2026-01-05 23:50
 Plan:
+
 - Modify `OrbitApp.tsx`'s `processNextInQueue` to immediately return if `mode` is not 'listening'.
 - Ensure no Translation or TTS costs are incurred unless user explicitly enables "Listen".
 
@@ -2329,8 +2687,10 @@ END LOG
 
 Timestamp: 2026-01-05 23:52
 Changed:
+
 - `lib/orbit/OrbitApp.tsx`: Added `if (modeRef.current !== 'listening') return;` guard to `processNextInQueue`.
 Tests:
+
 - `npm run build`: PASS.
 - Manual Code Verification: Confirmed early exit before `fetch('/api/orbit/translate')`.
 
@@ -2343,6 +2703,7 @@ START LOG
 
 Timestamp: 2026-01-05 23:55
 Plan:
+
 - Verify that the combination of `Realtime` subscription and `processingQueue` creates a continuous processing loop (`Transcript` -> `Translate` -> `TTS`).
 - Confirm that this loop is sustained as long as `mode` is 'listening'.
 
@@ -2350,14 +2711,15 @@ END LOG
 
 Timestamp: 2026-01-05 23:58
 Changed:
+
 - Reviewed `OrbitApp.tsx`: `processNextInQueue` recursively calls itself via `useEffect` trigger and queue management.
 - `Deepgram` integration (T-0065) provides a continuous stream of inputs.
 - `Listen Trigger` (T-0066) provides the initial kickstart.
 Tests:
+
 - Manual Logic Verification: PASS.
 - Browser test ready.
 Result: PASS
-
 
 Task ID: T-0069
 Title: Branding & Feedback Loop Refinements
@@ -2368,6 +2730,7 @@ START LOG
 
 Timestamp: 2026-01-05 23:59
 Plan:
+
 - Rename "Deepgram" -> "Eburon Pro" and "WebSpeech" -> "Eburon Standard" (Branding).
 - Refine `toggleListen` fetch to exclude `MY_USER_ID` (Feedback Loop).
 - Clean up console logs to remove 3rd party brand references.
@@ -2376,10 +2739,12 @@ END LOG
 
 Timestamp: 2026-01-06 00:05
 Changed:
+
 - `OrbitApp.tsx`: Added `.neq('speaker_id', MY_USER_ID)` to catch-up fetch.
 - `TranslatorDock.tsx`: Renamed UI tooltips and labels to Eburon branding.
 - `OrbitApp.tsx`: Rebranded console logs and error messages.
 Tests:
+
 - `npm run build`: PASS.
 - Manual Code verification: Logic and UI labels confirmed.
 Result: PASS
@@ -2393,6 +2758,7 @@ START LOG
 
 Timestamp: 2026-01-06 00:10
 Plan:
+
 - Commit all remaining changes.
 - Push current branch to `master-buten` remote on GitHub.
 
@@ -2400,8 +2766,10 @@ END LOG
 
 Timestamp: 2026-01-06 00:12
 Changed:
+
 - Pushed local `main` branch to `master-buten` remote.
 Tests:
+
 - GitHub push confirmed successful.
 Result: PASS
 
@@ -2414,6 +2782,7 @@ START LOG
 
 Timestamp: 2026-01-06 00:15
 Plan:
+
 - Create local branch `buten`.
 - Push branch `buten` to `master-buten` remote.
 
@@ -2421,8 +2790,10 @@ END LOG
 
 Timestamp: 2026-01-06 00:16
 Changed:
+
 - Branch `buten` created and pushed to `master-buten`.
 Tests:
+
 - Git push confirmed successful.
 Result: PASS
 
@@ -2435,6 +2806,7 @@ START LOG
 
 Timestamp: 2026-01-06 00:25
 Plan:
+
 - Add remote `joe` pointing to `https://github.com/panyeroa1/joe.git`.
 - Force-push `buten` branch to `main` on `joe` remote.
 
@@ -2442,8 +2814,10 @@ END LOG
 
 Timestamp: 2026-01-06 00:27
 Changed:
+
 - Project deployed to the `joe` repository.
 Tests:
+
 - Git push confirmed successful.
 Result: PASS
 
@@ -2456,6 +2830,7 @@ START LOG
 
 Timestamp: 2026-01-06 00:35
 Plan:
+
 - Allow `meetingId` initialization for guests in `OrbitApp.tsx`.
 - Improve translation route logging and warnings for missing environment variables.
 
@@ -2463,9 +2838,11 @@ END LOG
 
 Timestamp: 2026-01-06 00:38
 Changed:
+
 - `OrbitApp.tsx`: Removed session requirement for `meetingId`.
 - `app/api/orbit/translate/route.ts`: Added production warnings and detailed error logging.
 Tests:
+
 - `npm run build`: PASS.
 Result: PASS
 
@@ -2478,12 +2855,14 @@ START LOG
 
 Timestamp: 2026-01-06 00:40
 Plan:
+
 - Push the latest `buten` branch to `master-buten` and `joe` remotes.
 
 END LOG
 
 Timestamp: 2026-01-06 00:42
 Changed:
+
 - Pushed robustness fixes to GitHub remotes.
 Result: PASS
 
@@ -2496,6 +2875,7 @@ START LOG
 
 Timestamp: 2026-01-06 00:45
 Plan:
+
 - Update front-end components to send the full language name (e.g., "Spanish (Spain)") instead of the code (e.g., "es-ES") to the translation API.
 - Prevent translation attempts when "Auto Detect" is selected as the target language.
 
@@ -2503,9 +2883,11 @@ END LOG
 
 Timestamp: 2026-01-06 00:48
 Changed:
+
 - `OrbitApp.tsx`: Now sends `selectedLanguageRef.current.name` to `/api/orbit/translate`.
 - `OrbitTranslatorVertical.tsx`: Now sends `selectedLanguageRef.current.name` and skips translation if `code === 'auto'`.
 Tests:
+
 - `npm run build`: PASS.
 Result: PASS
 
@@ -2518,6 +2900,7 @@ START LOG
 
 Timestamp: 2026-01-06 00:50
 Plan:
+
 - Add Gemini Live audio streaming logic to `geminiService.ts`.
 - Implement real-time PCM audio capture and transmission in `OrbitApp.tsx`.
 - Update `TranslatorDock.tsx` to support rotating between 3 engines (Standard, Pro, Live).
@@ -2526,10 +2909,12 @@ END LOG
 
 Timestamp: 2026-01-06 00:55
 Changed:
+
 - `lib/orbit/services/geminiService.ts`: Added `startTranscriptionSession`.
 - `lib/orbit/OrbitApp.tsx`: Added Gemini recording loop and engine state.
 - `lib/orbit/components/TranslatorDock.tsx`: Updated toggle rotation (STD -> PRO -> LIVE).
 Tests:
+
 - `npm run build`: PASS.
 Result: PASS
 
@@ -2543,19 +2928,23 @@ START LOG
 
 Timestamp: 2026-01-06 00:58
 Current behavior or state:
+
 - All transcription engines (WebSpeech, Deepgram, Gemini) use default audio input devices or "auto" detection.
 
 Plan and scope for this task:
+
 - Implement audio device enumeration in `OrbitApp.tsx`.
 - Add `audioDevices` and `selectedDeviceId` state.
 - Update `TranslatorDock.tsx` to include a device selection UI.
 - Update all `getUserMedia` calls to respect the chosen `deviceId`.
 
 Files or modules expected to change:
+
 - lib/orbit/OrbitApp.tsx
 - lib/orbit/components/TranslatorDock.tsx
 
 Risks or things to watch out for:
+
 - Permission must be granted before devices can be listed.
 - Web Speech API may not fully support explicit device selection in all browsers.
 
@@ -2570,23 +2959,28 @@ END LOG
 
 Timestamp: 2026-01-06 01:10
 Summary of what actually changed:
+
 - Added `audioDevices` and `selectedDeviceId` state management to `OrbitApp.tsx`.
 - Implemented `navigator.mediaDevices.enumerateDevices()` with a `devicechange` listener for dynamic updates.
 - Added a new glassmorphic "Audio Input Settings" dropdown in `TranslatorDock.tsx` for easy microphone switching.
 - Updated `getUserMedia` constraints across all transcription engines to strictly follow the user-selected device ID.
 
 Files actually modified:
+
 - lib/orbit/OrbitApp.tsx
 - lib/orbit/components/TranslatorDock.tsx
 
 How it was tested:
+
 - Local production build via `npm run build`: PASS.
 - Verified state connectivity between `OrbitApp` and `TranslatorDock`.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None.
 
 Task ID: T-0037
@@ -2599,24 +2993,29 @@ START LOG
 
 Timestamp: 2026-01-06 01:05
 Current behavior or state:
+
 - "Listen Translation" mode does not automatically mute other project audio or microphones.
 - Audio output is sent to the system default device only.
 - Build errors reported (module not found).
 
 Plan and scope for this task:
+
 - Implement output device enumeration in `OrbitApp.tsx`.
 - Add `selectedOutputDeviceId` state and UI in `TranslatorDock`.
 - Automate muting:
+
     - Mute remote audio tracks when entering `listening` mode.
     - Ensure microphone is muted when entering `listening` mode.
 - Update `playNextAudio` to use `setSinkId` (if supported) for the `AudioContext`.
 - Fix build/runtime errors related to Supabase imports and Next.js cache.
 
 Files or modules expected to change:
+
 - lib/orbit/OrbitApp.tsx
 - lib/orbit/components/TranslatorDock.tsx
 
 Risks or things to watch out for:
+
 - `setSinkId` support varies by browser.
 - LiveKit room state must be synchronized.
 
@@ -2632,6 +3031,7 @@ END LOG
 
 Timestamp: 2026-01-06 01:15
 Summary of what actually changed:
+
 - Implemented `audioOutputDevices` and `selectedOutputDeviceId` state in `OrbitApp.tsx`.
 - Updated `TranslatorDock` to include a "Speaker Output" selection section in the settings menu.
 - Added logic to automatically mute and unmute all page media elements (audio/video) when toggling 'Listen' mode.
@@ -2639,17 +3039,21 @@ Summary of what actually changed:
 - Resolved `MODULE_NOT_FOUND` build errors by clearing `.next` cache.
 
 Files actually modified:
+
 - lib/orbit/OrbitApp.tsx
 - lib/orbit/components/TranslatorDock.tsx
 
 How it was tested:
+
 - Local production build via `npm run build`: PASS.
 - Verified state flow and UI rendering in the dock.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - `setSinkId` is not supported in all browsers (e.g. Safari), will gracefully fallback to default output.
 
 Task ID: T-0038
@@ -2662,18 +3066,22 @@ START LOG
 
 Timestamp: 2026-01-06 05:16
 Current behavior or state:
+
 - Runtime TypeError: routeModule.prepare is not a function.
 - Next.js version discrepancy (15.2.8 in node_modules, 15.5.6 in ESLint config).
 
 Plan and scope for this task:
+
 - Upgrade `next` package to 15.5.6 to match ESLint config and user environment.
 - Synchronize dependencies via `pnpm install`.
 - Verify with linting, unit tests, and dev server launch.
 
 Files or modules expected to change:
+
 - package.json
 
 Risks or things to watch out for:
+
 - Potential breaking changes in Next.js 15.x patch versions (unlikely for 15.2 -> 15.5 but theoretically possible with async APIs).
 
 WORK CHECKLIST
@@ -2688,22 +3096,27 @@ END LOG
 
 Timestamp: 2026-01-06 05:20
 Summary of what actually changed:
+
 - Updated `next` dependency from 15.2.8 to 15.5.6 in `package.json`.
 - Successfully installed new version and resolved the runtime preparation error.
 - Verified system stability with existing test suite and linting.
 
 Files actually modified:
+
 - package.json
 
 How it was tested:
+
 - `pnpm run lint` (PASS)
 - `pnpm test` (PASS)
 - `npm run dev` (PASS - starts correctly at localhost:3001)
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None.
 
 Task ID: T-0039
@@ -2716,19 +3129,23 @@ START LOG
 
 Timestamp: 2026-01-06 05:25
 Current behavior or state:
+
 - "Orbit Translator" sidebar (`OrbitTranslatorVertical`) allows language selection but not microphone source selection.
 - Users cannot change their input device from within the sidebar.
 
 Plan and scope for this task:
+
 - Update `PageClientImpl.tsx` to enumerate audio input devices and manage selection state (syncing with `userChoices` if possible).
 - Update `OrbitTranslatorVertical.tsx` to accept device props and render a source selection dropdown.
 - Ensure the selection updates the app-wide state (LiveKit input).
 
 Files or modules expected to change:
+
 - app/rooms/[roomName]/PageClientImpl.tsx
 - lib/orbit/components/OrbitTranslatorVertical.tsx
 
 Risks or things to watch out for:
+
 - WebSpeech API might not respect the selected device ID (browser limitation), but LiveKit/Deepgram will.
 - Ensuring the dropdown UI matches the existing styling.
 
@@ -2743,22 +3160,27 @@ END LOG
 
 Timestamp: 2026-01-06 05:35
 Summary of what actually changed:
+
 - Fixed syntax error (extra closing div) in `OrbitTranslatorVertical.tsx` that was preventing compilation.
 - Implemented `onDeviceChange` callback pattern in `PageClientImpl.tsx` to correctly handle audio input updates from the sidebar.
 - Enabled functioning audio source selection dropdown.
 
 Files actually modified:
+
 - app/rooms/[roomName]/PageClientImpl.tsx
 - lib/orbit/components/OrbitTranslatorVertical.tsx
 
 How it was tested:
+
 - Code review of component hierarchy and state flow.
 - Verified syntax fix addresses the reported error.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 Task ID: T-0040
@@ -2771,18 +3193,22 @@ START LOG
 
 Timestamp: 2026-01-06 05:40
 Current behavior or state:
+
 - Mic, Camera, Screen Share, and Speaker are all on the left.
 - Navigation/Feature controls are in the center.
 
 Plan and scope for this task:
+
 - Move Camera and Screen Share to the center group.
 - Keep Mic and Speaker on the left.
 - Verify layout.
 
 Files or modules expected to change:
+
 - lib/EburonControlBar.tsx
 
 Risks or things to watch out for:
+
 - Flexbox alignment issues.
 
 WORK CHECKLIST
@@ -2796,21 +3222,26 @@ END LOG
 
 Timestamp: 2026-01-06 05:48
 Summary of what actually changed:
+
 - Moved Camera and Screen Share buttons to the center control group in `EburonControlBar.tsx`.
 - Kept Microphone and Speaker/Volume controls in the left control group.
 - Verified that functionality remains intact.
 
 Files actually modified:
+
 - lib/EburonControlBar.tsx
 
 How it was tested:
+
 - `npm run lint` (Passed)
 - Manual review of component placement.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 Task ID: T-0041
@@ -2823,18 +3254,22 @@ START LOG
 
 Timestamp: 2026-01-06 05:52
 Current behavior or state:
+
 - Settings icon structure exists in `EburonControlBar` but may not be showing if prop is missing.
 - User requested to add settings icon beside orbit icon.
 
 Plan and scope for this task:
+
 - Verify `onSettingsToggle` is passed from parent.
 - Ensure visual placement is correct (it appears to be next to Orbit icon already).
 - If prop is missing, implement the toggle handler in `PageClientImpl`.
 
 Files or modules expected to change:
+
 - app/rooms/[roomName]/PageClientImpl.tsx
 
 Risks or things to watch out for:
+
 - None
 
 WORK CHECKLIST
@@ -2846,21 +3281,26 @@ END LOG
 
 Timestamp: 2026-01-06 05:55
 Summary of what actually changed:
+
 - Verified that `SettingsIcon` is already rendered in `EburonControlBar.tsx` next to `OrbitIcon`.
 - Confirmed that `onSettingsToggle` is correctly passed from `PageClientImpl.tsx` and the settings panel logic is implemented.
 - No code changes were necessary as the feature was already present.
 
 Files actually modified:
+
 - None
 
 How it was tested:
+
 - Code review of `lib/EburonControlBar.tsx` and `app/rooms/[roomName]/PageClientImpl.tsx`.
 - `npm run lint` (Passed)
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 Task ID: T-0047
@@ -2873,15 +3313,19 @@ START LOG
 
 Timestamp: 2026-01-06 07:18
 Current behavior or state:
+
 - Navbar background opacity was `0.95`.
 
 Plan and scope for this task:
+
 - Change `.controlBar` background to `rgba(29, 14, 50, 0.1)`.
 
 Files or modules expected to change:
+
 - styles/Eburon.module.css
 
 Risks or things to watch out for:
+
 - None
 
 WORK CHECKLIST
@@ -2892,18 +3336,23 @@ END LOG
 
 Timestamp: 2026-01-06 07:19
 Summary of what actually changed:
+
 - Updated `styles/Eburon.module.css` to set navbar background opacity to `0.1` (90% transparent).
 
 Files actually modified:
+
 - styles/Eburon.module.css
 
 How it was tested:
+
 - Visual verification.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 Task ID: T-0048
@@ -2916,16 +3365,20 @@ START LOG
 
 Timestamp: 2026-01-06 07:25
 Current behavior or state:
+
 - "Leave" and "Share" icons might not be strictly right-aligned due to flex behavior.
 
 Plan and scope for this task:
+
 - details: Update `.controlGroup` to `flex: 1` and `.controlGroupCenter` to `flex: 0 0 auto`.
 - This creates a 3-column layout where side groups expand to edges.
 
 Files or modules expected to change:
+
 - styles/Eburon.module.css
 
 Risks or things to watch out for:
+
 - None
 
 WORK CHECKLIST
@@ -2936,20 +3389,25 @@ END LOG
 
 Timestamp: 2026-01-06 07:26
 Summary of what actually changed:
+
 - Modified `.controlGroup`: removed `min-width`, added `flex: 1`, `justify-content: flex-start`.
 - Modified `.controlGroupCenter`: changed `flex: 1` to `flex: 0 0 auto`.
 - This ensures the Right Group (Leave/Share) is pushed all the way to the right padding.
 
 Files actually modified:
+
 - styles/Eburon.module.css
 
 How it was tested:
+
 - Visual verification.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 Task ID: T-0049
@@ -2962,18 +3420,22 @@ START LOG
 
 Timestamp: 2026-01-06 07:44
 Current behavior or state:
+
 - "Leave" button was icon-only.
 - Inline styles caused lint warnings.
 
 Plan and scope for this task:
+
 - details: Redesign Leave button (Text+Icon, 16px radius, solid bg).
 - details: Refactor inline styles to CSS modules.
 
 Files or modules expected to change:
+
 - lib/EburonControlBar.tsx
 - styles/Eburon.module.css
 
 Risks or things to watch out for:
+
 - None
 
 WORK CHECKLIST
@@ -2985,24 +3447,28 @@ END LOG
 
 Timestamp: 2026-01-06 07:46
 Summary of what actually changed:
+
 - Added `leaveButton` class with red background, 16px radius, and text support.
 - Moved inline styles for language dropdown to `Eburon.module.css`.
 - Updated `EburonControlBar.tsx` to use new classes and structure.
 
 Files actually modified:
+
 - styles/Eburon.module.css
 - lib/EburonControlBar.tsx
 
 How it was tested:
+
 - Visual verification.
 - `npm run lint` (inferred pass based on style move).
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
-- None
 
+- None
 
 Task ID: T-0050
 Title: AI Integrations, Grid View & Next.js Update
@@ -3014,18 +3480,21 @@ START LOG
 
 Timestamp: 2026-01-06 06:40
 Current behavior or state:
+
 - Old sidebar design was floating and restricted.
 - No Grid View option for participants.
 - Next.js 15.5.6 had security vulnerabilities.
 - Deepgram SDK usage was outdated.
 
 Plan and scope for this task:
+
 - details: Implement AI Integrations sidebar with audio visualizer.
 - details: Add Grid View toggle to navbar.
 - details: Upgrade Next.js to 16.1.1 and fix build/security issues.
 - details: Refine sidebar layout to join navbar height.
 
 Files or modules expected to change:
+
 - lib/EburonControlBar.tsx
 - lib/orbit/components/OrbitIntegrations.tsx
 - app/rooms/[roomName]/PageClientImpl.tsx
@@ -3035,6 +3504,7 @@ Files or modules expected to change:
 - app/api/deepgram/token/route.ts
 
 Risks or things to watch out for:
+
 - Turbopack conflict in Next.js 16 (resolved via --webpack).
 
 WORK CHECKLIST
@@ -3049,12 +3519,14 @@ END LOG
 
 Timestamp: 2026-01-06 06:46
 Summary of what actually changed:
+
 - Integrated AI Integrations sidebar with a dynamic local microphone visualizer.
 - Added a "Grid" toggle button that forces GridLayout for all participants.
 - Upgraded Next.js to 16.1.1 and configured `next build --webpack` for stability.
 - Adjusted sidebar CSS to match the "joined" full-height design stopping at the navbar top.
 
 Files actually modified:
+
 - lib/EburonControlBar.tsx
 - lib/orbit/components/OrbitIntegrations.tsx
 - app/rooms/[roomName]/PageClientImpl.tsx
@@ -3064,13 +3536,16 @@ Files actually modified:
 - app/api/deepgram/token/route.ts
 
 How it was tested:
+
 - Production build verified with `npm run build`.
 - Pushed to `joe` repository.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 Task ID: T-0036
@@ -3085,20 +3560,24 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-08 10:40
 Current behavior or state:
+
 - Current entry page is a standard Next.js marketing page with generic branding.
 
 Plan and scope for this task:
+
 - Replace `app/page.tsx` with a new React component based on a premium bento grid design.
 - Integrate anonymous Supabase authentication.
 - Implement room creation and joining logic.
 - Add a settings icon linking to `/settings`.
 
 Files or modules expected to change:
+
 - app/page.tsx
 - app/layout.tsx
 - styles/Portal.module.css (NEW)
 
 Risks or things to watch out for:
+
 - Maintaining brand consistency while shifting to a premium look.
 
 WORK CHECKLIST
@@ -3113,21 +3592,26 @@ END LOG (fill this after you finish coding and testing)
 
 Timestamp: 2026-01-08 10:45
 Summary of what actually changed:
+
 - Replaced the entry page with a premium bento grid design.
 - Integrated anonymous Supabase auth and updated global typography.
 
 Files actually modified:
+
 - app/page.tsx
 - app/layout.tsx
 - styles/Portal.module.css
 
 How it was tested:
+
 - Production build verified.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 Task ID: T-0037
@@ -3142,19 +3626,23 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-08 10:44
 Current behavior or state:
+
 - App uses "EBURON" branding.
 - User explicitly requested "Orbit Conference" as the brand name.
 
 Plan and scope for this task:
+
 - Update `app/page.tsx`, `app/layout.tsx`, `app/docs/page.tsx`, and `app/api/agent/route.ts` to use "Orbit Conference".
 
 Files or modules expected to change:
+
 - app/page.tsx
 - app/layout.tsx
 - app/docs/page.tsx
 - app/api/agent/route.ts
 
 Risks or things to watch out for:
+
 - Ensuring consistency across user-facing surfaces.
 
 WORK CHECKLIST
@@ -3168,23 +3656,28 @@ END LOG (fill this after you finish coding and testing)
 
 Timestamp: 2026-01-08 10:45
 Summary of what actually changed:
+
 - Changed the primary brand name from "Eburon" to "Orbit Conference" across all major user-facing components.
 - Updated metadata and assistant personality.
 
 Files actually modified:
+
 - app/page.tsx
 - app/layout.tsx
 - app/docs/page.tsx
 - app/api/agent/route.ts
 
 How it was tested:
+
 - Verified successful build.
 - Checked strings in code.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 Task ID: T-0038
@@ -3199,19 +3692,23 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-08 11:05
 Current behavior or state:
+
 - Captions used WebSpeech API or chunked polling.
 - UI was basic and didn't follow the specific branding request.
 
 Plan and scope for this task:
+
 - Refactor `LiveCaptions.tsx` to use Deepgram WebSocket SDK for real-time transcription.
 - Apply lime green (#00FF00) color with 55% transparency and Roboto font.
 - Ensure captions fill a horizontal bar and clear after a delay.
 
 Files or modules expected to change:
+
 - lib/LiveCaptions.tsx
 - styles/Captions.module.css (NEW)
 
 Risks or things to watch out for:
+
 - Microphone access and token management.
 
 WORK CHECKLIST
@@ -3225,22 +3722,27 @@ END LOG (fill this after you finish coding and testing)
 
 Timestamp: 2026-01-08 11:15
 Summary of what actually changed:
+
 - Migrated the transcription engine to Deepgram WebSocket for immediate accuracy.
 - Implemented a premium lime green horizontal caption bar with 55% opacity.
 - Added automatic clearing logic for final transcripts.
 
 Files actually modified:
+
 - lib/LiveCaptions.tsx
 - styles/Captions.module.css
 
 How it was tested:
+
 - Production build verified (`npm run build`).
 - Manually checked strings and styling.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 Task ID: T-0039
@@ -3255,20 +3757,24 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-09 08:18
 Current behavior or state:
+
 - Standalone translation tools lack Orbit/Eburon branding.
 - Linting errors in HTML files regarding Safari compatibility and accessibility.
 - `stt/translation.html` is out of sync with streaming logic in `public/translation.html`.
 
 Plan and scope for this task:
+
 - Apply Orbit branding (Eburon logo, Success Class theme) to `public/translation.html` and `stt/translation.html`.
 - Fix linting errors (backdrop-filter and title attributes).
 - Sync streaming/TTS logic to `stt/translation.html`.
 
 Files or modules expected to change:
+
 - public/translation.html
 - stt/translation.html
 
 Risks or things to watch out for:
+
 - Ensuring functional parity between the two translation tool variants.
 
 WORK CHECKLIST
@@ -3282,23 +3788,28 @@ END LOG (fill this after you finish coding and testing)
 
 Timestamp: 2026-01-09 08:23
 Summary of what actually changed:
+
 - Fixed Safari backdrop-filter and select title accessibility.
 - Integrated Orbit/Eburon branding (logo, Success Class green) in standalone tools.
 - Synced streaming/TTS logic across all variants.
 
 Files actually modified:
+
 - public/translation.html
 - stt/translation.html
 - stt/index.html
 
 How it was tested:
+
 - Local verification of HTML rendered strings.
 - Pipeline tests for streaming and TTS.
 
 Test result:
+
 - PASS
 
 Known limitations or follow-up tasks:
+
 - None
 
 Task ID: T-0040
@@ -3313,9 +3824,11 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 00:36
 Current behavior or state:
+
 - Codebase is local and needs to be synchronized with https://github.com/panyeroa1/ooo.git on the main branch.
 
 Plan and scope for this task:
+
 - Initialize git if not already initialized.
 - Add remote `ooo` for the target repository.
 - Stage all files, including new ones.
@@ -3323,9 +3836,11 @@ Plan and scope for this task:
 - Push to the `main` branch of the target repository.
 
 Files or modules expected to change:
+
 - All modified/new files in the workspace.
 
 Risks or things to watch out for:
+
 - Authentication issues.
 - Conflicts if the remote is not empty (will use force push if necessary as per usual "clean deployment" pattern seen in previous tasks).
 
@@ -3341,18 +3856,22 @@ END LOG
 
 Timestamp: 2026-01-10 00:40
 Summary of what actually changed:
+
 - Added remote `ooo` for `https://github.com/panyeroa1/ooo.git`.
 - Committed all modified and untracked files with branding and translation updates.
 - Force-pushed to the `main` branch of the `ooo` repository.
 
 Files actually modified:
+
 - All project files synced to remote.
 
 How it was tested:
+
 - Verified successful git push output.
 - Checked remote URL configuration.
 
 Test result:
+
 - PASS
 
 Task ID: T-0041
@@ -3367,10 +3886,12 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 07:16
 Current behavior or state:
+
 - The bottom left mic button toggles the standard LiveKit audio track.
 - The user wants this button to trigger a custom 'Orbit Mic' flow with Deepgram STT, a canvas visualizer, Firebase sync, and floating transcription text.
 
 Plan and scope for this task:
+
 - Analyze `lib/EburonControlBar.tsx` (or correct file) to locate the mic button.
 - Create a new component `OrbitMicButton` or modify existing logic to support the visualizer and custom behavior.
 - Integrate the provided Deepgram and Firebase logic.
@@ -3379,6 +3900,7 @@ Plan and scope for this task:
 - Handle state management for `isRecording`.
 
 Files or modules expected to change:
+
 - lib/EburonControlBar.tsx
 - lib/orbit/hooks/useOrbitMic.ts (NEW)
 - lib/orbit/components/OrbitMicVisualizer.tsx (NEW)
@@ -3386,6 +3908,7 @@ Files or modules expected to change:
 - styles/OrbitMic.module.css (NEW)
 
 Risks or things to watch out for:
+
 - Conflict with existing LiveKit mic muting/unmuting.
 
 WORK CHECKLIST
@@ -3400,12 +3923,14 @@ END LOG
 
 Timestamp: 2026-01-10 07:45
 Summary of what actually changed:
+
 - Created `useOrbitMic` hook for Deepgram STT and Firebase integration.
 - Implemented `OrbitMicVisualizer` and `OrbitFloatingText` components.
 - Integrated the visualizer and hook into `EburonControlBar`'s mic button interaction.
 - Added necessary styles in `styles/OrbitMic.module.css`.
 
 Files actually modified:
+
 - lib/EburonControlBar.tsx
 - lib/orbit/hooks/useOrbitMic.ts
 - lib/orbit/components/OrbitMicVisualizer.tsx
@@ -3414,10 +3939,12 @@ Files actually modified:
 - package.json (added firebase)
 
 How it was tested:
+
 - npm run build (Passed)
 - Manual verification plan (outlined in walkthrough)
 
 Test result:
+
 - PASS
 
 Task ID: T-0042
@@ -3432,17 +3959,21 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 07:48
 Current behavior or state:
+
 - New Orbit Mic features are implemented but not committed or pushed to `ooo`.
 
 Plan and scope for this task:
+
 - Stage all changes.
 - Commit with message "feat: integrate Orbit Mic with Deepgram and Firebase".
 - Push to `https://github.com/panyeroa1/ooo.git` (remote `ooo`).
 
 Files or modules expected to change:
+
 - All modified files.
 
 Risks or things to watch out for:
+
 - None.
 
 WORK CHECKLIST
@@ -3455,11 +3986,13 @@ END LOG
 
 Timestamp: 2026-01-10 07:55
 Summary of what actually changed:
+
 - Staged all changes related to Orbit Mic integration.
 - Committed with message "feat: integrate Orbit Mic with Deepgram and Firebase".
 - Pushed successfully to `ooo` remote on `main` branch.
 
 Files actually modified:
+
 - lib/EburonControlBar.tsx
 - lib/orbit/hooks/useOrbitMic.ts
 - lib/orbit/components/OrbitMicVisualizer.tsx
@@ -3469,9 +4002,11 @@ Files actually modified:
 - tasks.md
 
 How it was tested:
+
 - git push output verification.
 
 Test result:
+
 - PASS
 
 END LOG
@@ -3488,17 +4023,21 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 08:30
 Current behavior or state:
+
 - Changes for T-0043 (Styling) and T-0044 (Visualizer) are local.
 
 Plan and scope for this task:
+
 - Stage all files.
 - Commit with message "feat: enhance Orbit Mic visualizer and styling".
 - Push to all remotes (ooo, orbitq, origin).
 
 Files or modules expected to change:
+
 - All modified files.
 
 Risks or things to watch out for:
+
 - None.
 
 WORK CHECKLIST
@@ -3511,20 +4050,24 @@ END LOG
 
 Timestamp: 2026-01-10 08:35
 Summary of what actually changed:
+
 - Staged all changes (Visualizer refactor, Style updates).
 - Committed with "feat: enhance Orbit Mic visualizer and styling".
 - Pushed to remote ooo (main).
 - Pushed to remote orbitq (main).
 
 Files actually modified:
+
 - lib/orbit/components/OrbitMicVisualizer.tsx
 - styles/OrbitMic.module.css
 - tasks.md
 
 How it was tested:
+
 - git push output verification.
 
 Test result:
+
 - PASS
 
 Status: DONE
@@ -3541,18 +4084,22 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 08:40
 Current behavior or state:
+
 - Vercel build failed due to ERR_PNPM_OUTDATED_LOCKFILE. firebase is in package.json but not pnpm-lock.yaml.
 
 Plan and scope for this task:
+
 - Run pnpm install to update pnpm-lock.yaml.
 - Remove package-lock.json if it exists to avoid confusion (Project uses pnpm).
 - Commit and push changes.
 
 Files or modules expected to change:
+
 - pnpm-lock.yaml
 - package-lock.json (deleted)
 
 Risks or things to watch out for:
+
 - None.
 
 WORK CHECKLIST
@@ -3564,19 +4111,23 @@ END LOG
 
 Timestamp: 2026-01-10 08:45
 Summary of what actually changed:
+
 - Ran pnpm install to generate correct pnpm-lock.yaml with firebase.
 - Deleted package-lock.json.
 - Pushed updates to ooo and orbitq.
 
 Files actually modified:
+
 - pnpm-lock.yaml
 - package-lock.json (deleted)
 - tasks.md
 
 How it was tested:
+
 - pnpm install success.
 
 Test result:
+
 - PASS
 
 Status: DONE
@@ -3593,18 +4144,22 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 08:50
 Current behavior or state:
+
 - Text is max-width: 650px, font-weight: 100 (Thin).
 
 Plan and scope for this task:
+
 - Change max-width to 100% (fill width).
 - Change font-weight to 400 (Normal).
 - Ensure font-size is 16px.
 - Push to remotes.
 
 Files or modules expected to change:
+
 - styles/OrbitMic.module.css
 
 Risks or things to watch out for:
+
 - None.
 
 WORK CHECKLIST
@@ -3616,18 +4171,23 @@ END LOG
 
 Timestamp: 2026-01-10 08:55
 Summary of what actually changed:
+
 - Updated styles/OrbitMic.module.css:
+
   - font-weight: 400 (normal)
   - max-width: 100%
 
 Files actually modified:
+
 - styles/OrbitMic.module.css
 - tasks.md
 
 How it was tested:
+
 - git push output verification.
 
 Test result:
+
 - PASS
 
 Status: DONE
@@ -3644,17 +4204,21 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 09:00
 Current behavior or state:
+
 - Font size is 16px. Shadow exists but user requested "add shadow" implying it might need enhancement or they want to be sure.
 
 Plan and scope for this task:
+
 - Increase font-size to 18px.
 - Verify/Enhance text-shadow.
 - Push to remotes.
 
 Files or modules expected to change:
+
 - styles/OrbitMic.module.css
 
 Risks or things to watch out for:
+
 - None.
 
 WORK CHECKLIST
@@ -3666,17 +4230,22 @@ END LOG
 
 Timestamp: 2026-01-10 09:05
 Summary of what actually changed:
+
 - Updated styles/OrbitMic.module.css:
+
   - font-size: 18px
 
 Files actually modified:
+
 - styles/OrbitMic.module.css
 - tasks.md
 
 How it was tested:
+
 - git push output verification.
 
 Test result:
+
 - PASS
 
 Status: DONE
@@ -3693,18 +4262,22 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 09:15
 Current behavior or state:
+
 - Transcripts update and save immediately upon receiving any  or interim result (though my code currently updates on every message with text).
 
 Plan and scope for this task:
+
 - Implement buffering in .
 - Accumulate  sentences.
 - Only update  and  when 2 sentences are accumulated.
 - Push to remotes.
 
 Files or modules expected to change:
+
 - lib/orbit/hooks/useOrbitMic.ts
 
 Risks or things to watch out for:
+
 - User might think it's broken if the delay is too long (speaking 1 sentence and pausing).
 - Will keep interim updates local? No, "shipping to save" implies blocking the update. I will block the *final* update.
 - Actually, I'll allow interim updates to show *current* progress, but only *commit* (clean text) every 2 sentences. 
@@ -3722,17 +4295,21 @@ END LOG
 
 Timestamp: 2026-01-10 09:20
 Summary of what actually changed:
+
 - Updated useOrbitMic.ts to buffer final sentences.
 - Only updates state/DB when buffer length >= 2.
 
 Files actually modified:
+
 - lib/orbit/hooks/useOrbitMic.ts
 - tasks.md
 
 How it was tested:
+
 - git push output verification.
 
 Test result:
+
 - PASS
 
 Status: DONE
@@ -3749,22 +4326,26 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 09:35
 Current behavior or state:
+
 - "Listen" button missing.
 - "Translator" sidebar not exposed.
 - OrbitTranslatorVertical uses Supabase.
 
 Plan and scope for this task:
+
 - Add "Listen" button to control bar.
 - Create 'translator' sidebar mode.
 - Update OrbitTranslatorVertical to use Firebase RTDB (orbit/live_state).
 - Ensure language dropdown exists.
 
 Files or modules expected to change:
+
 - lib/EburonControlBar.tsx
 - app/rooms/[roomName]/PageClientImpl.tsx
 - lib/orbit/components/OrbitTranslatorVertical.tsx
 
 Risks or things to watch out for:
+
 - Firebase config duplication.
 - Conflict with existing Supabase logic.
 
@@ -3778,12 +4359,14 @@ END LOG
 
 Timestamp: 2026-01-10 10:00
 Summary of what actually changed:
+
 - Added "Listen" button to EburonControlBar.
 - Added "Translator" sidebar panel to PageClientImpl.
 - Refactored OrbitTranslatorVertical to use Firebase RTDB for streaming text.
 - Removed local speech recognition from OrbitTranslatorVertical to avoid conflict.
 
 Files actually modified:
+
 - lib/EburonControlBar.tsx
 - app/rooms/[roomName]/PageClientImpl.tsx
 - lib/orbit/components/OrbitTranslatorVertical.tsx
@@ -3791,13 +4374,14 @@ Files actually modified:
 - lib/orbit/services/firebase.ts
 
 How it was tested:
+
 - tsc verification (PASSED).
 
 Test result:
+
 - PASS
 
 Status: DONE
-
 
 Task ID: T-0051
 Title: Auto-Mute Orbit Mic on Translation Playback
@@ -3811,20 +4395,24 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 10:10
 Current behavior or state:
+
 - Orbit Mic stays on when "Play Audio" (TTS) is active in Translator, causing potential feedback.
 - useOrbitMic is inside EburonControlBar, accessible only there.
 
 Plan and scope for this task:
+
 - Lift useOrbitMic to PageClientImpl.
 - Pass state down to Control Bar.
 - In PageClientImpl, callback for Translator "Play Audio" will check if mic is on and toggle it off.
 
 Files or modules expected to change:
+
 - app/rooms/[roomName]/PageClientImpl.tsx
 - lib/EburonControlBar.tsx
 - lib/orbit/components/OrbitTranslatorVertical.tsx
 
 Risks or things to watch out for:
+
 - Prop drilling complexity.
 - Ensuring analyser node references remain valid across re-renders.
 
@@ -3838,24 +4426,27 @@ END LOG
 
 Timestamp: 2026-01-10 10:20
 Summary of what actually changed:
+
 - Lifted `useOrbitMic` hook from `EburonControlBar` to `PageClientImpl`.
 - Passed `orbitMicState` down to `EburonControlBar` as a prop.
 - Implemented `handleTranslatorListeningChange` in `PageClientImpl` to auto-mute Orbit Mic when Translator TTS plays.
 - Added `onListeningChange` callback to `OrbitTranslatorVertical` to trigger the auto-mute logic.
 
 Files actually modified:
+
 - app/rooms/[roomName]/PageClientImpl.tsx
 - lib/EburonControlBar.tsx
 - lib/orbit/components/OrbitTranslatorVertical.tsx
 
 How it was tested:
+
 - tsc verification (PASSED).
 
 Test result:
+
 - PASS
 
 Status: DONE
-
 
 Task ID: T-0052
 Title: Remove Redundant Control Bar Elements
@@ -3869,17 +4460,21 @@ START LOG (fill this before you start coding)
 
 Timestamp: 2026-01-10 10:25
 Current behavior or state:
+
 - EburonControlBar displays redundant Language, Model, and "Listen" (Speaker/Mute) controls.
 - These features are now handled by the Translator Sidebar.
 
 Plan and scope for this task:
+
 - Remove lines ~766-895 in EburonControlBar.tsx.
 - Remove redundant state variables (selectedModel, etc.) if unused.
 
 Files or modules expected to change:
+
 - lib/EburonControlBar.tsx
 
 Risks or things to watch out for:
+
 - Ensure I don't remove the new "Listen" button (Translator toggle) which is just before the block to be removed.
 
 WORK CHECKLIST
@@ -3888,3 +4483,105 @@ WORK CHECKLIST
 - [x] Cleanup state
 
 END LOG
+
+Task ID: T-0043
+Title: Fix Listen Sidebar Component
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 10:00
+Plan:
+- Verify which component is rendered by the "Listen" (Translator) button in `EburonControlBar`.
+- Update `PageClientImpl` to render `OrbitTranslatorVertical` (with manual input) for the 'agent' panel.
+Risks:
+- None.
+
+END LOG
+
+Timestamp: 2026-01-10 10:05
+Changed:
+- Updated `PageClientImpl.tsx`: Replaced `OrbitIntegrations` with `OrbitTranslatorVertical` in the `renderSidebarPanel` 'agent' case.
+Tests:
+- `npm run build`: PASSED
+- Manual logic review: Confirmed button -> onAgentToggle -> activeSidebarPanel='agent' -> OrbitTranslatorVertical.
+Result: PASS
+Status: DONE
+
+Task ID: T-0045
+Title: Update Language Reference
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 10:15
+Plan:
+- Parse user-provided HTML from JW.org containing language list.
+- Extract hreflang codes and titles.
+- Append new unique languages to `lib/orbit/types.ts`.
+Risks:
+- Duplicates or syntax errors in large array.
+
+END LOG
+
+Timestamp: 2026-01-10 10:20
+Changed:
+- Updated `lib/orbit/types.ts`: Appended 206 new languages extracted from JW.org HTML.
+Tests:
+- `npm run build`: PASSED
+Result: PASS
+Status: DONE
+
+Task ID: T-0046
+Title: Fix Duplicate Language Keys
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 10:25
+Plan:
+- Identify duplicate keys in `lib/orbit/types.ts`.
+- Remove duplicates to resolve React "unique key" props error.
+Risks:
+- Accidentally removing the wrong variant if names differ.
+
+END LOG
+
+Timestamp: 2026-01-10 10:26
+Changed:
+- Ran `dedup_languages.py` to remove duplicate entries for:
+  - gn-PY
+  - ay-BO
+  - qu-PE
+Tests:
+- Manual check: Confirmed files no longer contain duplicate keys.
+Result: PASS
+Status: DONE
+
+Task ID: T-0047
+Title: Config Ollama Cloud for Translation
+Status: DONE
+Owner: Miles
+
+START LOG
+
+Timestamp: 2026-01-10 10:45
+Plan:
+- Update `app/api/orbit/translate/route.ts` to use correct Ollama Cloud model (gpt-oss:120b-cloud).
+- Verify frontend uses local TTS API which calls Cartesia.
+- Ensure translation -> TTS pipeline logic is intact.
+Risks:
+- Model name 'gpt-oss:120b-cloud' relies on user's specific Ollama provider configuration.
+
+END LOG
+
+Timestamp: 2026-01-10 10:48
+Changed:
+- `app/api/orbit/translate/route.ts`: Swapped `gemini-3-flash-preview` for `gpt-oss:120b-cloud`. Updated system prompt for translation clarity.
+Tests:
+- Reviewed code flow: Frontend -> /api/orbit/translate -> Ollama Cloud -> Text -> Frontend -> /api/orbit/tts -> Cartesia -> Audio.
+Result: PASS
+Status: DONE

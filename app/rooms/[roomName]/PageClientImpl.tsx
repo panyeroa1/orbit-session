@@ -873,7 +873,14 @@ function VideoConferenceComponent(props: {
 // Actually, I can use multi_replace for this.
 
       case 'agent':
-        return <OrbitIntegrations />;
+        return (
+          <OrbitTranslatorVertical 
+            roomCode={roomName}
+            userId={user?.id || 'guest'}
+            audioDevices={audioDevices}
+            onListeningChange={handleTranslatorListeningChange}
+          />
+        );
       case 'chat':
         return <ChatPanel />;
       case 'settings':

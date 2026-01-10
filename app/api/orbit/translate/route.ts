@@ -20,10 +20,10 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gemini-3-flash-preview',
-        stream: true, // Enable streaming
+        model: 'gpt-oss:120b-cloud', // Using user's cloud model
+        stream: true,
         messages: [
-          { role: "system", content: "Translate naturally. Return ONLY the translated text. No labels." },
+          { role: "system", content: "You are a translator. Translate the following text directly to the target language. Do not add any conversational text, notes, or punctuation explanations. Just the translation." },
           { role: "user", content: `Translate to ${targetLang}:\n\n${text}` }
         ]
       }),

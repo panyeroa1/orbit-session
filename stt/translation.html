@@ -139,6 +139,24 @@
         .header-logo img {
             height: 100%;
         }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #manual-input {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 200px;
+            outline: none;
+        }
+        #manual-input:focus {
+            border-color: var(--accent-color);
+        }
     </style>
 </head>
 <body>
@@ -172,6 +190,13 @@
         <button id="start-btn" class="btn">
             <i class="fa-solid fa-play"></i> START TRANSLATOR
         </button>
+        
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="manual-input" placeholder="Type to test...">
+            <button id="manual-send-btn" class="btn" title="Send text" aria-label="Send text">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
     </div>
 
     <div id="status">Status: Idle</div>
@@ -199,6 +224,23 @@
         const statusEl = document.getElementById('status');
         const targetLangSelect = document.getElementById('target-language');
         const micSelect = document.getElementById('mic-select');
+        const manualInput = document.getElementById('manual-input');
+        const manualSendBtn = document.getElementById('manual-send-btn');
+
+        // Manual Input Logic
+        function submitManualText() {
+            const text = manualInput.value.trim();
+            if (text) {
+                originalText.innerText = text;
+                handleStreamingTranslation(text);
+                manualInput.value = '';
+            }
+        }
+
+        manualSendBtn.onclick = submitManualText;
+        manualInput.onkeydown = (e) => {
+            if (e.key === 'Enter') submitManualText();
+        };
 
         // Initial setup: List microphones
         async function setupMics() {
