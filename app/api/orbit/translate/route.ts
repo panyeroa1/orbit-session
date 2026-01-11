@@ -9,42 +9,73 @@ export async function POST(request: Request) {
       return new NextResponse('Missing text or targetLang', { status: 400 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    if (!apiKey) {
-      return new NextResponse('Missing Gemini API Key', { status: 500 });
+    // 1. Try DeepSeek (User Preference)
+    const deepseekKey = process.env.DEEPSEEK_API_KEY;
+    if (deepseekKey) {
+      try {
+        const dsResponse = await fetch('https://api.deepseek.com/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${deepseekKey}`
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [
+              { role: "system", content: "You are a professional translator. Output ONLY the translated text." },
+              { role: "user", content: `Translate to ${targetLang}:\n\n${text}` }
+            ],
+            stream: false
+          })
+        });
+
+        if (dsResponse.ok) {
+          const data = await dsResponse.json();
+          const translation = data.choices?.[0]?.message?.content?.trim();
+          if (translation) return NextResponse.json({ translation });
+        } else {
+          const err = await dsResponse.text();
+          console.warn(`[Orbit] DeepSeek translation failed (${dsResponse.status}): ${err}. Falling back to Gemini.`);
+        }
+      } catch (e) {
+        console.error("[Orbit] DeepSeek connection error:", e);
+      }
     }
 
-    // Use 2.5-flash as it is confirmed available in the model list
-    const model = 'gemini-2.5-flash';
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    // 2. Fallback to Gemini (Verified Working)
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    if (!geminiKey) {
+      return new NextResponse('Translation Failed: DeepSeek failed and no Gemini key found', { status: 500 });
+    }
 
-    const response = await fetch(url, {
+    // Use 2.5-flash which is known to work
+    const model = 'gemini-2.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
+
+    const geminiResponse = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{
           parts: [{ 
-            text: `You are a professional translator. Translate the following text to ${targetLang}. Output ONLY the translated text without any quotes, notes, or preambles.\n\nText: ${text}` 
+            text: `Translate the following text to ${targetLang}. Output ONLY the translated text.\n\nText: ${text}` 
           }]
         }],
-        generationConfig: {
-          temperature: 0.1
-        }
+        generationConfig: { temperature: 0.1 }
       }),
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error(`[Orbit Translation Error] Gemini API returned ${response.status}:`, err);
-      return new NextResponse(err, { status: response.status });
+    if (!geminiResponse.ok) {
+      const err = await geminiResponse.text();
+      console.error(`[Orbit] Gemini translation failed (${geminiResponse.status}):`, err);
+      return new NextResponse(err, { status: geminiResponse.status });
     }
 
-    const data = await response.json();
+    const data = await geminiResponse.json();
     const translation = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 
     return NextResponse.json({ translation });
+
   } catch (error) {
     console.error('Orbit translation route error:', error);
     return new NextResponse('Internal error', { status: 500 });
