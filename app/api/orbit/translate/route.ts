@@ -9,6 +9,33 @@ export async function POST(request: Request) {
       return new NextResponse('Missing text or targetLang', { status: 400 });
     }
 
+    // 0. Try Remote Ollama (User Preference)
+    const ollamaUrl = process.env.OLLAMA_BASE_URL;
+    if (ollamaUrl) {
+      try {
+        console.log(`[Orbit] Attempting Remote Ollama at ${ollamaUrl}...`);
+        const olResponse = await fetch(`${ollamaUrl}/api/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: "gemini-3-flash-preview:cloud", // Upgraded to user's new model
+            prompt: `Translate the following text to ${targetLang}. Output ONLY the translated text.\n\nText: ${text}`,
+            stream: false
+          })
+        });
+
+        if (olResponse.ok) {
+           const data = await olResponse.json();
+           const translation = data.response?.trim();
+           if (translation) return NextResponse.json({ translation });
+        } else {
+           console.warn(`[Orbit] Remote Ollama failed (${olResponse.status}). Fallback...`);
+        }
+      } catch (e) {
+         console.error("[Orbit] Remote Ollama connection error:", e);
+      }
+    }
+
     // 1. Try DeepSeek (User Preference)
     const deepseekKey = process.env.DEEPSEEK_API_KEY;
     if (deepseekKey) {
@@ -48,8 +75,8 @@ export async function POST(request: Request) {
       return new NextResponse('Translation Failed: DeepSeek failed and no Gemini key found', { status: 500 });
     }
 
-    // Use 2.5-flash which is known to work
-    const model = 'gemini-2.5-flash';
+    // Use reported working model
+    const model = 'gemini-3-flash-preview';
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`;
 
     const geminiResponse = await fetch(url, {

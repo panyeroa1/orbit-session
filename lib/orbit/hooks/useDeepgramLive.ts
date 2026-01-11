@@ -88,9 +88,9 @@ export function useDeepgramLive(options: UseDeepgramLiveOptions = {}): UseDeepgr
 
   const start = useCallback(async (deviceId?: string) => {
     const apiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY;
-    if (!apiKey) {
-      setError('Orbit API key not configured');
-      return;
+    if (!apiKey || apiKey === 'YOUR_DEEPGRAM_API_KEY' || apiKey.startsWith('6c275acd19')) {
+      console.warn("[Orbit] Deepgram Key is missing or known invalid. Voice transcription disabled.");
+      return; 
     }
 
     setError(null);
@@ -179,19 +179,33 @@ export function useDeepgramLive(options: UseDeepgramLiveOptions = {}): UseDeepgr
         params.append('token', apiKey.trim());
         console.log('✅ Token appended to params');
       } else {
-        console.error('❌ Orbit API Key is missing during URL construction!');
+        const msg = '❌ Orbit API Key is missing! Aborting connection.';
+        console.error(msg);
+        setError(msg);
+        setIsListening(false);
+        return;
       }
 
       const wsUrl = `wss://api.deepgram.com/v1/listen?${params.toString()}`;
       console.log('🔌 Full WebSocket URL (token masked):', wsUrl.replace(/token=[^&]+/, 'token=***'));
       console.log('🔑 Token included in URL:', wsUrl.includes('token='));
 
-      const socket = new WebSocket(wsUrl);
+      let socket: WebSocket;
+      try {
+        socket = new WebSocket(wsUrl);
+      } catch (e) {
+        console.error("Failed to create WebSocket:", e);
+        setError('Failed to create WebSocket connection');
+        setIsListening(false);
+        return;
+      }
+      
       socketRef.current = socket;
 
       socket.onopen = () => {
-        console.log('✅ Orbit connection established');
+        console.log('✅ Orbit Engine connected successfully');
         setIsListening(true);
+        setError(null);
         
         try {
           // Start recording with optimal settings for Orbit

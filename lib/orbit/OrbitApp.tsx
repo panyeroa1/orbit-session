@@ -61,6 +61,14 @@ export function OrbitApp() {
 
         // Initialize meetingId regardless of session (allows guest use)
         let currentMeetingId = sessionStorage.getItem('eburon_meeting_id');
+        
+        // Sanitize: remove any port numbers (e.g. :1) or invalid chars
+        if (currentMeetingId && currentMeetingId.includes(':')) {
+             console.warn('Sanitizing malformed meeting ID:', currentMeetingId);
+             currentMeetingId = currentMeetingId.split(':')[0];
+             sessionStorage.setItem('eburon_meeting_id', currentMeetingId);
+        }
+
         if (!currentMeetingId) {
           currentMeetingId = `MEETING_${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
           sessionStorage.setItem('eburon_meeting_id', currentMeetingId);
@@ -165,26 +173,6 @@ export function OrbitApp() {
     return text.match(/[^.!?]+[.!?]*|[^.!?]+$/g) || [text];
   };
 
-  const shipSegment = useCallback(async (text: string) => {
-    const segment = text.trim();
-    if (!segment) return;
-    try {
-       // Append to full transcript (client-side approximation)
-      const newFull = (fullTranscriptRef.current + " " + segment).trim();
-      setFullTranscript(newFull);
-
-      const { error } = await supabase.from('transcriptions').insert({ 
-        meeting_id: meetingId, 
-        speaker_id: MY_USER_ID, 
-        transcribe_text_segment: segment,
-        full_transcription: newFull,
-        users_all: [] // Placeholder for "all listening users"
-      });
-      if (error) throw error;
-    } catch (err) {
-      reportError("Failed to send transcription", err);
-    }
-  }, [meetingId, reportError]);
 
   const playNextAudio = useCallback(async () => {
     if (isPlayingRef.current || audioQueueRef.current.length === 0) return;
@@ -259,10 +247,10 @@ export function OrbitApp() {
     try {
         console.log(`[Pipeline] 3. Starting processing for: "${item.text}"`);
         
-        // Strict Gate: Only process if in listening mode
-        if (modeRef.current !== 'listening') {
-             console.log(`[Pipeline] Skipped Translation/TTS (Not in listening mode)`);
-             // We can still update the UI with the raw text if desired, but user asked for "No need to do anything"
+        // Strict Gate: Only process if in listening OR speaking mode (Translator feature)
+        if (modeRef.current !== 'listening' && modeRef.current !== 'speaking') {
+             console.log(`[Pipeline] Skipped Translation/TTS (Mode is ${modeRef.current})`);
+             // We can still update the UI with the raw text if desired
              return; 
         }
 
@@ -308,6 +296,32 @@ export function OrbitApp() {
         processNextInQueue();
     }
   }, [playNextAudio]);
+
+  const shipSegment = useCallback(async (text: string) => {
+    const segment = text.trim();
+    if (!segment) return;
+    try {
+       // Append to full transcript (client-side approximation)
+      const newFull = (fullTranscriptRef.current + " " + segment).trim();
+      setFullTranscript(newFull);
+
+      // Trigger Pipeline Locally (Echo/Translator Mode)
+      console.log(`[Pipeline] 0. Local Speech Captured: "${segment}"`);
+      processingQueueRef.current.push({ text: segment, id: 'local-' + Date.now() });
+      processNextInQueue();
+
+      const { error } = await supabase.from('transcriptions').insert({ 
+        meeting_id: meetingId, 
+        speaker_id: MY_USER_ID, 
+        transcribe_text_segment: segment,
+        full_transcription: newFull,
+        users_all: [] // Placeholder for "all listening users"
+      });
+      if (error) throw error;
+    } catch (err) {
+      reportError("Failed to send transcription", err);
+    }
+  }, [meetingId, reportError, processNextInQueue]);
 
   // Deepgram Recording Loop
   useEffect(() => {
