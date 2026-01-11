@@ -519,7 +519,7 @@ function VideoConferenceComponent(props: {
   const { activeSpeakerId: floorSpeakerId, isFloorHolder, claimFloor, grantFloor } = useMeetingFloor(roomName, user?.id || '');
 
   const [isTranscriptionEnabled, setIsTranscriptionEnabled] = React.useState(true);
-  const [targetLanguage, setTargetLanguage] = React.useState('English'); // New State
+  const [targetLanguage, setTargetLanguage] = React.useState('West Flemish (Belgium)'); // New State
   const [roomState, setRoomState] = React.useState<RoomState>({ activeSpeaker: null, raiseHandQueue: [], lockVersion: 0 });
   const [roomId, setRoomId] = React.useState<string | null>(null);
   const [audioDevices, setAudioDevices] = React.useState<MediaDeviceInfo[]>([]);

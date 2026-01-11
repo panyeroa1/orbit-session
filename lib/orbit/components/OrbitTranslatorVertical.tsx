@@ -110,7 +110,7 @@ export function OrbitTranslatorVertical({
   const meetingIdToUse = meetingId || roomCode || 'Orbit-Session';
 
   // --- Translation & TTS ---
-  const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES[0]);
+  const [selectedLanguage, setSelectedLanguage] = useState(LANGUAGES.find(l => l.code === 'vls-BE') || LANGUAGES[0]);
   const [manualText, setManualText] = useState('');
 
   // Track last processed transcript
