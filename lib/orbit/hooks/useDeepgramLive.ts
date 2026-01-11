@@ -27,9 +27,12 @@ interface UseDeepgramLiveReturn {
   isFinal: boolean;
   start: (deviceId?: string) => Promise<void>;
   stop: () => void;
+  setLanguage: (lang: string) => void;
+  language: string;
   error: string | null;
   analyser: AnalyserNode | null;
   words: Array<{ word: string; start: number; end: number; confidence: number }>;
+  detectedLanguage: string | null;
 }
 
 /**
@@ -49,6 +52,8 @@ export function useDeepgramLive(options: UseDeepgramLiveOptions = {}): UseDeepgr
   const [isFinal, setIsFinal] = useState(false);
   const [words, setWords] = useState<Array<{ word: string; start: number; end: number; confidence: number }>>([]);
   const [error, setError] = useState<string | null>(null);
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
+  const [currentLanguage, setCurrentLanguage] = useState(options.language || 'multi');
 
   const socketRef = useRef<WebSocket | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -130,7 +135,15 @@ export function useDeepgramLive(options: UseDeepgramLiveOptions = {}): UseDeepgr
         encoding: 'linear16',
         sample_rate: '48000',
         words: 'true',             // Word-level data for karaoke effect
+        multichannel: 'true',      // Better for some models
       });
+
+      // Special handling for 'auto' language
+      if (language === 'auto' || language === 'multi') {
+        params.set('detect_language', 'true');
+        // If we want to support specific dialects for auto, we can append them
+        // params.append('language', 'nl-BE'); // Example for Flemish
+      }
 
       // Add diarization if enabled
       if (options.diarize) {
@@ -145,6 +158,9 @@ export function useDeepgramLive(options: UseDeepgramLiveOptions = {}): UseDeepgr
       }
 
       const wsUrl = `wss://api.deepgram.com/v1/listen?${params.toString()}`;
+
+      // If already listening with a different language, we might need to restart
+      // But for now, start() is called manually.
 
       // Connect to Deepgram
       const socket = new WebSocket(wsUrl, ['token', apiKey]);
@@ -184,6 +200,13 @@ export function useDeepgramLive(options: UseDeepgramLiveOptions = {}): UseDeepgr
             }
             setIsFinal(data.is_final ?? false);
           }
+
+          // Capture detected language from metadata or results
+          if (data.metadata?.language) {
+             setDetectedLanguage(data.metadata.language);
+          } else if (data.results?.channels?.[0]?.detected_language) {
+             setDetectedLanguage(data.results.channels[0].detected_language);
+          }
         } catch (e) {
           console.error('Error parsing Deepgram response:', e);
         }
@@ -202,7 +225,19 @@ export function useDeepgramLive(options: UseDeepgramLiveOptions = {}): UseDeepgr
       setError(e.message || 'Microphone access denied');
       stop();
     }
-  }, [options.model, options.language, options.diarize, options.keywords, stop]);
+  }, [options.model, options.diarize, options.keywords, stop, currentLanguage]);
+
+  const setLanguage = useCallback((lang: string) => {
+    if (lang !== currentLanguage) {
+      setCurrentLanguage(lang);
+      if (isListening) {
+        // Restart with new language
+        const currentDeviceId = recorderRef.current?.stream.getAudioTracks()[0]?.getSettings().deviceId;
+        stop();
+        setTimeout(() => start(currentDeviceId), 100);
+      }
+    }
+  }, [currentLanguage, isListening, stop, start]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -217,8 +252,11 @@ export function useDeepgramLive(options: UseDeepgramLiveOptions = {}): UseDeepgr
     isFinal,
     start,
     stop,
+    setLanguage,
+    language: currentLanguage,
     error,
     analyser: analyserRef.current,
-    words
+    words,
+    detectedLanguage
   };
 }

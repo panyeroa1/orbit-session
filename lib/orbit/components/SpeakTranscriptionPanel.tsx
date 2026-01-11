@@ -12,7 +12,10 @@ interface SpeakTranscriptionPanelProps {
     isFinal: boolean;
     start: (deviceId?: string) => Promise<void>;
     stop: () => void;
+    setLanguage?: (lang: string) => void;
+    language?: string;
     error: string | null;
+    detectedLanguage: string | null;
   };
   meetingId?: string | null;
   roomCode?: string;
@@ -32,7 +35,8 @@ export function SpeakTranscriptionPanel({
     isFinal,
     start,
     stop,
-    error
+    error,
+    detectedLanguage
   } = deepgram;
 
   const meetingIdToUse = meetingId || roomCode || 'Orbit-Session';
@@ -84,9 +88,14 @@ export function SpeakTranscriptionPanel({
             <h3 className="uppercase tracking-widest text-[11px] font-bold">Transcription Feed</h3>
           </div>
           <div className={styles.sidebarHeaderMeta}>
-            <span className={`text-[10px] uppercase tracking-wide font-medium ${isListening ? 'text-rose-400' : 'text-emerald-400'}`}>
-              {isListening ? 'Listening...' : 'Ready'}
-            </span>
+            <div className="flex items-center gap-1.5 mt-1">
+              {isListening && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />}
+              <span className={`text-[10px] uppercase tracking-wide font-medium ${isListening ? 'text-rose-400' : 'text-emerald-400'}`}>
+                {isListening 
+                  ? (detectedLanguage ? `Detected: ${detectedLanguage.toUpperCase()}` : 'Listening...')
+                  : 'Ready'}
+              </span>
+            </div>
           </div>
         </div>
         <div className={styles.sidebarHeaderActions}>

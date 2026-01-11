@@ -57,7 +57,10 @@ interface OrbitTranslatorVerticalProps {
     isFinal: boolean;
     start: (deviceId?: string) => Promise<void>;
     stop: () => void;
+    setLanguage?: (lang: string) => void;
+    language?: string;
     error: string | null;
+    detectedLanguage: string | null;
   };
   meetingId?: string | null;
 }
@@ -97,7 +100,8 @@ export function OrbitTranslatorVertical({
     isFinal: isDeepgramFinal,
     start: startDeepgram,
     stop: stopDeepgram,
-    error: deepgramError
+    error: deepgramError,
+    detectedLanguage: deepgramDetectedLanguage
   } = deepgram;
 
   // Track if we should play TTS
@@ -129,7 +133,11 @@ export function OrbitTranslatorVertical({
   const selectedLanguageRef = useRef(selectedLanguage);
   useEffect(() => {
     selectedLanguageRef.current = selectedLanguage;
-  }, [selectedLanguage]);
+    // Sync with Deepgram STT
+    if (deepgram.setLanguage) {
+      deepgram.setLanguage(selectedLanguage.code);
+    }
+  }, [selectedLanguage, deepgram]);
 
   const ensureAudioContext = useCallback(() => {
     if (!audioCtxRef.current) {
@@ -370,8 +378,11 @@ export function OrbitTranslatorVertical({
           </div>
           <div className={sharedStyles.sidebarHeaderMeta}>
             <div className="flex items-center gap-1.5 mt-1">
+              {isDeepgramListening && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />}
               <span className={`text-[10px] uppercase tracking-wide font-medium ${isDeepgramListening ? 'text-rose-400' : 'text-emerald-400'}`}>
-                {isDeepgramListening ? 'Listening...' : 'Ready'}
+                {isDeepgramListening 
+                  ? (deepgramDetectedLanguage ? `Detected: ${deepgramDetectedLanguage.toUpperCase()}` : 'Listening...')
+                  : 'Ready'}
               </span>
             </div>
           </div>
