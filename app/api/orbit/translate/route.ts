@@ -9,40 +9,42 @@ export async function POST(request: Request) {
       return new NextResponse('Missing text or targetLang', { status: 400 });
     }
 
-    const apiKey = process.env.OLLAMA_API_KEY;
-    
-    const ollamaUrl = 'https://ollama.com/api/chat';
+    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    if (!apiKey) {
+      return new NextResponse('Missing Gemini API Key', { status: 500 });
+    }
 
-    const response = await fetch(ollamaUrl, {
+    // Use 2.5-flash as it is confirmed available in the model list
+    const model = 'gemini-2.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'eburon-ai:cloud', // Using Eburon AI model
-        stream: true,
-        messages: [
-          { role: "system", content: "You are a translator. Translate the following text directly to the target language. Do not add any conversational text, notes, or punctuation explanations. Just the translation." },
-          { role: "user", content: `Translate to ${targetLang}:\n\n${text}` }
-        ]
+        contents: [{
+          parts: [{ 
+            text: `You are a professional translator. Translate the following text to ${targetLang}. Output ONLY the translated text without any quotes, notes, or preambles.\n\nText: ${text}` 
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.1
+        }
       }),
     });
 
     if (!response.ok) {
       const err = await response.text();
-      console.error(`[Translation Failed] Orbit at ${ollamaUrl} returned ${response.status}:`, err);
+      console.error(`[Orbit Translation Error] Gemini API returned ${response.status}:`, err);
       return new NextResponse(err, { status: response.status });
     }
 
-    // Return the stream directly to the client
-    return new NextResponse(response.body, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    });
+    const data = await response.json();
+    const translation = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+
+    return NextResponse.json({ translation });
   } catch (error) {
     console.error('Orbit translation route error:', error);
     return new NextResponse('Internal error', { status: 500 });
