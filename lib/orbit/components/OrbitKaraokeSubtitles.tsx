@@ -58,8 +58,8 @@ export function OrbitKaraokeSubtitles({ words, isFinal, isListening }: OrbitKara
         style={{ 
           display: 'flex', 
           flexDirection: 'row', 
-          justifyContent: 'center',
-          gap: '8px',
+          justifyContent: 'flex-start',
+          gap: '2px',
           paddingBottom: '4px'
         }}
       >
