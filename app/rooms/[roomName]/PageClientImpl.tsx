@@ -25,7 +25,7 @@ import { useDeepgramLive } from '@/lib/orbit/hooks/useDeepgramLive';
 import { ensureRoomState } from '@/lib/orbit/services/orbitService';
 
 
-import { OrbitKaraokeSubtitles } from '@/lib/orbit/components/OrbitKaraokeSubtitles';
+import { HostCaptionOverlay } from '@/lib/orbit/components/HostCaptionOverlay';
 import { CinemaCaptionOverlay } from '@/lib/CinemaCaptionOverlay';
 
 import roomStyles from '@/styles/Eburon.module.css';
@@ -1088,11 +1088,12 @@ function VideoConferenceComponent(props: {
           
 
 
-          {/* New Karaoke Style Subtitles (Host only) */}
-          <OrbitKaraokeSubtitles 
+          {/* Modern Host-Only Per-Character Subtitles */}
+          <HostCaptionOverlay 
             words={deepgram.words} 
             isFinal={deepgram.isFinal} 
-            isListening={deepgram.isListening} 
+            isListening={deepgram.isListening}
+            analyser={deepgram.analyser}
           />
 
           {/* Legacy Overlay - disabled for now to favor Karaoke style */}

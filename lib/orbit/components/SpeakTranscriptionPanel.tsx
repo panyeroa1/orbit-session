@@ -96,23 +96,6 @@ export function SpeakTranscriptionPanel({
         </div>
       </div>
 
-      {/* Meeting Context Binding Info */}
-      <div className="px-4 py-2 border-b border-white/5 bg-[#070707]/30 flex items-center justify-between">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold font-plus-jakarta">Meeting Context</span>
-          <code className="text-[10px] text-lime-400 font-mono flex items-center gap-1.5 line-clamp-1">
-            <span className="w-1 h-1 rounded-full bg-lime-500 animate-pulse" />
-            {(roomCode || 'Lobby').toUpperCase()}
-          </code>
-        </div>
-        <div className="flex flex-col gap-0.5 items-end">
-          <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold font-plus-jakarta">Invite Code</span>
-          <span className="text-[10px] text-slate-400 font-mono">
-            {String(meetingIdToUse).slice(0, 8).toUpperCase()}
-          </span>
-        </div>
-      </div>
-
       {/* Controls */}
       <div className={styles.agentPanelBody}>
         <div className={styles.agentControls}>
