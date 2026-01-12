@@ -512,6 +512,14 @@ function VideoConferenceComponent(props: {
   const [admittedIds, setAdmittedIds] = React.useState<Set<string>>(new Set());
   const { user } = useAuth();
   const [isAppMuted, setIsAppMuted] = React.useState(false);
+  const [isOrbSettingsOpen, setIsOrbSettingsOpen] = React.useState(false);
+  const [orbPosition, setOrbPosition] = React.useState<{ x: number; y: number } | null>(null);
+  const [isOrbDragging, setIsOrbDragging] = React.useState(false);
+  const orbRef = React.useRef<HTMLDivElement | null>(null);
+  const orbBarIndices = React.useMemo(() => Array.from({ length: 6 }, (_, i) => i), []);
+  const orbStyle: React.CSSProperties | undefined = orbPosition
+    ? { left: orbPosition.x, top: orbPosition.y, right: 'auto', bottom: 'auto' }
+    : undefined;
 
   const { activeSpeakerId: floorSpeakerId, isFloorHolder, claimFloor, grantFloor } = useMeetingFloor(roomName, user?.id || '');
 
@@ -571,6 +579,104 @@ function VideoConferenceComponent(props: {
       sessionStorage.setItem('eburon_meeting_id', roomName);
     }
   }, [roomName]);
+
+  React.useEffect(() => {
+    if (!isOrbSettingsOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOrbSettingsOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOrbSettingsOpen]);
+
+  React.useEffect(() => {
+    const orb = orbRef.current;
+    if (!orb) return;
+
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+    const margin = 12;
+
+    const clampPosition = (x: number, y: number) => {
+      const rect = orb.getBoundingClientRect();
+      const size = rect.width || 86;
+      const maxX = Math.max(margin, window.innerWidth - size - margin);
+      const maxY = Math.max(margin, window.innerHeight - size - margin);
+      return {
+        x: Math.min(Math.max(margin, x), maxX),
+        y: Math.min(Math.max(margin, y), maxY),
+      };
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('[data-orb-settings="true"]')) return;
+      const rect = orb.getBoundingClientRect();
+      startLeft = rect.left;
+      startTop = rect.top;
+      startX = event.clientX;
+      startY = event.clientY;
+      dragging = true;
+      setIsOrbDragging(true);
+      orb.setPointerCapture(event.pointerId);
+      setOrbPosition(clampPosition(rect.left, rect.top));
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (!dragging) return;
+      const dx = event.clientX - startX;
+      const dy = event.clientY - startY;
+      const next = clampPosition(startLeft + dx, startTop + dy);
+      setOrbPosition(next);
+    };
+
+    const endDrag = (event: PointerEvent) => {
+      if (!dragging) return;
+      dragging = false;
+      setIsOrbDragging(false);
+      try {
+        orb.releasePointerCapture(event.pointerId);
+      } catch (_) {}
+    };
+
+    orb.addEventListener('pointerdown', onPointerDown);
+    orb.addEventListener('pointermove', onPointerMove);
+    orb.addEventListener('pointerup', endDrag);
+    orb.addEventListener('pointercancel', endDrag);
+
+    return () => {
+      orb.removeEventListener('pointerdown', onPointerDown);
+      orb.removeEventListener('pointermove', onPointerMove);
+      orb.removeEventListener('pointerup', endDrag);
+      orb.removeEventListener('pointercancel', endDrag);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!orbPosition) return;
+    const orb = orbRef.current;
+    if (!orb) return;
+    const margin = 12;
+    const onResize = () => {
+      setOrbPosition((prev) => {
+        if (!prev) return prev;
+        const rect = orb.getBoundingClientRect();
+        const size = rect.width || 86;
+        const maxX = Math.max(margin, window.innerWidth - size - margin);
+        const maxY = Math.max(margin, window.innerHeight - size - margin);
+        return {
+          x: Math.min(Math.max(margin, prev.x), maxX),
+          y: Math.min(Math.max(margin, prev.y), maxY),
+        };
+      });
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [orbPosition]);
 
   const playJoinSound = React.useCallback(() => {
     try {
@@ -955,6 +1061,99 @@ function VideoConferenceComponent(props: {
           <KeyboardShortcuts />
           <RoomAudioRenderer volume={1} />
           <ConnectionStateToast />
+
+          <div
+            ref={orbRef}
+            className={`${roomStyles.orbDock} ${isOrbDragging ? roomStyles.orbDockDragging : ''}`}
+            style={orbStyle}
+            aria-label="Orbit audio orb"
+          >
+            <div className={roomStyles.orbCore} />
+            <div className={roomStyles.orbVisualizer} aria-hidden="true">
+              <div className={roomStyles.orbVizRow}>
+                {orbBarIndices.map((i) => (
+                  <span
+                    key={`orb-in-${i}`}
+                    className={`${roomStyles.orbBar} ${roomStyles.orbBarIn}`}
+                    style={{ animationDelay: `${i * 0.12}s` }}
+                  />
+                ))}
+              </div>
+              <div className={roomStyles.orbVizRow}>
+                {orbBarIndices.map((i) => (
+                  <span
+                    key={`orb-out-${i}`}
+                    className={`${roomStyles.orbBar} ${roomStyles.orbBarOut}`}
+                    style={{ animationDelay: `${i * 0.1}s` }}
+                  />
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              className={roomStyles.orbSettingsBtn}
+              data-orb-settings="true"
+              onClick={() => setIsOrbSettingsOpen(true)}
+              aria-label="Open Orbit settings"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M12 8.5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 0 0 0-7Z"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="M19 12a7 7 0 0 0-.08-1l2.02-1.57-2-3.46-2.48.6a7.1 7.1 0 0 0-1.7-.98L14 2h-4l-.76 2.59c-.6.2-1.17.48-1.7.82l-2.48-.6-2 3.46L5.08 11A7 7 0 0 0 5 12c0 .34.03.67.08 1l-2.02 1.57 2 3.46 2.48-.6c.52.34 1.1.62 1.7.82L10 22h4l.76-2.59c.6-.2 1.17-.48 1.7-.82l2.48.6 2-3.46L18.92 13c.05-.33.08-.66.08-1Z"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.85"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {isOrbSettingsOpen && (
+            <div
+              className={roomStyles.orbModalOverlay}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="orbSettingsTitle"
+              onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                  setIsOrbSettingsOpen(false);
+                }
+              }}
+            >
+              <div className={roomStyles.orbModalCard}>
+                <div className={roomStyles.orbModalHeader}>
+                  <div id="orbSettingsTitle" className={roomStyles.orbModalTitle}>
+                    Orbit
+                  </div>
+                  <button
+                    type="button"
+                    className={roomStyles.orbModalClose}
+                    onClick={() => setIsOrbSettingsOpen(false)}
+                    aria-label="Close Orbit settings"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M6 6l12 12M18 6L6 18"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        opacity="0.9"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <p className={roomStyles.orbModalText}>
+                  Orbit audio is active. Tap the orb to drag it; use the controls here for future voice options.
+                </p>
+              </div>
+            </div>
+          )}
           
           {/* Main video grid */}
           <div className={roomStyles.videoGridContainer}>
