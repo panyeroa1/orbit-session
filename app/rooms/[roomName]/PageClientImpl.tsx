@@ -16,6 +16,7 @@ import { RoomState } from '@/lib/orbit/types';
 
 import { ChatPanel } from '@/lib/ChatPanel';
 import { ParticipantsPanel } from '@/lib/ParticipantsPanel';
+import { OrbitTranslatorVertical } from '@/lib/orbit/components/OrbitTranslatorVertical';
 import { LiveCaptions } from '@/lib/LiveCaptions';
 import { CustomPreJoin } from '@/lib/CustomPreJoin';
 import { useDeepgramLive } from '@/lib/orbit/hooks/useDeepgramLive';
@@ -91,7 +92,7 @@ const ChevronLeftIcon = () => (
   </svg>
 );
 
-type SidebarPanel = 'participants' | 'chat' | 'settings';
+type SidebarPanel = 'participants' | 'chat' | 'settings' | 'orbit';
 
 function VideoGrid({ allowedParticipantIds, isGridView }: { allowedParticipantIds: Set<string>, isGridView: boolean }) {
   const layoutContext = useLayoutContext();
@@ -962,6 +963,8 @@ function VideoConferenceComponent(props: {
             onAutoGainChange={setAutoGainEnabled}
           />
         );
+      case 'orbit':
+        return <OrbitTranslatorVertical />;
       default:
         return null;
     }
@@ -1202,6 +1205,7 @@ function VideoConferenceComponent(props: {
             onParticipantsToggle={() => handleSidebarPanelToggle('participants')}
             onChatToggle={() => handleSidebarPanelToggle('chat')}
             onSettingsToggle={() => handleSidebarPanelToggle('settings')}
+            onOrbitToggle={() => handleSidebarPanelToggle('orbit')}
 
             onGridToggle={() => setIsGridView(!isGridView)}
             isGridView={isGridView}
@@ -1210,6 +1214,7 @@ function VideoConferenceComponent(props: {
             isParticipantsOpen={!sidebarCollapsed && activeSidebarPanel === 'participants'}
             isChatOpen={!sidebarCollapsed && activeSidebarPanel === 'chat'}
             isSettingsOpen={!sidebarCollapsed && activeSidebarPanel === 'settings'}
+            isOrbitOpen={!sidebarCollapsed && activeSidebarPanel === 'orbit'}
 
 
             isTranscriptionOpen={isTranscriptionEnabled}

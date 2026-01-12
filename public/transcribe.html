@@ -23,12 +23,16 @@
     }
 
     *{ box-sizing:border-box; }
+    html, body{
+      height: 100%;
+    }
     body{
       margin:0;
       background:#050505;
       color:var(--txt);
       font-family: var(--mono);
-      height:100vh;
+      height: 100%;
+      min-height: 100vh;
       overflow:hidden;
     }
 
@@ -55,6 +59,15 @@
       right:12px;
       top:12px;
       max-width: none;
+    }
+
+    body.embedded .overlay{
+      position: absolute;
+      inset: 0;
+      height: 100%;
+      margin: 0;
+      max-width: none;
+      border-radius: 0;
     }
 
     .topbar{
@@ -475,6 +488,16 @@
     if (cs.position === "static") host.style.position = "relative";
     host.appendChild(overlay);
     overlay.classList.add("in-host");
+  }
+  let embedded = false;
+  try {
+    embedded = window.self !== window.top;
+  } catch (_) {
+    embedded = true;
+  }
+  if (!host && embedded && overlay) {
+    document.body.classList.add("embedded");
+    overlay.classList.add("embedded");
   }
 })();
 

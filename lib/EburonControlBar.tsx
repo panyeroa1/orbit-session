@@ -5,6 +5,7 @@ import { useLocalParticipant, useRoomContext } from '@livekit/components-react';
 import { Track, type ScreenShareCaptureOptions, type AudioCaptureOptions } from 'livekit-client';
 import toast from 'react-hot-toast';
 import styles from '../styles/Eburon.module.css';
+import { OrbitIcon } from '@/lib/orbit/components/OrbitTranslatorVertical';
 // Jitsi-style SVG Icons (simple, line-based)
 const MicIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -177,12 +178,14 @@ import { RoomState, LANGUAGES, Language } from '@/lib/orbit/types';
 interface EburonControlBarProps {
   onChatToggle?: () => void;
   onParticipantsToggle?: () => void;
+  onOrbitToggle?: () => void;
   onSettingsToggle?: () => void;
 
   onTranscriptionToggle?: () => void;
   audioCaptureOptions?: AudioCaptureOptions;
   isChatOpen?: boolean;
   isParticipantsOpen?: boolean;
+  isOrbitOpen?: boolean;
   isSettingsOpen?: boolean;
 
   isTranscriptionOpen?: boolean;
@@ -201,12 +204,14 @@ interface EburonControlBarProps {
 export function EburonControlBar({
   onChatToggle,
   onParticipantsToggle,
+  onOrbitToggle,
   onSettingsToggle,
 
   onTranscriptionToggle,
   audioCaptureOptions,
   isChatOpen,
   isParticipantsOpen,
+  isOrbitOpen,
   isSettingsOpen,
 
   isTranscriptionOpen,
@@ -584,6 +589,7 @@ export function EburonControlBar({
   const isSidebarOpen = Boolean(
     isChatOpen || 
     isParticipantsOpen || 
+    isOrbitOpen ||
     isSettingsOpen
   );
 
@@ -807,6 +813,16 @@ export function EburonControlBar({
             </button>
           )}
 
+          {onOrbitToggle && (
+            <button
+              className={`${styles.controlButton} ${isOrbitOpen ? styles.controlButtonActive : ''}`}
+              onClick={onOrbitToggle}
+              title="Orbit Translator"
+            >
+              <OrbitIcon size={20} />
+            </button>
+          )}
+
 
           {onSettingsToggle && (
             <button
@@ -933,6 +949,19 @@ export function EburonControlBar({
               >
                 <div className={styles.mobileGridIcon}><SettingsIcon /></div>
                 <span className={styles.mobileGridLabel}>Settings</span>
+              </button>
+            )}
+
+            {onOrbitToggle && (
+              <button
+                className={`${styles.mobileGridItem} ${isOrbitOpen ? styles.mobileGridItemActive : ''}`}
+                onClick={() => {
+                  onOrbitToggle();
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <div className={styles.mobileGridIcon}><OrbitIcon size={22} /></div>
+                <span className={styles.mobileGridLabel}>Orbit</span>
               </button>
             )}
 

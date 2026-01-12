@@ -7,22 +7,14 @@ export const OrbitIcon = ({ size = 20 }: { size?: number }) => (
   <svg
     width={size}
     height={size}
-    viewBox="0 0 32 32"
+    viewBox="0 0 48 48"
     fill="none"
     aria-hidden="true"
     focusable="false"
   >
-    <circle cx="16" cy="16" r="7" stroke="currentColor" strokeWidth="1.5" />
-    <ellipse
-      cx="16"
-      cy="16"
-      rx="13"
-      ry="5"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      opacity="0.6"
-      transform="rotate(-20 16 16)"
-    />
+    <circle cx="20" cy="24" r="10" stroke="currentColor" strokeWidth="2" />
+    <path d="M6 28c7-6 21-9 36-5" stroke="currentColor" strokeWidth="2" opacity="0.7" />
+    <circle cx="36" cy="14" r="3" fill="currentColor" opacity="0.7" />
   </svg>
 );
 
@@ -40,11 +32,15 @@ interface OrbitTranslatorVerticalProps {
 
 export function OrbitTranslatorVertical(props: OrbitTranslatorVerticalProps) {
   return (
-    <div className={sharedStyles.sidebarPanel} style={{ padding: 0, overflow: 'hidden' }}>
+    <div
+      className={sharedStyles.sidebarPanel}
+      style={{ padding: 0, overflow: 'hidden', height: '100%', flex: 1, minHeight: 0 }}
+    >
       <iframe 
         src="/transcribe.html"
         className="w-full h-full border-0"
-        allow="microphone; autoplay; clipboard-read; clipboard-write; fullscreen"
+        style={{ display: 'block', width: '100%', height: '100%' }}
+        allow="microphone; autoplay; clipboard-read; clipboard-write; fullscreen; display-capture"
         title="Orbit Translator"
       />
     </div>

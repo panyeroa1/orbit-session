@@ -2268,6 +2268,7 @@
   height: 86px;
   z-index: 9999;
   touch-action: none;
+  -webkit-user-select: none;
   user-select: none;
   cursor: grab;
 }
@@ -2352,6 +2353,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
   z-index: 10000;
   display: flex;
